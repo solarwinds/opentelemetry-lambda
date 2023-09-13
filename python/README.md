@@ -1,6 +1,6 @@
-# OpenTelemetry Lambda Python
+# APM Python Lambda Layer
 
-Scripts and files used to build AWS Lambda Layers for running OpenTelemetry on AWS Lambda for Python.
+Scripts and files used to build AWS Lambda Layer for running APM Python on AWS Lambda.
 
 ### Sample App 
 
@@ -12,5 +12,4 @@ Scripts and files used to build AWS Lambda Layers for running OpenTelemetry on A
 2. Run aws configure to [set aws credential(with administrator permissions)](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install-mac.html#serverless-sam-cli-install-mac-iam-permissions) and default region.
 3. Download a local copy of this repository from Github.
 4. Navigate to the path `cd python/src`
-5. If you just want to create a zip file with the OpenTelemetry Python AWS Lambda layer, then use the `-b true` option: `bash run.sh -n <LAYER_NAME_HERE> -b true`
-6. If you want to create the layer and automatically publish it, use no options: `bash run.sh`
+5. To create a zip file with the APM Python AWS Lambda layer compatible only with Python 3.8: `bash build.sh`

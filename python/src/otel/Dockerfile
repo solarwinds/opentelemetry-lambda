@@ -1,4 +1,4 @@
-ARG runtime=python3.11
+ARG runtime=python3.8
 
 FROM public.ecr.aws/sam/build-${runtime}
 
@@ -9,6 +9,7 @@ WORKDIR /workspace
 RUN mkdir -p /build && \
   python3 -m pip install -r otel_sdk/requirements.txt -t /build/python && \
   python3 -m pip install -r otel_sdk/requirements-nodeps.txt -t /build/tmp --no-deps && \
+  python3 -m pip install -r otel_sdk/requirements-testpypi.txt -t /build/tmp --extra-index-url https://test.pypi.org/simple/ --no-deps && \
   # We need to use a `/build/tmp/` folder otherwise the instrumentation packages
   # do not get fully downloaded to the `opentelemetry/instrumentation/` path.
   cp -r /build/tmp/* /build/python/ && \
