@@ -15,6 +15,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"math"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -84,6 +85,7 @@ func (extension *solarwindsapmSettingsExtension) Start(ctx context.Context, host
 							for _, item := range response.GetSettings() {
 
 								marshalOptions := protojson.MarshalOptions{
+									UseEnumNumbers:  true,
 									EmitUnpopulated: true,
 								}
 								if settingBytes, err := marshalOptions.Marshal(item); err != nil {
@@ -93,6 +95,27 @@ func (extension *solarwindsapmSettingsExtension) Start(ctx context.Context, host
 									if err := json.Unmarshal(settingBytes, &setting); err != nil {
 										extension.logger.Warn("Error to unmarshal setting JSON object from setting JSON[]byte " + err.Error())
 									} else {
+										if value, ok := setting["value"].(string); ok {
+											if num, e := strconv.ParseInt(value, 10, 0); e != nil {
+												extension.logger.Warn("Unable to parse value " + value + " as number " + e.Error())
+											} else {
+												setting["value"] = num
+											}
+										}
+										if timestamp, ok := setting["timestamp"].(string); ok {
+											if num, e := strconv.ParseInt(timestamp, 10, 0); e != nil {
+												extension.logger.Warn("Unable to parse timestamp " + timestamp + " as number " + e.Error())
+											} else {
+												setting["timestamp"] = num
+											}
+										}
+										if ttl, ok := setting["ttl"].(string); ok {
+											if num, e := strconv.ParseInt(ttl, 10, 0); e != nil {
+												extension.logger.Warn("Unable to parse ttl " + ttl + " as number " + e.Error())
+											} else {
+												setting["ttl"] = num
+											}
+										}
 										if _, ok := setting["flags"]; ok {
 											setting["flags"] = string(item.Flags)
 										}
@@ -147,6 +170,7 @@ func (extension *solarwindsapmSettingsExtension) Start(ctx context.Context, host
 									extension.logger.Error("Unable to write " + JSONOutputFile + " " + err.Error())
 								} else {
 									extension.logger.Info(JSONOutputFile + " is refreshed")
+									extension.logger.Info(string(content))
 								}
 							}
 						case collectorpb.ResultCode_TRY_LATER:

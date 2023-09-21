@@ -20,6 +20,7 @@ import (
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/attributesprocessor"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/probabilisticsamplerprocessor"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourcedetectionprocessor"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourceprocessor"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/spanprocessor"
 	"github.com/open-telemetry/opentelemetry-lambda/collector/extension/solarwindsapmsettingsextension"
@@ -68,6 +69,7 @@ func Components(extensionID string) (otelcol.Factories, error) {
 		resourceprocessor.NewFactory(),
 		spanprocessor.NewFactory(),
 		coldstartprocessor.NewFactory(),
+		resourcedetectionprocessor.NewFactory(),
 	)
 	if err != nil {
 		errs = append(errs, err)
