@@ -55,6 +55,7 @@ func (extension *solarwindsapmSettingsExtension) Start(ctx context.Context, host
 		for {
 			select {
 			case <-ticker.C:
+				extension.logger.Info("Time to getSettings from " + extension.config.Endpoint)
 				if hostname, err := os.Hostname(); err != nil {
 					extension.logger.Fatal("Unable to call os.Hostname() " + err.Error())
 				} else {
