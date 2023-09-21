@@ -188,6 +188,7 @@ func (extension *solarwindsapmSettingsExtension) Start(ctx context.Context, host
 					}
 				}
 			case <-ctx.Done():
+				extension.logger.Info("Received ctx.Done() from ticker")
 				return
 			}
 		}
