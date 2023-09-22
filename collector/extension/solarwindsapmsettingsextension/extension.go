@@ -32,6 +32,140 @@ type solarwindsapmSettingsExtension struct {
 	client collectorpb.TraceCollectorClient
 }
 
+func Refresh(extension *solarwindsapmSettingsExtension, ctx context.Context) {
+	extension.logger.Info("Time to refresh from " + extension.config.Endpoint)
+	if hostname, err := os.Hostname(); err != nil {
+		extension.logger.Fatal("Unable to call os.Hostname() " + err.Error())
+	} else {
+		request := &collectorpb.SettingsRequest{
+			ApiKey: extension.config.Key,
+			Identity: &collectorpb.HostID{
+				Hostname: hostname,
+			},
+			ClientVersion: "2",
+		}
+		if response, err := extension.client.GetSettings(ctx, request); err != nil {
+			extension.logger.Fatal("Unable to getSettings from " + extension.config.Endpoint + " " + err.Error())
+		} else {
+			switch result := response.GetResult(); result {
+			case collectorpb.ResultCode_OK:
+				if bytes, err := proto.Marshal(response); err != nil {
+					extension.logger.Error("Unable to marshal response to bytes " + err.Error())
+				} else {
+					// Output in raw format
+					if err := os.WriteFile(RawOutputFile, bytes, 0644); err != nil {
+						extension.logger.Error("Unable to write " + RawOutputFile + " " + err.Error())
+					} else {
+						extension.logger.Info(RawOutputFile + " is refreshed")
+					}
+				}
+				// Output in human-readable format
+				var settings []map[string]interface{}
+				for _, item := range response.GetSettings() {
+
+					marshalOptions := protojson.MarshalOptions{
+						UseEnumNumbers:  true,
+						EmitUnpopulated: true,
+					}
+					if settingBytes, err := marshalOptions.Marshal(item); err != nil {
+						extension.logger.Warn("Error to marshal setting JSON[] byte from response.GetSettings() " + err.Error())
+					} else {
+						setting := make(map[string]interface{})
+						if err := json.Unmarshal(settingBytes, &setting); err != nil {
+							extension.logger.Warn("Error to unmarshal setting JSON object from setting JSON[]byte " + err.Error())
+						} else {
+							if value, ok := setting["value"].(string); ok {
+								if num, e := strconv.ParseInt(value, 10, 0); e != nil {
+									extension.logger.Warn("Unable to parse value " + value + " as number " + e.Error())
+								} else {
+									setting["value"] = num
+								}
+							}
+							if timestamp, ok := setting["timestamp"].(string); ok {
+								if num, e := strconv.ParseInt(timestamp, 10, 0); e != nil {
+									extension.logger.Warn("Unable to parse timestamp " + timestamp + " as number " + e.Error())
+								} else {
+									setting["timestamp"] = num
+								}
+							}
+							if ttl, ok := setting["ttl"].(string); ok {
+								if num, e := strconv.ParseInt(ttl, 10, 0); e != nil {
+									extension.logger.Warn("Unable to parse ttl " + ttl + " as number " + e.Error())
+								} else {
+									setting["ttl"] = num
+								}
+							}
+							if _, ok := setting["flags"]; ok {
+								setting["flags"] = string(item.Flags)
+							}
+							if arguments, ok := setting["arguments"].(map[string]interface{}); ok {
+								if value, ok := item.Arguments["BucketCapacity"]; ok {
+									arguments["BucketCapacity"] = math.Float64frombits(binary.LittleEndian.Uint64(value))
+								}
+								if value, ok := item.Arguments["BucketRate"]; ok {
+									arguments["BucketRate"] = math.Float64frombits(binary.LittleEndian.Uint64(value))
+								}
+								if value, ok := item.Arguments["TriggerRelaxedBucketCapacity"]; ok {
+									arguments["TriggerRelaxedBucketCapacity"] = math.Float64frombits(binary.LittleEndian.Uint64(value))
+								}
+								if value, ok := item.Arguments["TriggerRelaxedBucketRate"]; ok {
+									arguments["TriggerRelaxedBucketRate"] = math.Float64frombits(binary.LittleEndian.Uint64(value))
+								}
+								if value, ok := item.Arguments["TriggerStrictBucketCapacity"]; ok {
+									arguments["TriggerStrictBucketCapacity"] = math.Float64frombits(binary.LittleEndian.Uint64(value))
+								}
+								if value, ok := item.Arguments["TriggerStrictBucketRate"]; ok {
+									arguments["TriggerStrictBucketRate"] = math.Float64frombits(binary.LittleEndian.Uint64(value))
+								}
+
+								if value, ok := item.Arguments["MetricsFlushInterval"]; ok {
+									arguments["MetricsFlushInterval"] = int32(binary.LittleEndian.Uint32(value))
+								}
+								if value, ok := item.Arguments["MaxTransactions"]; ok {
+									arguments["MaxTransactions"] = int32(binary.LittleEndian.Uint32(value))
+								}
+								if value, ok := item.Arguments["MaxCustomMetrics"]; ok {
+									arguments["MaxCustomMetrics"] = int32(binary.LittleEndian.Uint32(value))
+								}
+								if value, ok := item.Arguments["EventsFlushInterval"]; ok {
+									arguments["EventsFlushInterval"] = int32(binary.LittleEndian.Uint32(value))
+								}
+								if value, ok := item.Arguments["ProfilingInterval"]; ok {
+									arguments["ProfilingInterval"] = int32(binary.LittleEndian.Uint32(value))
+								}
+								if value, ok := item.Arguments["SignatureKey"]; ok {
+									arguments["SignatureKey"] = string(value)
+								}
+							}
+							settings = append(settings, setting)
+						}
+					}
+				}
+				if content, err := json.Marshal(settings); err != nil {
+					extension.logger.Warn("Error to marshal setting JSON[] byte from settings " + err.Error())
+				} else {
+					if err := os.WriteFile(JSONOutputFile, content, 0644); err != nil {
+						extension.logger.Error("Unable to write " + JSONOutputFile + " " + err.Error())
+					} else {
+						extension.logger.Info(JSONOutputFile + " is refreshed")
+						extension.logger.Info(string(content))
+					}
+				}
+			case collectorpb.ResultCode_TRY_LATER:
+				extension.logger.Warn("GetSettings returned TRY_LATER " + response.GetWarning())
+			case collectorpb.ResultCode_INVALID_API_KEY:
+				extension.logger.Warn("GetSettings returned INVALID_API_KEY " + response.GetWarning())
+			case collectorpb.ResultCode_LIMIT_EXCEEDED:
+				extension.logger.Warn("GetSettings returned LIMIT_EXCEEDED " + response.GetWarning())
+			case collectorpb.ResultCode_REDIRECT:
+				extension.logger.Warn("GetSettings returned REDIRECT " + response.GetWarning())
+			default:
+				extension.logger.Warn("Unknown ResultCode from GetSettings " + response.GetWarning())
+			}
+		}
+	}
+}
+
 func (extension *solarwindsapmSettingsExtension) Start(ctx context.Context, host component.Host) error {
 	extension.logger.Debug("Starting up solarwinds apm settings extension")
 	ctx = context.Background()
@@ -46,6 +180,10 @@ func (extension *solarwindsapmSettingsExtension) Start(ctx context.Context, host
 	}
 	extension.client = collectorpb.NewTraceCollectorClient(extension.conn)
 
+	// Refresh immediately
+	Refresh(extension, ctx)
+
+	// setup lightweight thread to refresh
 	var interval time.Duration
 	interval, err = time.ParseDuration(extension.config.Interval)
 	go func() {
@@ -55,138 +193,8 @@ func (extension *solarwindsapmSettingsExtension) Start(ctx context.Context, host
 		for {
 			select {
 			case <-ticker.C:
-				extension.logger.Info("Time to getSettings from " + extension.config.Endpoint)
-				if hostname, err := os.Hostname(); err != nil {
-					extension.logger.Fatal("Unable to call os.Hostname() " + err.Error())
-				} else {
-					request := &collectorpb.SettingsRequest{
-						ApiKey: extension.config.Key,
-						Identity: &collectorpb.HostID{
-							Hostname: hostname,
-						},
-						ClientVersion: "2",
-					}
-					if response, err := extension.client.GetSettings(ctx, request); err != nil {
-						extension.logger.Fatal("Unable to getSettings from " + extension.config.Endpoint + " " + err.Error())
-					} else {
-						switch result := response.GetResult(); result {
-						case collectorpb.ResultCode_OK:
-							if bytes, err := proto.Marshal(response); err != nil {
-								extension.logger.Error("Unable to marshal response to bytes " + err.Error())
-							} else {
-								// Output in raw format
-								if err := os.WriteFile(RawOutputFile, bytes, 0644); err != nil {
-									extension.logger.Error("Unable to write " + RawOutputFile + " " + err.Error())
-								} else {
-									extension.logger.Info(RawOutputFile + " is refreshed")
-								}
-							}
-							// Output in human-readable format
-							var settings []map[string]interface{}
-							for _, item := range response.GetSettings() {
-
-								marshalOptions := protojson.MarshalOptions{
-									UseEnumNumbers:  true,
-									EmitUnpopulated: true,
-								}
-								if settingBytes, err := marshalOptions.Marshal(item); err != nil {
-									extension.logger.Warn("Error to marshal setting JSON[] byte from response.GetSettings() " + err.Error())
-								} else {
-									setting := make(map[string]interface{})
-									if err := json.Unmarshal(settingBytes, &setting); err != nil {
-										extension.logger.Warn("Error to unmarshal setting JSON object from setting JSON[]byte " + err.Error())
-									} else {
-										if value, ok := setting["value"].(string); ok {
-											if num, e := strconv.ParseInt(value, 10, 0); e != nil {
-												extension.logger.Warn("Unable to parse value " + value + " as number " + e.Error())
-											} else {
-												setting["value"] = num
-											}
-										}
-										if timestamp, ok := setting["timestamp"].(string); ok {
-											if num, e := strconv.ParseInt(timestamp, 10, 0); e != nil {
-												extension.logger.Warn("Unable to parse timestamp " + timestamp + " as number " + e.Error())
-											} else {
-												setting["timestamp"] = num
-											}
-										}
-										if ttl, ok := setting["ttl"].(string); ok {
-											if num, e := strconv.ParseInt(ttl, 10, 0); e != nil {
-												extension.logger.Warn("Unable to parse ttl " + ttl + " as number " + e.Error())
-											} else {
-												setting["ttl"] = num
-											}
-										}
-										if _, ok := setting["flags"]; ok {
-											setting["flags"] = string(item.Flags)
-										}
-										if arguments, ok := setting["arguments"].(map[string]interface{}); ok {
-											if value, ok := item.Arguments["BucketCapacity"]; ok {
-												arguments["BucketCapacity"] = math.Float64frombits(binary.LittleEndian.Uint64(value))
-											}
-											if value, ok := item.Arguments["BucketRate"]; ok {
-												arguments["BucketRate"] = math.Float64frombits(binary.LittleEndian.Uint64(value))
-											}
-											if value, ok := item.Arguments["TriggerRelaxedBucketCapacity"]; ok {
-												arguments["TriggerRelaxedBucketCapacity"] = math.Float64frombits(binary.LittleEndian.Uint64(value))
-											}
-											if value, ok := item.Arguments["TriggerRelaxedBucketRate"]; ok {
-												arguments["TriggerRelaxedBucketRate"] = math.Float64frombits(binary.LittleEndian.Uint64(value))
-											}
-											if value, ok := item.Arguments["TriggerStrictBucketCapacity"]; ok {
-												arguments["TriggerStrictBucketCapacity"] = math.Float64frombits(binary.LittleEndian.Uint64(value))
-											}
-											if value, ok := item.Arguments["TriggerStrictBucketRate"]; ok {
-												arguments["TriggerStrictBucketRate"] = math.Float64frombits(binary.LittleEndian.Uint64(value))
-											}
-
-											if value, ok := item.Arguments["MetricsFlushInterval"]; ok {
-												arguments["MetricsFlushInterval"] = int32(binary.LittleEndian.Uint32(value))
-											}
-											if value, ok := item.Arguments["MaxTransactions"]; ok {
-												arguments["MaxTransactions"] = int32(binary.LittleEndian.Uint32(value))
-											}
-											if value, ok := item.Arguments["MaxCustomMetrics"]; ok {
-												arguments["MaxCustomMetrics"] = int32(binary.LittleEndian.Uint32(value))
-											}
-											if value, ok := item.Arguments["EventsFlushInterval"]; ok {
-												arguments["EventsFlushInterval"] = int32(binary.LittleEndian.Uint32(value))
-											}
-											if value, ok := item.Arguments["ProfilingInterval"]; ok {
-												arguments["ProfilingInterval"] = int32(binary.LittleEndian.Uint32(value))
-											}
-
-											if value, ok := item.Arguments["SignatureKey"]; ok {
-												arguments["SignatureKey"] = string(value)
-											}
-										}
-										settings = append(settings, setting)
-									}
-								}
-							}
-							if content, err := json.Marshal(settings); err != nil {
-								extension.logger.Warn("Error to marshal setting JSON[] byte from settings " + err.Error())
-							} else {
-								if err := os.WriteFile(JSONOutputFile, content, 0644); err != nil {
-									extension.logger.Error("Unable to write " + JSONOutputFile + " " + err.Error())
-								} else {
-									extension.logger.Info(JSONOutputFile + " is refreshed")
-									extension.logger.Info(string(content))
-								}
-							}
-						case collectorpb.ResultCode_TRY_LATER:
-							extension.logger.Warn("GetSettings returned TRY_LATER " + response.GetWarning())
-						case collectorpb.ResultCode_INVALID_API_KEY:
-							extension.logger.Warn("GetSettings returned INVALID_API_KEY " + response.GetWarning())
-						case collectorpb.ResultCode_LIMIT_EXCEEDED:
-							extension.logger.Warn("GetSettings returned LIMIT_EXCEEDED " + response.GetWarning())
-						case collectorpb.ResultCode_REDIRECT:
-							extension.logger.Warn("GetSettings returned REDIRECT " + response.GetWarning())
-						default:
-							extension.logger.Warn("Unknown ResultCode from GetSettings " + response.GetWarning())
-						}
-					}
-				}
+				// Refresh at each ticker event
+				Refresh(extension, ctx)
 			case <-ctx.Done():
 				extension.logger.Info("Received ctx.Done() from ticker")
 				return
