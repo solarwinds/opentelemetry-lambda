@@ -32,11 +32,14 @@ type solarwindsapmSettingsExtension struct {
 	client collectorpb.TraceCollectorClient
 }
 
-func Refresh(extension *solarwindsapmSettingsExtension, ctx context.Context) {
+func Refresh(extension *solarwindsapmSettingsExtension) {
 	extension.logger.Info("Time to refresh from " + extension.config.Endpoint)
 	if hostname, err := os.Hostname(); err != nil {
 		extension.logger.Fatal("Unable to call os.Hostname() " + err.Error())
 	} else {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
 		request := &collectorpb.SettingsRequest{
 			ApiKey: extension.config.Key,
 			Identity: &collectorpb.HostID{
@@ -181,7 +184,7 @@ func (extension *solarwindsapmSettingsExtension) Start(ctx context.Context, host
 	extension.client = collectorpb.NewTraceCollectorClient(extension.conn)
 
 	// Refresh immediately
-	Refresh(extension, ctx)
+	Refresh(extension)
 
 	// setup lightweight thread to refresh
 	var interval time.Duration
@@ -194,7 +197,7 @@ func (extension *solarwindsapmSettingsExtension) Start(ctx context.Context, host
 			select {
 			case <-ticker.C:
 				// Refresh at each ticker event
-				Refresh(extension, ctx)
+				Refresh(extension)
 			case <-ctx.Done():
 				extension.logger.Info("Received ctx.Done() from ticker")
 				return
