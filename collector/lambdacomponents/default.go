@@ -23,7 +23,9 @@ import (
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourcedetectionprocessor"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourceprocessor"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/spanprocessor"
+	"github.com/open-telemetry/opentelemetry-lambda/collector/connector/swotracemetricsconnector"
 	"github.com/open-telemetry/opentelemetry-lambda/collector/extension/solarwindsapmsettingsextension"
+	"go.opentelemetry.io/collector/connector"
 	"go.opentelemetry.io/collector/exporter"
 	"go.opentelemetry.io/collector/exporter/loggingexporter"
 	"go.opentelemetry.io/collector/exporter/otlpexporter"
@@ -83,11 +85,19 @@ func Components(extensionID string) (otelcol.Factories, error) {
 		errs = append(errs, err)
 	}
 
+	connectors, err := connector.MakeFactoryMap(
+		swotracemetricsconnector.NewFactory(),
+	)
+	if err != nil {
+		errs = append(errs, err)
+	}
+
 	factories := otelcol.Factories{
 		Receivers:  receivers,
 		Exporters:  exporters,
 		Processors: processors,
 		Extensions: extensions,
+		Connectors: connectors,
 	}
 
 	return factories, multierr.Combine(errs...)
