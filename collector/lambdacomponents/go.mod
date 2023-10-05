@@ -1,6 +1,6 @@
 module github.com/open-telemetry/opentelemetry-lambda/collector/lambdacomponents
 
-go 1.20
+go 1.21.0
 
 require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/exporter/prometheusremotewriteexporter v0.85.0
@@ -11,18 +11,19 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourcedetectionprocessor v0.85.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourceprocessor v0.85.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/spanprocessor v0.85.0
+	github.com/open-telemetry/opentelemetry-lambda/collector/connector/swotracemetricsconnector v0.0.0-00010101000000-000000000000
 	github.com/open-telemetry/opentelemetry-lambda/collector/extension/solarwindsapmsettingsextension v0.0.0-00010101000000-000000000000
 	github.com/open-telemetry/opentelemetry-lambda/collector/processor/coldstartprocessor v0.84.0
 	github.com/open-telemetry/opentelemetry-lambda/collector/receiver/telemetryapireceiver v0.84.0
-	go.opentelemetry.io/collector v0.85.0
-	go.opentelemetry.io/collector/exporter v0.85.0
+	go.opentelemetry.io/collector v0.86.0
+	go.opentelemetry.io/collector/exporter v0.86.0
 	go.opentelemetry.io/collector/exporter/loggingexporter v0.85.0
 	go.opentelemetry.io/collector/exporter/otlpexporter v0.85.0
 	go.opentelemetry.io/collector/exporter/otlphttpexporter v0.85.0
-	go.opentelemetry.io/collector/extension v0.85.0
-	go.opentelemetry.io/collector/processor v0.85.0
+	go.opentelemetry.io/collector/extension v0.86.0
+	go.opentelemetry.io/collector/processor v0.86.0
 	go.opentelemetry.io/collector/processor/memorylimiterprocessor v0.85.0
-	go.opentelemetry.io/collector/receiver v0.85.0
+	go.opentelemetry.io/collector/receiver v0.86.0
 	go.opentelemetry.io/collector/receiver/otlpreceiver v0.85.0
 	go.uber.org/multierr v1.11.0
 )
@@ -37,17 +38,17 @@ require (
 	github.com/alecthomas/participle/v2 v2.1.0 // indirect
 	github.com/antonmedv/expr v1.15.3 // indirect
 	github.com/armon/go-metrics v0.4.1 // indirect
-	github.com/aws/aws-sdk-go v1.45.14 // indirect
+	github.com/aws/aws-sdk-go v1.45.16 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.21.0 // indirect
-	github.com/aws/aws-sdk-go-v2/config v1.18.41 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.13.39 // indirect
+	github.com/aws/aws-sdk-go-v2/config v1.18.42 // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.13.40 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.13.11 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.41 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.35 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.42 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.43 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.35 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.14.0 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.17.0 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.14.1 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.17.1 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.22.0 // indirect
 	github.com/aws/smithy-go v1.14.2 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -128,7 +129,7 @@ require (
 	github.com/prometheus/client_golang v1.16.0 // indirect
 	github.com/prometheus/client_model v0.4.0 // indirect
 	github.com/prometheus/common v0.44.0 // indirect
-	github.com/prometheus/procfs v0.11.1 // indirect
+	github.com/prometheus/procfs v0.12.0 // indirect
 	github.com/prometheus/prometheus v0.47.0 // indirect
 	github.com/prometheus/statsd_exporter v0.24.0 // indirect
 	github.com/rs/cors v1.10.0 // indirect
@@ -139,7 +140,7 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/objx v0.5.1 // indirect
 	github.com/stretchr/testify v1.8.4 // indirect
-	github.com/tidwall/gjson v1.16.0 // indirect
+	github.com/tidwall/gjson v1.17.0 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/tidwall/tinylru v1.2.1 // indirect
@@ -148,41 +149,41 @@ require (
 	github.com/tklauser/numcpus v0.6.1 // indirect
 	github.com/yusufpapurcu/wmi v1.2.3 // indirect
 	go.opencensus.io v0.24.0 // indirect
-	go.opentelemetry.io/collector/component v0.85.0 // indirect
+	go.opentelemetry.io/collector/component v0.86.0 // indirect
 	go.opentelemetry.io/collector/config/configauth v0.85.0 // indirect
 	go.opentelemetry.io/collector/config/configcompression v0.85.0 // indirect
 	go.opentelemetry.io/collector/config/configgrpc v0.85.0 // indirect
 	go.opentelemetry.io/collector/config/confighttp v0.85.0 // indirect
-	go.opentelemetry.io/collector/config/confignet v0.85.0 // indirect
+	go.opentelemetry.io/collector/config/confignet v0.86.0 // indirect
 	go.opentelemetry.io/collector/config/configopaque v0.85.0 // indirect
-	go.opentelemetry.io/collector/config/configtelemetry v0.85.0 // indirect
+	go.opentelemetry.io/collector/config/configtelemetry v0.86.0 // indirect
 	go.opentelemetry.io/collector/config/configtls v0.85.0 // indirect
 	go.opentelemetry.io/collector/config/internal v0.85.0 // indirect
-	go.opentelemetry.io/collector/confmap v0.85.0 // indirect
-	go.opentelemetry.io/collector/connector v0.85.0 // indirect
-	go.opentelemetry.io/collector/consumer v0.85.0 // indirect
+	go.opentelemetry.io/collector/confmap v0.86.0 // indirect
+	go.opentelemetry.io/collector/connector v0.86.0 // indirect
+	go.opentelemetry.io/collector/consumer v0.86.0 // indirect
 	go.opentelemetry.io/collector/extension/auth v0.85.0 // indirect
-	go.opentelemetry.io/collector/featuregate v1.0.0-rcv0014 // indirect
-	go.opentelemetry.io/collector/pdata v1.0.0-rcv0014 // indirect
-	go.opentelemetry.io/collector/semconv v0.85.0 // indirect
+	go.opentelemetry.io/collector/featuregate v1.0.0-rcv0015 // indirect
+	go.opentelemetry.io/collector/pdata v1.0.0-rcv0015 // indirect
+	go.opentelemetry.io/collector/semconv v0.86.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.44.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.44.0 // indirect
 	go.opentelemetry.io/contrib/propagators/b3 v1.19.0 // indirect
-	go.opentelemetry.io/otel v1.18.0 // indirect
+	go.opentelemetry.io/otel v1.19.0 // indirect
 	go.opentelemetry.io/otel/bridge/opencensus v0.41.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric v0.41.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc v0.41.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp v0.41.0 // indirect
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.18.0 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.19.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.18.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.18.0 // indirect
 	go.opentelemetry.io/otel/exporters/prometheus v0.41.0 // indirect
 	go.opentelemetry.io/otel/exporters/stdout/stdoutmetric v0.41.0 // indirect
 	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.18.0 // indirect
-	go.opentelemetry.io/otel/metric v1.18.0 // indirect
-	go.opentelemetry.io/otel/sdk v1.18.0 // indirect
+	go.opentelemetry.io/otel/metric v1.19.0 // indirect
+	go.opentelemetry.io/otel/sdk v1.19.0 // indirect
 	go.opentelemetry.io/otel/sdk/metric v0.41.0 // indirect
-	go.opentelemetry.io/otel/trace v1.18.0 // indirect
+	go.opentelemetry.io/otel/trace v1.19.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.0.0 // indirect
 	go.uber.org/zap v1.26.0 // indirect
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
@@ -227,3 +228,5 @@ replace github.com/open-telemetry/opentelemetry-lambda/collector/processor/colds
 replace github.com/open-telemetry/opentelemetry-lambda/collector/receiver/telemetryapireceiver => ../receiver/telemetryapireceiver
 
 replace github.com/open-telemetry/opentelemetry-lambda/collector/extension/solarwindsapmsettingsextension => ../extension/solarwindsapmsettingsextension
+
+replace github.com/open-telemetry/opentelemetry-lambda/collector/connector/swotracemetricsconnector => ../connector/swotracemetricsconnector
