@@ -21,10 +21,10 @@ jobs:
     outputs:
       COLLECTOR_VERSION: ${{ steps.save-collector-version.outputs.COLLECTOR_VERSION }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-go@v4
         with:
-          go-version: '^1.20.7'
+          go-version: '^1.20.8'
       - name: build
         run: make -C collector package GOARCH=${{ matrix.architecture }}
       - uses: actions/upload-artifact@v3
