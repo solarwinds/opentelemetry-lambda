@@ -7,7 +7,13 @@ LAYER_NAME:=otel-collector
 OTELCOL_VERSION="UNSET" # run recipe set-otelcol-version to get this
 GIT_SHA=$(shell git rev-parse HEAD)
 GOARCH ?= amd64
-ARCH ?= x86_64
+
+ifeq ($(GOARCH), amd64)
+ARCH=x86_64
+else
+ARCH=$(GOARCH)
+endif
+
 GOBUILD=GO111MODULE=on CGO_ENABLED=0 installsuffix=cgo go build -trimpath
 BUILD_INFO_IMPORT_PATH=main
 
