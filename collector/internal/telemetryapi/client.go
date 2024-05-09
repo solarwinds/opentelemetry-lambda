@@ -49,8 +49,8 @@ func NewClient(logger *zap.Logger) *Client {
 func (c *Client) Subscribe(ctx context.Context, extensionID string, listenerURI string) (string, error) {
 	eventTypes := []EventType{
 		Platform,
-		// Function,
-		// Extension,
+		Function,
+		Extension,
 	}
 
 	bufferingConfig := BufferingCfg{
