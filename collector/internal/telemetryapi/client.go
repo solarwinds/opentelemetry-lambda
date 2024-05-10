@@ -46,11 +46,72 @@ func NewClient(logger *zap.Logger) *Client {
 	}
 }
 
+func (c *Client) SubscribeLogs(ctx context.Context, extensionID string, listenerURI string) (string, error) {
+	eventTypes := []EventType{
+		// Platform,
+		Function,
+		Extension,
+	}
+
+	bufferingConfig := BufferingCfg{
+		MaxItems:  1000,
+		MaxBytes:  256 * 1024,
+		TimeoutMS: 25,
+	}
+
+	destination := Destination{
+		Protocol:   HttpProto,
+		HttpMethod: HttpPost,
+		Encoding:   JSON,
+		URI:        URI(listenerURI),
+	}
+
+	data, err := json.Marshal(
+		&SubscribeRequest{
+			SchemaVersion: SchemaVersionLatest,
+			EventTypes:    eventTypes,
+			BufferingCfg:  bufferingConfig,
+			Destination:   destination,
+		})
+
+	if err != nil {
+		return "", fmt.Errorf("Failed to marshal SubscribeRequest: %w", err)
+	}
+
+	headers := make(map[string]string)
+	headers[lambdaAgentIdentifierHeaderKey] = extensionID
+
+	c.logger.Info("Subscribing", zap.String("baseURL", c.baseURL))
+	resp, err := httpPutWithHeaders(ctx, c.httpClient, c.baseURL, data, headers)
+	if err != nil {
+		c.logger.Error("Subscription failed", zap.Error(err))
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusAccepted {
+		c.logger.Error("Subscription failed. Logs API is not supported! Is this extension running in a local sandbox?", zap.Int("status_code", resp.StatusCode))
+	} else if resp.StatusCode != http.StatusOK {
+		c.logger.Error("Subscription failed")
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return "", fmt.Errorf("request to %s failed: %d[%s]: %w", c.baseURL, resp.StatusCode, resp.Status, err)
+		}
+
+		return "", fmt.Errorf("request to %s failed: %d[%s] %s", c.baseURL, resp.StatusCode, resp.Status, string(body))
+	}
+
+	body, _ := io.ReadAll(resp.Body)
+	c.logger.Info("Subscription success", zap.String("response", string(body)))
+
+	return string(body), nil
+}
+
 func (c *Client) Subscribe(ctx context.Context, extensionID string, listenerURI string) (string, error) {
 	eventTypes := []EventType{
 		Platform,
-		Function,
-		Extension,
+		// Function,
+		// Extension,
 	}
 
 	bufferingConfig := BufferingCfg{

@@ -1,6 +1,8 @@
 module github.com/open-telemetry/opentelemetry-lambda/collector/receiver/telemetryapireceiver
 
-go 1.21
+go 1.21.0
+
+toolchain go1.21.1
 
 replace github.com/open-telemetry/opentelemetry-lambda/collector => ../../
 
@@ -12,7 +14,7 @@ require (
 	go.opentelemetry.io/collector/consumer v0.99.0
 	go.opentelemetry.io/collector/pdata v1.6.0
 	go.opentelemetry.io/collector/receiver v0.99.0
-	go.opentelemetry.io/collector/semconv v0.99.0
+	go.opentelemetry.io/collector/semconv v0.100.0
 	go.uber.org/zap v1.27.0
 )
 
