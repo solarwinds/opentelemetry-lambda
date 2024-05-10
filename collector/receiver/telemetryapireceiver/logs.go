@@ -71,24 +71,6 @@ func (r *telemetryAPILogsReceiver) Shutdown(ctx context.Context) error {
 	return nil
 }
 
-//func newSpanID() pcommon.SpanID {
-//	var rngSeed int64
-//	_ = binary.Read(crand.Reader, binary.LittleEndian, &rngSeed)
-//	randSource := rand.New(rand.NewSource(rngSeed))
-//	sid := pcommon.SpanID{}
-//	_, _ = randSource.Read(sid[:])
-//	return sid
-//}
-//
-//func newTraceID() pcommon.TraceID {
-//	var rngSeed int64
-//	_ = binary.Read(crand.Reader, binary.LittleEndian, &rngSeed)
-//	randSource := rand.New(rand.NewSource(rngSeed))
-//	tid := pcommon.TraceID{}
-//	_, _ = randSource.Read(tid[:])
-//	return tid
-//}
-
 // httpHandler handles the requests coming from the Telemetry API.
 // Everytime Telemetry API sends events, this function will read them from the response body
 // and put into a synchronous queue to be dispatched later.
@@ -122,6 +104,7 @@ func (r *telemetryAPILogsReceiver) httpHandler(w http.ResponseWriter, req *http.
 		layout := "2006-01-02T15:04:05.000Z"
 		if time, err := time.Parse(layout, el.Time); err == nil {
 			logRecord.SetTimestamp(pcommon.NewTimestampFromTime(time))
+			logRecord.SetObservedTimestamp(pcommon.NewTimestampFromTime(time))
 		}
 		if record, ok := el.Record.(map[string]interface{}); ok {
 			// in JSON format https://docs.aws.amazon.com/lambda/latest/dg/telemetry-schema-reference.html#telemetry-api-function

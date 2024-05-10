@@ -50,7 +50,7 @@ func (c *Client) SubscribeLogs(ctx context.Context, extensionID string, listener
 	eventTypes := []EventType{
 		// Platform,
 		Function,
-		Extension,
+		// Extension, // overkill
 	}
 
 	bufferingConfig := BufferingCfg{
