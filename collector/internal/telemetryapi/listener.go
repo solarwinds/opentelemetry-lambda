@@ -140,10 +140,8 @@ func (s *Listener) Wait(ctx context.Context, reqID string) error {
 					continue
 				}
 
-				if record, ok := i.Record.(map[string]interface{}); ok {
-					if record["requestId"] == reqID {
-						return nil
-					}
+				if i.Record["requestId"] == reqID {
+					return nil
 				}
 			}
 		}
