@@ -2,7 +2,7 @@ module github.com/open-telemetry/opentelemetry-lambda/collector/receiver/telemet
 
 go 1.21.0
 
-toolchain go1.21.1
+toolchain go1.22.2
 
 replace github.com/open-telemetry/opentelemetry-lambda/collector => ../../
 
