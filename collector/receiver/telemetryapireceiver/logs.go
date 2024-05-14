@@ -1,17 +1,3 @@
-// Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package telemetryapireceiver // import "github.com/open-telemetry/opentelemetry-lambda/collector/receiver/telemetryapireceiver"
 
 import (
@@ -52,14 +38,20 @@ func (r *telemetryAPILogsReceiver) Start(ctx context.Context, host component.Hos
 	r.logger.Info("Listening for requests", zap.String("address", address))
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", r.httpHandler)
+	mux.HandleFunc("/function", r.httpFunctionHandler)
+	mux.HandleFunc("/platform", r.httpPlatformHandler)
 	r.httpServer = &http.Server{Addr: address, Handler: mux}
 	go func() {
 		_ = r.httpServer.ListenAndServe()
 	}()
 
 	telemetryClient := telemetryapi.NewClient(r.logger)
-	_, err := telemetryClient.SubscribeLogs(ctx, r.extensionID, fmt.Sprintf("http://%s/", address))
+	_, err := telemetryClient.SubscribeEvents(ctx, []telemetryapi.EventType{telemetryapi.Platform}, r.extensionID, fmt.Sprintf("http://%s/platform", address))
+	if err != nil {
+		r.logger.Info("Listening for requests", zap.String("address", address), zap.String("extensionID", r.extensionID))
+		return err
+	}
+	_, err = telemetryClient.SubscribeEvents(ctx, []telemetryapi.EventType{telemetryapi.Function}, r.extensionID, fmt.Sprintf("http://%s/function", address))
 	if err != nil {
 		r.logger.Info("Listening for requests", zap.String("address", address), zap.String("extensionID", r.extensionID))
 		return err
@@ -71,13 +63,7 @@ func (r *telemetryAPILogsReceiver) Shutdown(ctx context.Context) error {
 	return nil
 }
 
-// httpHandler handles the requests coming from the Telemetry API.
-// Everytime Telemetry API sends events, this function will read them from the response body
-// and put into a synchronous queue to be dispatched later.
-// Logging or printing besides the error cases below is not recommended if you have subscribed to
-// receive extension logs. Otherwise, logging here will cause Telemetry API to send new logs for
-// the printed lines which may create an infinite loop.
-func (r *telemetryAPILogsReceiver) httpHandler(w http.ResponseWriter, req *http.Request) {
+func (r *telemetryAPILogsReceiver) httpPlatformHandler(w http.ResponseWriter, req *http.Request) {
 	body, err := io.ReadAll(req.Body)
 	if err != nil {
 		r.logger.Error("error reading body", zap.Error(err))
@@ -102,9 +88,54 @@ func (r *telemetryAPILogsReceiver) httpHandler(w http.ResponseWriter, req *http.
 		logRecord.Attributes().PutStr("type", el.Type)
 
 		layout := "2006-01-02T15:04:05.000Z"
-		if time, err := time.Parse(layout, el.Time); err == nil {
-			logRecord.SetTimestamp(pcommon.NewTimestampFromTime(time))
-			logRecord.SetObservedTimestamp(pcommon.NewTimestampFromTime(time))
+		if t, err := time.Parse(layout, el.Time); err == nil {
+			logRecord.SetTimestamp(pcommon.NewTimestampFromTime(time.Now()))
+			logRecord.SetObservedTimestamp(pcommon.NewTimestampFromTime(t))
+		}
+		logRecord.SetSeverityText("INFO")
+		logRecord.SetSeverityNumber(9)
+		if j, err := json.Marshal(el.Record); err == nil {
+			logRecord.Body().SetStr(string(j))
+		} else {
+			r.logger.Error("error stringify record", zap.Error(err))
+		}
+
+		if err = r.nextConsumer.ConsumeLogs(context.Background(), log); err != nil {
+			r.logger.Error("error receiving logs", zap.Error(err))
+		}
+	}
+	r.logger.Debug("logEvents received", zap.Int("count", len(slice)), zap.Int64("queue_length", r.queue.Len()))
+	slice = nil
+}
+
+func (r *telemetryAPILogsReceiver) httpFunctionHandler(w http.ResponseWriter, req *http.Request) {
+	body, err := io.ReadAll(req.Body)
+	if err != nil {
+		r.logger.Error("error reading body", zap.Error(err))
+		return
+	}
+
+	var slice []event
+	if err := json.Unmarshal(body, &slice); err != nil {
+		r.logger.Error("error unmarshalling body", zap.Error(err))
+		return
+	}
+
+	log := plog.NewLogs()
+	resourceLog := log.ResourceLogs().AppendEmpty()
+	r.resource.CopyTo(resourceLog.Resource())
+	scopeLog := resourceLog.ScopeLogs().AppendEmpty()
+	scopeLog.Scope().SetName("github.com/open-telemetry/opentelemetry-lambda/collector/receiver/telemetryapi")
+
+	for _, el := range slice {
+		r.logger.Debug(fmt.Sprintf("Event: %s", el.Type), zap.Any("event", el))
+		logRecord := scopeLog.LogRecords().AppendEmpty()
+		logRecord.Attributes().PutStr("type", el.Type)
+
+		layout := "2006-01-02T15:04:05.000Z"
+		if t, err := time.Parse(layout, el.Time); err == nil {
+			logRecord.SetTimestamp(pcommon.NewTimestampFromTime(time.Now()))
+			logRecord.SetObservedTimestamp(pcommon.NewTimestampFromTime(t))
 		}
 		if record, ok := el.Record.(map[string]interface{}); ok {
 			// in JSON format https://docs.aws.amazon.com/lambda/latest/dg/telemetry-schema-reference.html#telemetry-api-function
@@ -176,8 +207,9 @@ func (r *telemetryAPILogsReceiver) httpHandler(w http.ResponseWriter, req *http.
 			}
 		} else {
 			// in plain text https://docs.aws.amazon.com/lambda/latest/dg/telemetry-schema-reference.html#telemetry-api-function
-			line := el.Record.(string)
-			logRecord.Body().SetStr(line)
+			if line, ok := el.Record.(string); ok {
+				logRecord.Body().SetStr(line)
+			}
 		}
 	}
 	if err = r.nextConsumer.ConsumeLogs(context.Background(), log); err != nil {

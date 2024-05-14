@@ -49,13 +49,7 @@ func NewClient(logger *zap.Logger) *Client {
 	}
 }
 
-func (c *Client) SubscribeLogs(ctx context.Context, extensionID string, listenerURI string) (string, error) {
-	eventTypes := []EventType{
-		// Platform,
-		Function,
-		// Extension,
-	}
-
+func (c *Client) SubscribeEvents(ctx context.Context, eventTypes []EventType, extensionID string, listenerURI string) (string, error) {
 	bufferingConfig := BufferingCfg{
 		MaxItems:  1000,
 		MaxBytes:  256 * 1024,
