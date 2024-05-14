@@ -89,8 +89,8 @@ func (r *telemetryAPILogsReceiver) httpPlatformHandler(w http.ResponseWriter, re
 
 		layout := "2006-01-02T15:04:05.000Z"
 		if t, err := time.Parse(layout, el.Time); err == nil {
-			logRecord.SetTimestamp(pcommon.NewTimestampFromTime(time.Now()))
-			logRecord.SetObservedTimestamp(pcommon.NewTimestampFromTime(t))
+			logRecord.SetTimestamp(pcommon.NewTimestampFromTime(t))
+			logRecord.SetObservedTimestamp(pcommon.NewTimestampFromTime(time.Now()))
 		}
 		logRecord.SetSeverityText("INFO")
 		logRecord.SetSeverityNumber(9)
@@ -134,14 +134,14 @@ func (r *telemetryAPILogsReceiver) httpFunctionHandler(w http.ResponseWriter, re
 
 		layout := "2006-01-02T15:04:05.000Z"
 		if t, err := time.Parse(layout, el.Time); err == nil {
-			logRecord.SetTimestamp(pcommon.NewTimestampFromTime(time.Now()))
-			logRecord.SetObservedTimestamp(pcommon.NewTimestampFromTime(t))
+			logRecord.SetTimestamp(pcommon.NewTimestampFromTime(t))
+			logRecord.SetObservedTimestamp(pcommon.NewTimestampFromTime(time.Now()))
 		}
 		if record, ok := el.Record.(map[string]interface{}); ok {
 			// in JSON format https://docs.aws.amazon.com/lambda/latest/dg/telemetry-schema-reference.html#telemetry-api-function
 			if timestamp, ok := record["timestamp"].(string); ok {
 				if observedTime, err := time.Parse(layout, timestamp); err == nil {
-					logRecord.SetObservedTimestamp(pcommon.NewTimestampFromTime(observedTime))
+					logRecord.SetTimestamp(pcommon.NewTimestampFromTime(observedTime))
 				}
 			}
 			if level, ok := record["level"].(string); ok {
