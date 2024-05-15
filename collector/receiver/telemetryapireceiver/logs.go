@@ -4,6 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"os"
+	"strings"
+	"time"
+
 	"github.com/golang-collections/go-datastructures/queue"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer"
@@ -12,17 +18,13 @@ import (
 	"go.opentelemetry.io/collector/receiver"
 	semconv "go.opentelemetry.io/collector/semconv/v1.25.0"
 	"go.uber.org/zap"
-	"io"
-	"net/http"
-	"os"
-	"strings"
-	"time"
 
 	"github.com/open-telemetry/opentelemetry-lambda/collector/internal/telemetryapi"
 )
 
 const defaultLogsListenerPort = "4327"
 const initialLogsQueueSize = 5
+const timeFormatLayout = "2006-01-02T15:04:05.000Z"
 
 type telemetryAPILogsReceiver struct {
 	httpServer   *http.Server
@@ -38,21 +40,14 @@ func (r *telemetryAPILogsReceiver) Start(ctx context.Context, host component.Hos
 	r.logger.Info("Listening for requests", zap.String("address", address))
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/function", r.httpFunctionHandler)
-	mux.HandleFunc("/platform", r.httpPlatformHandler)
+	mux.HandleFunc("/", r.httpHandler)
 	r.httpServer = &http.Server{Addr: address, Handler: mux}
 	go func() {
 		_ = r.httpServer.ListenAndServe()
 	}()
 
 	telemetryClient := telemetryapi.NewClient(r.logger)
-	var err error
-	_, err = telemetryClient.SubscribeEvents(ctx, []telemetryapi.EventType{telemetryapi.Platform}, r.extensionID, fmt.Sprintf("http://%s/platform", address))
-	if err != nil {
-		r.logger.Info("Listening for requests", zap.String("address", address), zap.String("extensionID", r.extensionID))
-		return err
-	}
-	_, err = telemetryClient.SubscribeEvents(ctx, []telemetryapi.EventType{telemetryapi.Function}, r.extensionID, fmt.Sprintf("http://%s/function", address))
+	_, err := telemetryClient.SubscribeEvents(ctx, []telemetryapi.EventType{telemetryapi.Platform, telemetryapi.Function}, r.extensionID, fmt.Sprintf("http://%s/", address))
 	if err != nil {
 		r.logger.Info("Listening for requests", zap.String("address", address), zap.String("extensionID", r.extensionID))
 		return err
@@ -64,7 +59,7 @@ func (r *telemetryAPILogsReceiver) Shutdown(ctx context.Context) error {
 	return nil
 }
 
-func (r *telemetryAPILogsReceiver) httpPlatformHandler(w http.ResponseWriter, req *http.Request) {
+func (r *telemetryAPILogsReceiver) httpHandler(w http.ResponseWriter, req *http.Request) {
 	body, err := io.ReadAll(req.Body)
 	if err != nil {
 		r.logger.Error("error reading body", zap.Error(err))
@@ -82,134 +77,100 @@ func (r *telemetryAPILogsReceiver) httpPlatformHandler(w http.ResponseWriter, re
 	r.resource.CopyTo(resourceLog.Resource())
 	scopeLog := resourceLog.ScopeLogs().AppendEmpty()
 	scopeLog.Scope().SetName("github.com/open-telemetry/opentelemetry-lambda/collector/receiver/telemetryapi")
-
 	for _, el := range slice {
 		r.logger.Debug(fmt.Sprintf("Event: %s", el.Type), zap.Any("event", el))
 		logRecord := scopeLog.LogRecords().AppendEmpty()
 		logRecord.Attributes().PutStr("type", el.Type)
-
-		layout := "2006-01-02T15:04:05.000Z"
-		if t, err := time.Parse(layout, el.Time); err == nil {
+		if t, err := time.Parse(timeFormatLayout, el.Time); err == nil {
 			logRecord.SetTimestamp(pcommon.NewTimestampFromTime(t))
 			logRecord.SetObservedTimestamp(pcommon.NewTimestampFromTime(time.Now()))
-		}
-		logRecord.SetSeverityText("INFO")
-		logRecord.SetSeverityNumber(9)
-		if j, err := json.Marshal(el.Record); err == nil {
-			logRecord.Body().SetStr(string(j))
 		} else {
-			r.logger.Error("error stringify record", zap.Error(err))
+			r.logger.Error("error parsing time", zap.Error(err))
 		}
-
-		if err = r.nextConsumer.ConsumeLogs(context.Background(), log); err != nil {
-			r.logger.Error("error receiving logs", zap.Error(err))
-		}
-	}
-	r.logger.Debug("logEvents received", zap.Int("count", len(slice)), zap.Int64("queue_length", r.queue.Len()))
-	slice = nil
-}
-
-func (r *telemetryAPILogsReceiver) httpFunctionHandler(w http.ResponseWriter, req *http.Request) {
-	body, err := io.ReadAll(req.Body)
-	if err != nil {
-		r.logger.Error("error reading body", zap.Error(err))
-		return
-	}
-
-	var slice []event
-	if err := json.Unmarshal(body, &slice); err != nil {
-		r.logger.Error("error unmarshalling body", zap.Error(err))
-		return
-	}
-
-	log := plog.NewLogs()
-	resourceLog := log.ResourceLogs().AppendEmpty()
-	r.resource.CopyTo(resourceLog.Resource())
-	scopeLog := resourceLog.ScopeLogs().AppendEmpty()
-	scopeLog.Scope().SetName("github.com/open-telemetry/opentelemetry-lambda/collector/receiver/telemetryapi")
-
-	for _, el := range slice {
-		r.logger.Debug(fmt.Sprintf("Event: %s", el.Type), zap.Any("event", el))
-		logRecord := scopeLog.LogRecords().AppendEmpty()
-		logRecord.Attributes().PutStr("type", el.Type)
-
-		layout := "2006-01-02T15:04:05.000Z"
-		if t, err := time.Parse(layout, el.Time); err == nil {
-			logRecord.SetTimestamp(pcommon.NewTimestampFromTime(t))
-			logRecord.SetObservedTimestamp(pcommon.NewTimestampFromTime(time.Now()))
-		}
-		if record, ok := el.Record.(map[string]interface{}); ok {
-			// in JSON format https://docs.aws.amazon.com/lambda/latest/dg/telemetry-schema-reference.html#telemetry-api-function
-			if timestamp, ok := record["timestamp"].(string); ok {
-				if observedTime, err := time.Parse(layout, timestamp); err == nil {
-					logRecord.SetTimestamp(pcommon.NewTimestampFromTime(observedTime))
+		if el.Type == string(telemetryapi.Function) || el.Type == string(telemetryapi.Extension) {
+			if record, ok := el.Record.(map[string]interface{}); ok {
+				// in JSON format https://docs.aws.amazon.com/lambda/latest/dg/telemetry-schema-reference.html#telemetry-api-function
+				if timestamp, ok := record["timestamp"].(string); ok {
+					if observedTime, err := time.Parse(timeFormatLayout, timestamp); err == nil {
+						logRecord.SetTimestamp(pcommon.NewTimestampFromTime(observedTime))
+					} else {
+						r.logger.Error("error parsing time", zap.Error(err))
+					}
+				}
+				if level, ok := record["level"].(string); ok {
+					level = strings.ToUpper(level)
+					logRecord.SetSeverityText(level)
+					switch level {
+					case "TRACE":
+						logRecord.SetSeverityNumber(1)
+					case "TRACE2":
+						logRecord.SetSeverityNumber(2)
+					case "TRACE3":
+						logRecord.SetSeverityNumber(3)
+					case "TRACE4":
+						logRecord.SetSeverityNumber(4)
+					case "DEBUG":
+						logRecord.SetSeverityNumber(5)
+					case "DEBUG2":
+						logRecord.SetSeverityNumber(6)
+					case "DEBUG3":
+						logRecord.SetSeverityNumber(7)
+					case "DEBUG4":
+						logRecord.SetSeverityNumber(8)
+					case "INFO":
+						logRecord.SetSeverityNumber(9)
+					case "INFO2":
+						logRecord.SetSeverityNumber(10)
+					case "INFO3":
+						logRecord.SetSeverityNumber(11)
+					case "INFO4":
+						logRecord.SetSeverityNumber(12)
+					case "WARN":
+						logRecord.SetSeverityNumber(13)
+					case "WARN2":
+						logRecord.SetSeverityNumber(14)
+					case "WARN3":
+						logRecord.SetSeverityNumber(15)
+					case "WARN4":
+						logRecord.SetSeverityNumber(16)
+					case "ERROR":
+						logRecord.SetSeverityNumber(17)
+					case "ERROR2":
+						logRecord.SetSeverityNumber(18)
+					case "ERROR3":
+						logRecord.SetSeverityNumber(19)
+					case "ERROR4":
+						logRecord.SetSeverityNumber(20)
+					case "FATAL":
+						logRecord.SetSeverityNumber(21)
+					case "FATAL2":
+						logRecord.SetSeverityNumber(22)
+					case "FATAL3":
+						logRecord.SetSeverityNumber(23)
+					case "FATAL4":
+						logRecord.SetSeverityNumber(24)
+					default:
+					}
+				}
+				if requestId, ok := record["requestId"].(string); ok {
+					logRecord.Attributes().PutStr(semconv.AttributeFaaSInvocationID, requestId)
+				}
+				if line, ok := record["message"].(string); ok {
+					logRecord.Body().SetStr(line)
+				}
+			} else {
+				// in plain text https://docs.aws.amazon.com/lambda/latest/dg/telemetry-schema-reference.html#telemetry-api-function
+				if line, ok := el.Record.(string); ok {
+					logRecord.Body().SetStr(line)
 				}
 			}
-			if level, ok := record["level"].(string); ok {
-				level = strings.ToUpper(level)
-				logRecord.SetSeverityText(level)
-				switch level {
-				case "TRACE":
-					logRecord.SetSeverityNumber(1)
-				case "TRACE2":
-					logRecord.SetSeverityNumber(2)
-				case "TRACE3":
-					logRecord.SetSeverityNumber(3)
-				case "TRACE4":
-					logRecord.SetSeverityNumber(4)
-				case "DEBUG":
-					logRecord.SetSeverityNumber(5)
-				case "DEBUG2":
-					logRecord.SetSeverityNumber(6)
-				case "DEBUG3":
-					logRecord.SetSeverityNumber(7)
-				case "DEBUG4":
-					logRecord.SetSeverityNumber(8)
-				case "INFO":
-					logRecord.SetSeverityNumber(9)
-				case "INFO2":
-					logRecord.SetSeverityNumber(10)
-				case "INFO3":
-					logRecord.SetSeverityNumber(11)
-				case "INFO4":
-					logRecord.SetSeverityNumber(12)
-				case "WARN":
-					logRecord.SetSeverityNumber(13)
-				case "WARN2":
-					logRecord.SetSeverityNumber(14)
-				case "WARN3":
-					logRecord.SetSeverityNumber(15)
-				case "WARN4":
-					logRecord.SetSeverityNumber(16)
-				case "ERROR":
-					logRecord.SetSeverityNumber(17)
-				case "ERROR2":
-					logRecord.SetSeverityNumber(18)
-				case "ERROR3":
-					logRecord.SetSeverityNumber(19)
-				case "ERROR4":
-					logRecord.SetSeverityNumber(20)
-				case "FATAL":
-					logRecord.SetSeverityNumber(21)
-				case "FATAL2":
-					logRecord.SetSeverityNumber(22)
-				case "FATAL3":
-					logRecord.SetSeverityNumber(23)
-				case "FATAL4":
-					logRecord.SetSeverityNumber(24)
-				default:
-				}
-			}
-			if requestId, ok := record["requestId"].(string); ok {
-				logRecord.Attributes().PutStr(semconv.AttributeFaaSInvocationID, requestId)
-			}
-			if line, ok := record["message"].(string); ok {
-				logRecord.Body().SetStr(line)
-			}
 		} else {
-			// in plain text https://docs.aws.amazon.com/lambda/latest/dg/telemetry-schema-reference.html#telemetry-api-function
-			if line, ok := el.Record.(string); ok {
-				logRecord.Body().SetStr(line)
+			logRecord.SetSeverityText("INFO")
+			logRecord.SetSeverityNumber(9)
+			if j, err := json.Marshal(el.Record); err == nil {
+				logRecord.Body().SetStr(string(j))
+			} else {
+				r.logger.Error("error stringify record", zap.Error(err))
 			}
 		}
 	}
