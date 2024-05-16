@@ -25,6 +25,7 @@ import (
 const defaultLogsListenerPort = "4327"
 const initialLogsQueueSize = 5
 const timeFormatLayout = "2006-01-02T15:04:05.000Z"
+const scopeName = "github.com/open-telemetry/opentelemetry-lambda/collector/receiver/telemetryapi"
 
 type telemetryAPILogsReceiver struct {
 	httpServer   *http.Server
@@ -88,7 +89,7 @@ func (r *telemetryAPILogsReceiver) createLogs(slice []event) (plog.Logs, error) 
 	resourceLog := log.ResourceLogs().AppendEmpty()
 	r.resource.CopyTo(resourceLog.Resource())
 	scopeLog := resourceLog.ScopeLogs().AppendEmpty()
-	scopeLog.Scope().SetName("github.com/open-telemetry/opentelemetry-lambda/collector/receiver/telemetryapi")
+	scopeLog.Scope().SetName(scopeName)
 	for _, el := range slice {
 		r.logger.Debug(fmt.Sprintf("Event: %s", el.Type), zap.Any("event", el))
 		logRecord := scopeLog.LogRecords().AppendEmpty()
@@ -98,6 +99,7 @@ func (r *telemetryAPILogsReceiver) createLogs(slice []event) (plog.Logs, error) 
 			logRecord.SetObservedTimestamp(pcommon.NewTimestampFromTime(time.Now()))
 		} else {
 			r.logger.Error("error parsing time", zap.Error(err))
+			return plog.Logs{}, err
 		}
 		if el.Type == string(telemetryapi.Function) || el.Type == string(telemetryapi.Extension) {
 			if record, ok := el.Record.(map[string]interface{}); ok {
@@ -107,6 +109,7 @@ func (r *telemetryAPILogsReceiver) createLogs(slice []event) (plog.Logs, error) 
 						logRecord.SetTimestamp(pcommon.NewTimestampFromTime(observedTime))
 					} else {
 						r.logger.Error("error parsing time", zap.Error(err))
+						return plog.Logs{}, err
 					}
 				}
 				if level, ok := record["level"].(string); ok {
@@ -183,6 +186,7 @@ func (r *telemetryAPILogsReceiver) createLogs(slice []event) (plog.Logs, error) 
 				logRecord.Body().SetStr(string(j))
 			} else {
 				r.logger.Error("error stringify record", zap.Error(err))
+				return plog.Logs{}, err
 			}
 		}
 	}

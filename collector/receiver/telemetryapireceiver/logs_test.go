@@ -2,9 +2,11 @@ package telemetryapireceiver // import "github.com/open-telemetry/opentelemetry-
 
 import (
 	"context"
+	"go.opentelemetry.io/collector/pdata/pcommon"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/consumer"
@@ -384,6 +386,172 @@ func TestLogsHandler(t *testing.T) {
 			rec := httptest.NewRecorder()
 			r.httpHandler(rec, req)
 			require.Equal(t, tc.expectedLogs, consumer.consumed)
+		})
+	}
+}
+
+func TestCreateLogs(t *testing.T) {
+	testCases := []struct {
+		desc                   string
+		slice                  []event
+		expectedLogRecords     int
+		expectedType           string
+		expectedTimestamp      string
+		expectedBody           string
+		expectedSeverityText   string
+		expectedSeverityNumber plog.SeverityNumber
+		expectError            bool
+	}{
+		{
+			desc:               "no slice",
+			expectedLogRecords: 0,
+			expectError:        false,
+		},
+		{
+			desc: "Invalid Timestamp",
+			slice: []event{
+				{
+					Time:   "invalid",
+					Type:   "function",
+					Record: "[INFO] Hello world, I am an extension!",
+				},
+			},
+			expectError: true,
+		},
+		{
+			desc: "function text",
+			slice: []event{
+				{
+					Time:   "2022-10-12T00:03:50.000Z",
+					Type:   "function",
+					Record: "[INFO] Hello world, I am an extension!",
+				},
+			},
+			expectedLogRecords:     1,
+			expectedType:           "function",
+			expectedTimestamp:      "2022-10-12T00:03:50.000Z",
+			expectedBody:           "[INFO] Hello world, I am an extension!",
+			expectedSeverityText:   "",
+			expectedSeverityNumber: plog.SeverityNumberUnspecified,
+			expectError:            false,
+		},
+		{
+			desc: "function json",
+			slice: []event{
+				{
+					Time: "2022-10-12T00:03:50.000Z",
+					Type: "function",
+					Record: map[string]any{
+						"timestamp": "2022-10-12T00:03:50.000Z",
+						"level":     "INFO",
+						"requestId": "79b4f56e-95b1-4643-9700-2807f4e68189",
+						"message":   "Hello world, I am a function!",
+					},
+				},
+			},
+			expectedLogRecords:     1,
+			expectedType:           "function",
+			expectedTimestamp:      "2022-10-12T00:03:50.000Z",
+			expectedBody:           "Hello world, I am a function!",
+			expectedSeverityText:   "INFO",
+			expectedSeverityNumber: plog.SeverityNumberInfo,
+			expectError:            false,
+		},
+		{
+			desc: "extension text",
+			slice: []event{
+				{
+					Time:   "2022-10-12T00:03:50.000Z",
+					Type:   "extension",
+					Record: "[INFO] Hello world, I am an extension!",
+				},
+			},
+			expectedLogRecords:     1,
+			expectedType:           "extension",
+			expectedTimestamp:      "2022-10-12T00:03:50.000Z",
+			expectedBody:           "[INFO] Hello world, I am an extension!",
+			expectedSeverityText:   "",
+			expectedSeverityNumber: plog.SeverityNumberUnspecified,
+			expectError:            false,
+		},
+		{
+			desc: "extension json",
+			slice: []event{
+				{
+					Time: "2022-10-12T00:03:50.000Z",
+					Type: "extension",
+					Record: map[string]any{
+						"timestamp": "2022-10-12T00:03:50.000Z",
+						"level":     "INFO",
+						"requestId": "79b4f56e-95b1-4643-9700-2807f4e68189",
+						"message":   "Hello world, I am an extension!",
+					},
+				},
+			},
+			expectedLogRecords:     1,
+			expectedType:           "extension",
+			expectedTimestamp:      "2022-10-12T00:03:50.000Z",
+			expectedBody:           "Hello world, I am an extension!",
+			expectedSeverityText:   "INFO",
+			expectedSeverityNumber: plog.SeverityNumberInfo,
+			expectError:            false,
+		},
+		{
+			desc: "platform.initReport",
+			slice: []event{
+				{
+					Time: "2024-05-15T23:58:26.858Z",
+					Type: "platform.initReport",
+					Record: map[string]any{
+						"initializationType": "on-demand",
+						"metrics": map[string]any{
+							"durationMs": 1819.081,
+						},
+						"phase":  "init",
+						"status": "success",
+					},
+				},
+			},
+			expectedLogRecords:     1,
+			expectedType:           "platform.initReport",
+			expectedTimestamp:      "2024-05-15T23:58:26.858Z",
+			expectedBody:           "{\"initializationType\":\"on-demand\",\"metrics\":{\"durationMs\":1819.081},\"phase\":\"init\",\"status\":\"success\"}",
+			expectedSeverityText:   "INFO",
+			expectedSeverityNumber: plog.SeverityNumberInfo,
+			expectError:            false,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			r, err := newTelemetryAPILogsReceiver(
+				&Config{},
+				nil,
+				receivertest.NewNopCreateSettings(),
+			)
+			require.NoError(t, err)
+			log, err := r.createLogs(tc.slice)
+			if tc.expectError {
+				require.Error(t, err)
+			} else {
+				require.Equal(t, 1, log.ResourceLogs().Len())
+				resourceLog := log.ResourceLogs().At(0)
+				require.Equal(t, 1, resourceLog.ScopeLogs().Len())
+				scopeLog := resourceLog.ScopeLogs().At(0)
+				require.Equal(t, scopeName, scopeLog.Scope().Name())
+				require.Equal(t, tc.expectedLogRecords, scopeLog.LogRecords().Len())
+				if scopeLog.LogRecords().Len() > 0 {
+					logRecord := scopeLog.LogRecords().At(0)
+					attr, ok := logRecord.Attributes().Get("type")
+					require.True(t, ok)
+					require.Equal(t, tc.expectedType, attr.Str())
+					expectedTime, err := time.Parse(timeFormatLayout, tc.expectedTimestamp)
+					require.NoError(t, err)
+					require.Equal(t, pcommon.NewTimestampFromTime(expectedTime), logRecord.Timestamp())
+					require.Equal(t, tc.expectedSeverityText, logRecord.SeverityText())
+					require.Equal(t, tc.expectedSeverityNumber, logRecord.SeverityNumber())
+					require.Equal(t, tc.expectedBody, logRecord.Body().Str())
+				}
+			}
 		})
 	}
 }
