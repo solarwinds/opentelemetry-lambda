@@ -72,6 +72,18 @@ func (r *telemetryAPILogsReceiver) httpHandler(w http.ResponseWriter, req *http.
 		return
 	}
 
+	if logs, err := r.createLogs(slice); err == nil {
+		err := r.nextConsumer.ConsumeLogs(context.Background(), logs)
+		if err != nil {
+			r.logger.Error("error receiving logs", zap.Error(err))
+		}
+	}
+
+	r.logger.Debug("logEvents received", zap.Int("count", len(slice)), zap.Int64("queue_length", r.queue.Len()))
+	slice = nil
+}
+
+func (r *telemetryAPILogsReceiver) createLogs(slice []event) (plog.Logs, error) {
 	log := plog.NewLogs()
 	resourceLog := log.ResourceLogs().AppendEmpty()
 	r.resource.CopyTo(resourceLog.Resource())
@@ -174,11 +186,7 @@ func (r *telemetryAPILogsReceiver) httpHandler(w http.ResponseWriter, req *http.
 			}
 		}
 	}
-	if err = r.nextConsumer.ConsumeLogs(context.Background(), log); err != nil {
-		r.logger.Error("error receiving logs", zap.Error(err))
-	}
-	r.logger.Debug("logEvents received", zap.Int("count", len(slice)), zap.Int64("queue_length", r.queue.Len()))
-	slice = nil
+	return log, nil
 }
 
 func newTelemetryAPILogsReceiver(

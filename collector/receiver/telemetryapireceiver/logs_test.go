@@ -1,9 +1,15 @@
 package telemetryapireceiver // import "github.com/open-telemetry/opentelemetry-lambda/collector/receiver/telemetryapireceiver"
 
 import (
+	"context"
+	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/collector/consumer"
+	"go.opentelemetry.io/collector/pdata/plog"
+	"go.opentelemetry.io/collector/receiver/receivertest"
 )
 
 func TestListenOnLogsAddress(t *testing.T) {
@@ -32,111 +38,352 @@ func TestListenOnLogsAddress(t *testing.T) {
 	}
 }
 
-//type mockConsumer struct {
-//	consumed int
-//}
+type mockLogsConsumer struct {
+	consumed int
+}
 
-//func (c *mockConsumer) ConsumeLogs(ctx context.Context, td plog.Logs) error {
-//	return nil
-//}
+func (c *mockLogsConsumer) ConsumeLogs(ctx context.Context, td plog.Logs) error {
+	c.consumed += td.LogRecordCount()
+	return nil
+}
 
-//	func (c *mockConsumer) Capabilities() consumer.Capabilities {
-//		return consumer.Capabilities{MutatesData: true}
-//	}
-//func TestHandler(t *testing.T) {
-//	testCases := []struct {
-//		desc          string
-//		body          string
-//		expectedSpans int
-//	}{
-//		{
-//			desc: "empty body",
-//			body: `{}`,
-//		},
-//		{
-//			desc: "invalid json",
-//			body: `invalid json`,
-//		},
-//		{
-//			desc: "valid event",
-//			body: `[{"time":"", "type":"", "record": {}}]`,
-//		},
-//		{
-//			desc: "valid event",
-//			body: `[{"time":"", "type":"platform.initStart", "record": {}}]`,
-//		},
-//		{
-//			desc: "valid start/end events",
-//			body: `[
-//				{"time":"2006-01-02T15:04:04.000Z", "type":"platform.initStart", "record": {}},
-//				{"time":"2006-01-02T15:04:05.000Z", "type":"platform.initRuntimeDone", "record": {}}
-//			]`,
-//			expectedLogs: 1,
-//		},
-//	}
-//	for _, tc := range testCases {
-//		t.Run(tc.desc, func(t *testing.T) {
-//			consumer := mockConsumer{}
-//			r, err := newTelemetryAPIReceiver(
-//				&Config{},
-//				&consumer,
-//				receivertest.NewNopCreateSettings(),
-//			)
-//			require.NoError(t, err)
-//			req := httptest.NewRequest("POST",
-//				"http://localhost:53612/someevent", strings.NewReader(tc.body))
-//			rec := httptest.NewRecorder()
-//			r.httpHandler(rec, req)
-//			require.Equal(t, tc.expectedSpans, consumer.consumed)
-//		})
-//	}
-//}
+func (c *mockLogsConsumer) Capabilities() consumer.Capabilities {
+	return consumer.Capabilities{MutatesData: false}
+}
 
-//
-//func TestCreatePlatformInitSpan(t *testing.T) {
-//	testCases := []struct {
-//		desc        string
-//		start       string
-//		end         string
-//		expected    int
-//		expectError bool
-//	}{
-//		{
-//			desc:        "no start/end times",
-//			expectError: true,
-//		},
-//		{
-//			desc:        "no end time",
-//			start:       "2006-01-02T15:04:05.000Z",
-//			expectError: true,
-//		},
-//		{
-//			desc:        "no start times",
-//			end:         "2006-01-02T15:04:05.000Z",
-//			expectError: true,
-//		},
-//		{
-//			desc:        "valid times",
-//			start:       "2006-01-02T15:04:04.000Z",
-//			end:         "2006-01-02T15:04:05.000Z",
-//			expected:    1,
-//			expectError: false,
-//		},
-//	}
-//	for _, tc := range testCases {
-//		t.Run(tc.desc, func(t *testing.T) {
-//			r, err := newTelemetryAPIReceiver(
-//				&Config{},
-//				nil,
-//				receivertest.NewNopCreateSettings(),
-//			)
-//			require.NoError(t, err)
-//			td, err := r.createPlatformInitSpan(tc.start, tc.end)
-//			if tc.expectError {
-//				require.Error(t, err)
-//			} else {
-//				require.Equal(t, tc.expected, td.SpanCount())
-//			}
-//		})
-//	}
-//}
+func TestLogsHandler(t *testing.T) {
+	testCases := []struct {
+		desc         string
+		body         string
+		expectedLogs int
+	}{
+		{
+			desc:         "empty body",
+			body:         `{}`,
+			expectedLogs: 0,
+		},
+		{
+			desc:         "invalid json",
+			body:         `invalid json`,
+			expectedLogs: 0,
+		},
+		{
+			desc:         "valid event",
+			body:         `[{"time":"", "type":"", "record": {}}]`,
+			expectedLogs: 1,
+		},
+		{
+			desc:         "valid event",
+			body:         `[{"time":"", "type":"platform.initStart", "record": {}}]`,
+			expectedLogs: 1,
+		},
+		{
+			desc: "platform.initStart",
+			body: `[
+				{
+					"time": "2024-05-15T18:10:29.635Z",
+					"type": "platform.initStart",
+					"record": {
+						"functionName": "opentelemetry-lambda-nodejs-experimental-arm64",
+						"functionVersion": "$LATEST",
+						"initializationType": "on-demand",
+						"phase": "init",
+						"runtimeVersion": "nodejs:20.v22",
+						"runtimeVersionArn": "arn:aws:lambda:us-east-1::runtime:da57c20c4b965d5b75540f6865a35fc8030358e33ec44ecfed33e90901a27a72"
+					}
+				}
+			]`,
+			expectedLogs: 1,
+		},
+		{
+			desc: "platform.telemetrySubscription",
+			body: `[
+				{
+					"time": "2024-05-15T18:10:30.010Z",
+					"type": "platform.telemetrySubscription",
+					"record": {
+						"name": "collector",
+						"state": "Subscribed",
+						"types": [
+							"platform"
+						]
+					}
+				}
+			]`,
+			expectedLogs: 1,
+		},
+		{
+			desc: "platform.telemetrySubscription",
+			body: `[
+				{
+					"time": "2024-05-15T18:10:30.511Z",
+					"type": "platform.telemetrySubscription",
+					"record": {
+						"name": "collector",
+						"state": "Subscribed",
+						"types": [
+							"platform",
+							"function"
+						]
+					}
+				}
+			]`,
+			expectedLogs: 1,
+		},
+		{
+			desc: "platform.initRuntimeDone",
+			body: `[
+				{
+					"time": "2024-05-15T23:58:26.857Z",
+					"type": "platform.initRuntimeDone",
+					"record": {
+						"initializationType": "on-demand",
+						"phase": "init",
+						"status": "success"
+					}
+				}
+			]`,
+			expectedLogs: 1,
+		},
+		{
+			desc: "platform.extension",
+			body: `[
+				{
+					"time": "2024-05-15T23:58:26.857Z",
+					"type": "platform.extension",
+					"record": {
+						"events": [
+							"INVOKE",
+							"SHUTDOWN"
+						],
+						"name": "collector",
+						"state": "Ready"
+					}
+				}
+			]`,
+			expectedLogs: 1,
+		},
+		{
+			desc: "platform.initReport",
+			body: `[
+				{
+					"time": "2024-05-15T23:58:26.858Z",
+					"type": "platform.initReport",
+					"record": {
+						"initializationType": "on-demand",
+						"metrics": {
+							"durationMs": 1819.081
+						},
+						"phase": "init",
+						"status": "success"
+					}
+				}
+			]`,
+			expectedLogs: 1,
+		},
+		{
+			desc: "platform.runtimeDone",
+			body: `[
+				{
+					"time": "2024-05-15T23:58:35.063Z",
+					"type": "platform.runtimeDone",
+					"record": {
+						"metrics": {
+							"durationMs": 8202.659,
+							"producedBytes": 50
+						},
+						"requestId": "882e9658-570e-4b2f-aaa8-5dfb88f7eccb",
+						"spans": [
+							{
+								"durationMs": 8200.68,
+								"name": "responseLatency",
+								"start": "2024-05-15T23:58:26.860Z"
+							},
+							{
+								"durationMs": 0.226,
+								"name": "responseDuration",
+								"start": "2024-05-15T23:58:35.061Z"
+							},
+							{
+								"durationMs": 1.502,
+								"name": "runtimeOverhead",
+								"start": "2024-05-15T23:58:35.061Z"
+							}
+						],
+						"status": "success"
+					}
+				}
+			]`,
+			expectedLogs: 1,
+		},
+		{
+			desc: "platform.report",
+			body: `[
+				{
+					"time": "2024-05-15T23:58:39.317Z",
+					"type": "platform.report",
+					"record": {
+						"metrics": {
+							"billedDurationMs": 12456,
+							"durationMs": 12455.155,
+							"initDurationMs": 1819.881,
+							"maxMemoryUsedMB": 128,
+							"memorySizeMB": 128
+						},
+						"requestId": "882e9658-570e-4b2f-aaa8-5dfb88f7eccb",
+						"status": "success"
+					}
+				}
+			]`,
+			expectedLogs: 1,
+		},
+		{
+			desc: "platform.start",
+			body: `[
+				{
+					"time": "2024-05-15T23:58:41.153Z",
+					"type": "platform.start",
+					"record": {
+						"requestId": "15b0ebbb-5cf8-49e2-8cbe-1d58a18330d2",
+						"version": "$LATEST"
+					}
+				}
+			]`,
+			expectedLogs: 1,
+		},
+		{
+			desc: "platform.restoreStart",
+			body: `[
+				{
+					"time": "2022-10-12T00:00:15.064Z",
+					"type": "platform.restoreStart",
+					"record": {
+						"runtimeVersion": "nodejs-14.v3",
+						"runtimeVersionArn": "arn",
+						"functionName": "myFunction",
+						"functionVersion": "$LATEST",
+						"instanceId": "82561ce0-53dd-47d1-90e0-c8f5e063e62e",
+						"instanceMaxMemory": 256
+					}
+				}
+			]`,
+			expectedLogs: 1,
+		},
+		{
+			desc: "platform.restoreRuntimeDone",
+			body: `[
+				{
+					"time": "2022-10-12T00:00:15.064Z",
+					"type": "platform.restoreRuntimeDone",
+					"record": {
+						"status": "success",
+						"spans": [
+							{
+								"name": "someTimeSpan",
+								"start": "2022-08-02T12:01:23:521Z",
+								"durationMs": 80.0
+							}
+						]
+					}
+				}
+			]`,
+			expectedLogs: 1,
+		},
+		{
+			desc: "platform.restoreReport",
+			body: `[
+				{
+					"time": "2022-10-12T00:00:15.064Z",
+					"type": "platform.restoreReport",
+					"record": {
+						"status": "success",
+						"metrics": {
+							"durationMs": 15.19
+						},
+						"spans": [
+							{
+								"name": "someTimeSpan",
+								"start": "2022-08-02T12:01:23:521Z",
+								"durationMs": 30.0
+							}
+						]
+					}
+				}
+			]`,
+			expectedLogs: 1,
+		},
+		{
+			desc: "platform.logsDropped",
+			body: `[
+				{
+					"time": "2022-10-12T00:02:35.000Z",
+					"type": "platform.logsDropped",
+					"record": {
+						"droppedBytes": 12345,
+						"droppedRecords": 123,
+						"reason": "Some logs were dropped because the downstream consumer is slower than the logs production rate"
+					}
+				}
+			]`,
+			expectedLogs: 1,
+		},
+		{
+			desc: "function",
+			body: `[
+				{
+					"time": "2024-05-15T23:59:20.159Z",
+					"type": "function",
+					"record": "2024-05-15T23:59:20.159Z\t8c181f94-d34c-4c65-abed-6977e17dd06b\tWARN\twarn from console\n"
+				},
+				{
+					"time": "2022-10-12T00:03:50.000Z",
+					"type": "function",
+					"record": {
+						"timestamp": "2022-10-12T00:03:50.000Z",
+						"level": "INFO",
+						"requestId": "79b4f56e-95b1-4643-9700-2807f4e68189",
+						"message": "Hello world, I am a function!"
+					}
+				}
+			]`,
+			expectedLogs: 2,
+		},
+		{
+			desc: "extension",
+			body: `[
+				{
+					"time": "2022-10-12T00:03:50.000Z",
+					"type": "extension",
+					"record": "[INFO] Hello world, I am an extension!"
+				},
+				{
+					"time": "2022-10-12T00:03:50.000Z",
+					"type": "extension",
+					"record": {
+					   "timestamp": "2022-10-12T00:03:50.000Z",
+					   "level": "INFO",
+					   "requestId": "79b4f56e-95b1-4643-9700-2807f4e68189",
+					   "message": "Hello world, I am an extension!"
+					}
+				}
+			]`,
+			expectedLogs: 2,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			consumer := mockLogsConsumer{}
+			r, err := newTelemetryAPILogsReceiver(
+				&Config{},
+				&consumer,
+				receivertest.NewNopCreateSettings(),
+			)
+			require.NoError(t, err)
+			req := httptest.NewRequest("POST",
+				"http://localhost:53612/someevent", strings.NewReader(tc.body))
+			rec := httptest.NewRecorder()
+			r.httpHandler(rec, req)
+			require.Equal(t, tc.expectedLogs, consumer.consumed)
+		})
+	}
+}
