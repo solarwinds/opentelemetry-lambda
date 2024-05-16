@@ -10,6 +10,7 @@ receivers:
         endpoint: "localhost:4317"
       http:
         endpoint: "localhost:4318"
+  telemetryapi:
 
 processors:
   decouple:
@@ -24,6 +25,9 @@ processors:
         action: upsert
       - key: sw.apm.otelcol.version
         value: "0.0.9"
+        action: upsert
+      - key: sw.data.module
+        value: "apm"
         action: upsert
 
 exporters:
@@ -43,6 +47,10 @@ service:
       exporters: [otlp,logging]
     metrics:
       receivers: [otlp]
+      processors: [resource,resourcedetection,decouple]
+      exporters: [otlp,logging]
+    logs:
+      receivers: [telemetryapi]
       processors: [resource,resourcedetection,decouple]
       exporters: [otlp,logging]
   telemetry:
