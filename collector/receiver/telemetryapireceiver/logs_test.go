@@ -12,6 +12,7 @@ import (
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.opentelemetry.io/collector/receiver/receivertest"
+	semconv "go.opentelemetry.io/collector/semconv/v1.25.0"
 )
 
 func TestListenOnLogsAddress(t *testing.T) {
@@ -392,15 +393,17 @@ func TestLogsHandler(t *testing.T) {
 
 func TestCreateLogs(t *testing.T) {
 	testCases := []struct {
-		desc                   string
-		slice                  []event
-		expectedLogRecords     int
-		expectedType           string
-		expectedTimestamp      string
-		expectedBody           string
-		expectedSeverityText   string
-		expectedSeverityNumber plog.SeverityNumber
-		expectError            bool
+		desc                      string
+		slice                     []event
+		expectedLogRecords        int
+		expectedType              string
+		expectedTimestamp         string
+		expectedBody              string
+		expectedSeverityText      string
+		expectedContainsRequestId bool
+		expectedRequestId         string
+		expectedSeverityNumber    plog.SeverityNumber
+		expectError               bool
 	}{
 		{
 			desc:               "no slice",
@@ -427,13 +430,14 @@ func TestCreateLogs(t *testing.T) {
 					Record: "[INFO] Hello world, I am an extension!",
 				},
 			},
-			expectedLogRecords:     1,
-			expectedType:           "function",
-			expectedTimestamp:      "2022-10-12T00:03:50.000Z",
-			expectedBody:           "[INFO] Hello world, I am an extension!",
-			expectedSeverityText:   "",
-			expectedSeverityNumber: plog.SeverityNumberUnspecified,
-			expectError:            false,
+			expectedLogRecords:        1,
+			expectedType:              "function",
+			expectedTimestamp:         "2022-10-12T00:03:50.000Z",
+			expectedBody:              "[INFO] Hello world, I am an extension!",
+			expectedContainsRequestId: false,
+			expectedSeverityText:      "",
+			expectedSeverityNumber:    plog.SeverityNumberUnspecified,
+			expectError:               false,
 		},
 		{
 			desc: "function json",
@@ -449,13 +453,15 @@ func TestCreateLogs(t *testing.T) {
 					},
 				},
 			},
-			expectedLogRecords:     1,
-			expectedType:           "function",
-			expectedTimestamp:      "2022-10-12T00:03:50.000Z",
-			expectedBody:           "Hello world, I am a function!",
-			expectedSeverityText:   "INFO",
-			expectedSeverityNumber: plog.SeverityNumberInfo,
-			expectError:            false,
+			expectedLogRecords:        1,
+			expectedType:              "function",
+			expectedTimestamp:         "2022-10-12T00:03:50.000Z",
+			expectedBody:              "Hello world, I am a function!",
+			expectedContainsRequestId: true,
+			expectedRequestId:         "79b4f56e-95b1-4643-9700-2807f4e68189",
+			expectedSeverityText:      "INFO",
+			expectedSeverityNumber:    plog.SeverityNumberInfo,
+			expectError:               false,
 		},
 		{
 			desc: "extension text",
@@ -466,13 +472,14 @@ func TestCreateLogs(t *testing.T) {
 					Record: "[INFO] Hello world, I am an extension!",
 				},
 			},
-			expectedLogRecords:     1,
-			expectedType:           "extension",
-			expectedTimestamp:      "2022-10-12T00:03:50.000Z",
-			expectedBody:           "[INFO] Hello world, I am an extension!",
-			expectedSeverityText:   "",
-			expectedSeverityNumber: plog.SeverityNumberUnspecified,
-			expectError:            false,
+			expectedLogRecords:        1,
+			expectedType:              "extension",
+			expectedTimestamp:         "2022-10-12T00:03:50.000Z",
+			expectedBody:              "[INFO] Hello world, I am an extension!",
+			expectedContainsRequestId: false,
+			expectedSeverityText:      "",
+			expectedSeverityNumber:    plog.SeverityNumberUnspecified,
+			expectError:               false,
 		},
 		{
 			desc: "extension json",
@@ -483,18 +490,20 @@ func TestCreateLogs(t *testing.T) {
 					Record: map[string]any{
 						"timestamp": "2022-10-12T00:03:50.000Z",
 						"level":     "INFO",
-						"requestId": "79b4f56e-95b1-4643-9700-2807f4e68189",
+						"requestId": "79b4f56e-95b1-4643-9700-2807f4e68689",
 						"message":   "Hello world, I am an extension!",
 					},
 				},
 			},
-			expectedLogRecords:     1,
-			expectedType:           "extension",
-			expectedTimestamp:      "2022-10-12T00:03:50.000Z",
-			expectedBody:           "Hello world, I am an extension!",
-			expectedSeverityText:   "INFO",
-			expectedSeverityNumber: plog.SeverityNumberInfo,
-			expectError:            false,
+			expectedLogRecords:        1,
+			expectedType:              "extension",
+			expectedTimestamp:         "2022-10-12T00:03:50.000Z",
+			expectedBody:              "Hello world, I am an extension!",
+			expectedContainsRequestId: true,
+			expectedRequestId:         "79b4f56e-95b1-4643-9700-2807f4e68689",
+			expectedSeverityText:      "INFO",
+			expectedSeverityNumber:    plog.SeverityNumberInfo,
+			expectError:               false,
 		},
 		{
 			desc: "platform.initReport",
@@ -512,13 +521,14 @@ func TestCreateLogs(t *testing.T) {
 					},
 				},
 			},
-			expectedLogRecords:     1,
-			expectedType:           "platform.initReport",
-			expectedTimestamp:      "2024-05-15T23:58:26.858Z",
-			expectedBody:           "{\"initializationType\":\"on-demand\",\"metrics\":{\"durationMs\":1819.081},\"phase\":\"init\",\"status\":\"success\"}",
-			expectedSeverityText:   "INFO",
-			expectedSeverityNumber: plog.SeverityNumberInfo,
-			expectError:            false,
+			expectedLogRecords:        1,
+			expectedType:              "platform.initReport",
+			expectedTimestamp:         "2024-05-15T23:58:26.858Z",
+			expectedBody:              "{\"initializationType\":\"on-demand\",\"metrics\":{\"durationMs\":1819.081},\"phase\":\"init\",\"status\":\"success\"}",
+			expectedContainsRequestId: false,
+			expectedSeverityText:      "INFO",
+			expectedSeverityNumber:    plog.SeverityNumberInfo,
+			expectError:               false,
 		},
 	}
 	for _, tc := range testCases {
@@ -547,6 +557,11 @@ func TestCreateLogs(t *testing.T) {
 					expectedTime, err := time.Parse(timeFormatLayout, tc.expectedTimestamp)
 					require.NoError(t, err)
 					require.Equal(t, pcommon.NewTimestampFromTime(expectedTime), logRecord.Timestamp())
+					requestId, ok := logRecord.Attributes().Get(semconv.AttributeFaaSInvocationID)
+					require.Equal(t, tc.expectedContainsRequestId, ok)
+					if ok {
+						require.Equal(t, tc.expectedRequestId, requestId.Str())
+					}
 					require.Equal(t, tc.expectedSeverityText, logRecord.SeverityText())
 					require.Equal(t, tc.expectedSeverityNumber, logRecord.SeverityNumber())
 					require.Equal(t, tc.expectedBody, logRecord.Body().Str())
