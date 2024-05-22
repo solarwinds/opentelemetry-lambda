@@ -45,16 +45,20 @@ const timeFormatLayout = "2006-01-02T15:04:05.000Z"
 const scopeName = "github.com/open-telemetry/opentelemetry-lambda/collector/receiver/telemetryapi"
 
 type telemetryAPIReceiver struct {
-	httpServer            *http.Server
-	logger                *zap.Logger
-	queue                 *queue.Queue // queue is a synchronous queue and is used to put the received log events to be dispatched later
-	nextTraces            consumer.Traces
-	nextMetrics           consumer.Metrics
-	nextLogs              consumer.Logs
-	lastPlatformStartTime string
-	lastPlatformEndTime   string
-	extensionID           string
-	resource              pcommon.Resource
+	httpServer                     *http.Server
+	logger                         *zap.Logger
+	queue                          *queue.Queue // queue is a synchronous queue and is used to put the received log events to be dispatched later
+	nextTraces                     consumer.Traces
+	nextMetrics                    consumer.Metrics
+	nextLogs                       consumer.Logs
+	lastPlatformStartTime          string
+	lastPlatformEndTime            string
+	firstPlatformInitReportTime    time.Time
+	firstPlatformRuntimeDoneTime   time.Time
+	firstPlatformReportTime        time.Time
+	firstPlatformRestoreReportTime time.Time
+	extensionID                    string
+	resource                       pcommon.Resource
 }
 
 func (r *telemetryAPIReceiver) Start(ctx context.Context, host component.Host) error {
@@ -119,16 +123,22 @@ func (r *telemetryAPIReceiver) httpHandler(w http.ResponseWriter, req *http.Requ
 	}
 
 	// traces
-	r.processTraces(slice)
+	if r.nextTraces != nil {
+		r.processTraces(slice)
+	}
 
 	// metrics
-	r.processMetrics(slice)
+	if r.nextMetrics != nil {
+		r.processMetrics(slice)
+	}
 
 	// Logs
-	if logs, err := r.createLogs(slice); err == nil {
-		err := r.nextLogs.ConsumeLogs(context.Background(), logs)
-		if err != nil {
-			r.logger.Error("error receiving logs", zap.Error(err))
+	if r.nextLogs != nil {
+		if logs, err := r.createLogs(slice); err == nil {
+			err := r.nextLogs.ConsumeLogs(context.Background(), logs)
+			if err != nil {
+				r.logger.Error("error receiving logs", zap.Error(err))
+			}
 		}
 	}
 
@@ -208,6 +218,10 @@ func (r *telemetryAPIReceiver) processMetrics(slice []event) {
 								metric.SetUnit("ms")
 								dp := metric.SetEmptyGauge().DataPoints().AppendEmpty()
 								dp.SetTimestamp(pcommon.NewTimestampFromTime(timestamp))
+								if r.firstPlatformInitReportTime.IsZero() {
+									r.firstPlatformInitReportTime = timestamp
+								}
+								dp.SetStartTimestamp(pcommon.NewTimestampFromTime(r.firstPlatformInitReportTime))
 								dp.SetDoubleValue(val)
 							}
 						}
@@ -226,6 +240,10 @@ func (r *telemetryAPIReceiver) processMetrics(slice []event) {
 								metric.SetUnit("ms")
 								dp := metric.SetEmptyGauge().DataPoints().AppendEmpty()
 								dp.SetTimestamp(pcommon.NewTimestampFromTime(timestamp))
+								if r.firstPlatformRuntimeDoneTime.IsZero() {
+									r.firstPlatformRuntimeDoneTime = timestamp
+								}
+								dp.SetStartTimestamp(pcommon.NewTimestampFromTime(r.firstPlatformRuntimeDoneTime))
 								dp.SetDoubleValue(val)
 							}
 						}
@@ -236,6 +254,10 @@ func (r *telemetryAPIReceiver) processMetrics(slice []event) {
 								metric.SetUnit("byte")
 								dp := metric.SetEmptyGauge().DataPoints().AppendEmpty()
 								dp.SetTimestamp(pcommon.NewTimestampFromTime(timestamp))
+								if r.firstPlatformRuntimeDoneTime.IsZero() {
+									r.firstPlatformRuntimeDoneTime = timestamp
+								}
+								dp.SetStartTimestamp(pcommon.NewTimestampFromTime(r.firstPlatformRuntimeDoneTime))
 								dp.SetIntValue(val)
 							}
 						}
@@ -254,6 +276,10 @@ func (r *telemetryAPIReceiver) processMetrics(slice []event) {
 								metric.SetUnit("ms")
 								dp := metric.SetEmptyGauge().DataPoints().AppendEmpty()
 								dp.SetTimestamp(pcommon.NewTimestampFromTime(timestamp))
+								if r.firstPlatformReportTime.IsZero() {
+									r.firstPlatformReportTime = timestamp
+								}
+								dp.SetStartTimestamp(pcommon.NewTimestampFromTime(r.firstPlatformReportTime))
 								dp.SetIntValue(val)
 							}
 						}
@@ -264,6 +290,10 @@ func (r *telemetryAPIReceiver) processMetrics(slice []event) {
 								metric.SetUnit("ms")
 								dp := metric.SetEmptyGauge().DataPoints().AppendEmpty()
 								dp.SetTimestamp(pcommon.NewTimestampFromTime(timestamp))
+								if r.firstPlatformReportTime.IsZero() {
+									r.firstPlatformReportTime = timestamp
+								}
+								dp.SetStartTimestamp(pcommon.NewTimestampFromTime(r.firstPlatformReportTime))
 								dp.SetDoubleValue(val)
 							}
 						}
@@ -274,6 +304,10 @@ func (r *telemetryAPIReceiver) processMetrics(slice []event) {
 								metric.SetUnit("ms")
 								dp := metric.SetEmptyGauge().DataPoints().AppendEmpty()
 								dp.SetTimestamp(pcommon.NewTimestampFromTime(timestamp))
+								if r.firstPlatformReportTime.IsZero() {
+									r.firstPlatformReportTime = timestamp
+								}
+								dp.SetStartTimestamp(pcommon.NewTimestampFromTime(r.firstPlatformReportTime))
 								dp.SetDoubleValue(val)
 							}
 						}
@@ -284,6 +318,10 @@ func (r *telemetryAPIReceiver) processMetrics(slice []event) {
 								metric.SetUnit("MB")
 								dp := metric.SetEmptyGauge().DataPoints().AppendEmpty()
 								dp.SetTimestamp(pcommon.NewTimestampFromTime(timestamp))
+								if r.firstPlatformReportTime.IsZero() {
+									r.firstPlatformReportTime = timestamp
+								}
+								dp.SetStartTimestamp(pcommon.NewTimestampFromTime(r.firstPlatformReportTime))
 								dp.SetIntValue(val)
 							}
 						}
@@ -294,6 +332,10 @@ func (r *telemetryAPIReceiver) processMetrics(slice []event) {
 								metric.SetUnit("MB")
 								dp := metric.SetEmptyGauge().DataPoints().AppendEmpty()
 								dp.SetTimestamp(pcommon.NewTimestampFromTime(timestamp))
+								if r.firstPlatformReportTime.IsZero() {
+									r.firstPlatformReportTime = timestamp
+								}
+								dp.SetStartTimestamp(pcommon.NewTimestampFromTime(r.firstPlatformReportTime))
 								dp.SetIntValue(val)
 							}
 						}
@@ -304,6 +346,10 @@ func (r *telemetryAPIReceiver) processMetrics(slice []event) {
 								metric.SetUnit("ms")
 								dp := metric.SetEmptyGauge().DataPoints().AppendEmpty()
 								dp.SetTimestamp(pcommon.NewTimestampFromTime(timestamp))
+								if r.firstPlatformReportTime.IsZero() {
+									r.firstPlatformReportTime = timestamp
+								}
+								dp.SetStartTimestamp(pcommon.NewTimestampFromTime(r.firstPlatformReportTime))
 								dp.SetDoubleValue(val)
 							}
 						}
@@ -322,6 +368,10 @@ func (r *telemetryAPIReceiver) processMetrics(slice []event) {
 								metric.SetUnit("ms")
 								dp := metric.SetEmptyGauge().DataPoints().AppendEmpty()
 								dp.SetTimestamp(pcommon.NewTimestampFromTime(timestamp))
+								if r.firstPlatformRestoreReportTime.IsZero() {
+									r.firstPlatformRestoreReportTime = timestamp
+								}
+								dp.SetStartTimestamp(pcommon.NewTimestampFromTime(r.firstPlatformRestoreReportTime))
 								dp.SetDoubleValue(val)
 							}
 						}
