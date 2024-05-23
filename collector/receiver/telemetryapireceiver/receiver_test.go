@@ -161,7 +161,7 @@ func TestCreatePlatformInitSpan(t *testing.T) {
 	}
 }
 
-func TestProcessMetrics(t *testing.T) {
+func TestCreateMetrics(t *testing.T) {
 	testCases := []struct {
 		desc                      string
 		slice                     []event
@@ -200,6 +200,26 @@ func TestProcessMetrics(t *testing.T) {
 			expectedSeverityNumber:    plog.SeverityNumberInfo,
 			expectError:               false,
 		},
+		{
+			desc: "platform.report",
+			slice: []event{
+				{
+					Time: "2024-05-15T23:58:39.317Z",
+					Type: "platform.report",
+					Record: map[string]any{
+						"metrics": map[string]any{
+							"billedDurationMs": 12456,
+							"durationMs":       12455.155,
+							"initDurationMs":   1819.881,
+							"maxMemoryUsedMB":  128,
+							"memorySizeMB":     128,
+						},
+						"requestId": "882e9658-570e-4b2f-aaa8-5dfb88f7eccb",
+						"status":    "success",
+					},
+				},
+			},
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
@@ -207,7 +227,7 @@ func TestProcessMetrics(t *testing.T) {
 				&Config{},
 				receivertest.NewNopCreateSettings(),
 			)
-			r.processMetrics(tc.slice)
+			r.createMetrics(tc.slice)
 			//if tc.expectError {
 			//	require.Error(t, err)
 			//} else {

@@ -124,20 +124,36 @@ func (r *telemetryAPIReceiver) httpHandler(w http.ResponseWriter, req *http.Requ
 
 	// traces
 	if r.nextTraces != nil {
-		r.processTraces(slice)
+		if traces, err := r.createTraces(slice); err == nil {
+			if traces.SpanCount() > 0 {
+				err := r.nextTraces.ConsumeTraces(context.Background(), traces)
+				if err != nil {
+					r.logger.Error("error receiving traces", zap.Error(err))
+				}
+			}
+		}
 	}
 
 	// metrics
 	if r.nextMetrics != nil {
-		r.processMetrics(slice)
+		if metrics, err := r.createMetrics(slice); err == nil {
+			if metrics.MetricCount() > 0 {
+				err := r.nextMetrics.ConsumeMetrics(context.Background(), metrics)
+				if err != nil {
+					r.logger.Error("error receiving metrics", zap.Error(err))
+				}
+			}
+		}
 	}
 
 	// Logs
 	if r.nextLogs != nil {
 		if logs, err := r.createLogs(slice); err == nil {
-			err := r.nextLogs.ConsumeLogs(context.Background(), logs)
-			if err != nil {
-				r.logger.Error("error receiving logs", zap.Error(err))
+			if logs.LogRecordCount() > 0 {
+				err := r.nextLogs.ConsumeLogs(context.Background(), logs)
+				if err != nil {
+					r.logger.Error("error receiving logs", zap.Error(err))
+				}
 			}
 		}
 	}
@@ -146,8 +162,227 @@ func (r *telemetryAPIReceiver) httpHandler(w http.ResponseWriter, req *http.Requ
 	slice = nil
 }
 
-func (r *telemetryAPIReceiver) processTraces(slice []event) {
-	// traces
+//func (r *telemetryAPIReceiver) processMetrics(slice []event) {
+//	metrics := pmetric.NewMetrics()
+//	rm := metrics.ResourceMetrics().AppendEmpty()
+//	r.resource.CopyTo(rm.Resource())
+//	sm := rm.ScopeMetrics().AppendEmpty()
+//
+//	for _, el := range slice {
+//		timestamp, err := time.Parse(timeFormatLayout, el.Time)
+//		if err != nil {
+//			r.logger.Error("error parsing time", zap.Error(err))
+//			return
+//		}
+//		switch el.Type {
+//		// A report of function initialization.
+//		case "platform.initReport":
+//			if record, ok := el.Record.(map[string]interface{}); ok {
+//				if m, ok := record["metrics"]; ok {
+//					if me, ok := m.(map[string]interface{}); ok {
+//						if v, ok := me["durationMs"]; ok {
+//							if val, ok := v.(float64); ok {
+//								metric := sm.Metrics().AppendEmpty()
+//								metric.SetName("sw.apm.lambda.initReport.durationMs")
+//								metric.SetUnit("ms")
+//								dp := metric.SetEmptyGauge().DataPoints().AppendEmpty()
+//								dp.SetTimestamp(pcommon.NewTimestampFromTime(timestamp))
+//								if r.firstPlatformInitReportTime.IsZero() {
+//									r.firstPlatformInitReportTime = timestamp
+//								}
+//								dp.SetStartTimestamp(pcommon.NewTimestampFromTime(r.firstPlatformInitReportTime))
+//								dp.SetDoubleValue(val)
+//							}
+//						}
+//					}
+//				}
+//			}
+//		// The runtime finished processing an event with either success or failure.
+//		case "platform.runtimeDone":
+//			if record, ok := el.Record.(map[string]interface{}); ok {
+//				if m, ok := record["metrics"]; ok {
+//					if me, ok := m.(map[string]interface{}); ok {
+//						if v, ok := me["durationMs"]; ok {
+//							if val, ok := v.(float64); ok {
+//								metric := sm.Metrics().AppendEmpty()
+//								metric.SetName("sw.apm.lambda.runtimeDone.durationMs")
+//								metric.SetUnit("ms")
+//								dp := metric.SetEmptyGauge().DataPoints().AppendEmpty()
+//								dp.SetTimestamp(pcommon.NewTimestampFromTime(timestamp))
+//								if r.firstPlatformRuntimeDoneTime.IsZero() {
+//									r.firstPlatformRuntimeDoneTime = timestamp
+//								}
+//								dp.SetStartTimestamp(pcommon.NewTimestampFromTime(r.firstPlatformRuntimeDoneTime))
+//								dp.SetDoubleValue(val)
+//							}
+//						}
+//						if v, ok := me["producedBytes"]; ok {
+//							if val, ok := v.(int64); ok {
+//								metric := sm.Metrics().AppendEmpty()
+//								metric.SetName("sw.apm.lambda.runtimeDone.producedBytes")
+//								metric.SetUnit("byte")
+//								dp := metric.SetEmptyGauge().DataPoints().AppendEmpty()
+//								dp.SetTimestamp(pcommon.NewTimestampFromTime(timestamp))
+//								if r.firstPlatformRuntimeDoneTime.IsZero() {
+//									r.firstPlatformRuntimeDoneTime = timestamp
+//								}
+//								dp.SetStartTimestamp(pcommon.NewTimestampFromTime(r.firstPlatformRuntimeDoneTime))
+//								dp.SetIntValue(val)
+//							}
+//						}
+//					}
+//				}
+//			}
+//		// A report of function invocation.
+//		case "platform.report":
+//			if record, ok := el.Record.(map[string]interface{}); ok {
+//				if m, ok := record["metrics"]; ok {
+//					if me, ok := m.(map[string]interface{}); ok {
+//						if v, ok := me["billedDurationMs"]; ok {
+//							if val, ok := v.(int64); ok {
+//								metric := sm.Metrics().AppendEmpty()
+//								metric.SetName("sw.apm.lambda.report.billedDurationMs")
+//								metric.SetUnit("ms")
+//								dp := metric.SetEmptyGauge().DataPoints().AppendEmpty()
+//								dp.SetTimestamp(pcommon.NewTimestampFromTime(timestamp))
+//								if r.firstPlatformReportTime.IsZero() {
+//									r.firstPlatformReportTime = timestamp
+//								}
+//								dp.SetStartTimestamp(pcommon.NewTimestampFromTime(r.firstPlatformReportTime))
+//								dp.SetIntValue(val)
+//							}
+//						}
+//						if v, ok := me["durationMs"]; ok {
+//							if val, ok := v.(float64); ok {
+//								metric := sm.Metrics().AppendEmpty()
+//								metric.SetName("sw.apm.lambda.report.durationMs")
+//								metric.SetUnit("ms")
+//								dp := metric.SetEmptyGauge().DataPoints().AppendEmpty()
+//								dp.SetTimestamp(pcommon.NewTimestampFromTime(timestamp))
+//								if r.firstPlatformReportTime.IsZero() {
+//									r.firstPlatformReportTime = timestamp
+//								}
+//								dp.SetStartTimestamp(pcommon.NewTimestampFromTime(r.firstPlatformReportTime))
+//								dp.SetDoubleValue(val)
+//							}
+//						}
+//						if v, ok := me["initDurationMs"]; ok {
+//							if val, ok := v.(float64); ok {
+//								metric := sm.Metrics().AppendEmpty()
+//								metric.SetName("sw.apm.lambda.report.initDurationMs")
+//								metric.SetUnit("ms")
+//								dp := metric.SetEmptyGauge().DataPoints().AppendEmpty()
+//								dp.SetTimestamp(pcommon.NewTimestampFromTime(timestamp))
+//								if r.firstPlatformReportTime.IsZero() {
+//									r.firstPlatformReportTime = timestamp
+//								}
+//								dp.SetStartTimestamp(pcommon.NewTimestampFromTime(r.firstPlatformReportTime))
+//								dp.SetDoubleValue(val)
+//							}
+//						}
+//						if v, ok := me["maxMemoryUsedMB"]; ok {
+//							if val, ok := v.(int64); ok {
+//								metric := sm.Metrics().AppendEmpty()
+//								metric.SetName("sw.apm.lambda.report.maxMemoryUsedMB")
+//								metric.SetUnit("MB")
+//								dp := metric.SetEmptyGauge().DataPoints().AppendEmpty()
+//								dp.SetTimestamp(pcommon.NewTimestampFromTime(timestamp))
+//								if r.firstPlatformReportTime.IsZero() {
+//									r.firstPlatformReportTime = timestamp
+//								}
+//								dp.SetStartTimestamp(pcommon.NewTimestampFromTime(r.firstPlatformReportTime))
+//								dp.SetIntValue(val)
+//							}
+//						}
+//						if v, ok := me["memorySizeMB"]; ok {
+//							if val, ok := v.(int64); ok {
+//								metric := sm.Metrics().AppendEmpty()
+//								metric.SetName("sw.apm.lambda.report.memorySizeMB")
+//								metric.SetUnit("MB")
+//								dp := metric.SetEmptyGauge().DataPoints().AppendEmpty()
+//								dp.SetTimestamp(pcommon.NewTimestampFromTime(timestamp))
+//								if r.firstPlatformReportTime.IsZero() {
+//									r.firstPlatformReportTime = timestamp
+//								}
+//								dp.SetStartTimestamp(pcommon.NewTimestampFromTime(r.firstPlatformReportTime))
+//								dp.SetIntValue(val)
+//							}
+//						}
+//						if v, ok := me["restoreDurationMs"]; ok {
+//							if val, ok := v.(float64); ok {
+//								metric := sm.Metrics().AppendEmpty()
+//								metric.SetName("sw.apm.lambda.report.restoreDurationMs")
+//								metric.SetUnit("ms")
+//								dp := metric.SetEmptyGauge().DataPoints().AppendEmpty()
+//								dp.SetTimestamp(pcommon.NewTimestampFromTime(timestamp))
+//								if r.firstPlatformReportTime.IsZero() {
+//									r.firstPlatformReportTime = timestamp
+//								}
+//								dp.SetStartTimestamp(pcommon.NewTimestampFromTime(r.firstPlatformReportTime))
+//								dp.SetDoubleValue(val)
+//							}
+//						}
+//					}
+//				}
+//			}
+//		// Report of runtime restore (reserved for future use)
+//		case "platform.restoreReport":
+//			if record, ok := el.Record.(map[string]interface{}); ok {
+//				if m, ok := record["metrics"]; ok {
+//					if me, ok := m.(map[string]interface{}); ok {
+//						if v, ok := me["durationMs"]; ok {
+//							if val, ok := v.(float64); ok {
+//								metric := sm.Metrics().AppendEmpty()
+//								metric.SetName("sw.apm.lambda.restoreReport.durationMs")
+//								metric.SetUnit("ms")
+//								dp := metric.SetEmptyGauge().DataPoints().AppendEmpty()
+//								dp.SetTimestamp(pcommon.NewTimestampFromTime(timestamp))
+//								if r.firstPlatformRestoreReportTime.IsZero() {
+//									r.firstPlatformRestoreReportTime = timestamp
+//								}
+//								dp.SetStartTimestamp(pcommon.NewTimestampFromTime(r.firstPlatformRestoreReportTime))
+//								dp.SetDoubleValue(val)
+//							}
+//						}
+//					}
+//				}
+//			}
+//		}
+//	}
+//
+//	if metrics.MetricCount() > 0 {
+//		if err := r.nextMetrics.ConsumeMetrics(context.Background(), metrics); err != nil {
+//			r.logger.Error("error receiving metrics", zap.Error(err))
+//		}
+//	}
+//}
+
+func (r *telemetryAPIReceiver) createPlatformInitSpan(start, end string) (ptrace.Traces, error) {
+	traceData := ptrace.NewTraces()
+	rs := traceData.ResourceSpans().AppendEmpty()
+	r.resource.CopyTo(rs.Resource())
+	ss := rs.ScopeSpans().AppendEmpty()
+	ss.Scope().SetName(scopeName)
+	span := ss.Spans().AppendEmpty()
+	span.SetTraceID(newTraceID())
+	span.SetSpanID(newSpanID())
+	span.SetName("platform.initRuntimeDone")
+	span.SetKind(ptrace.SpanKindInternal)
+	span.Attributes().PutBool(semconv.AttributeFaaSColdstart, true)
+	startTime, err := time.Parse(timeFormatLayout, start)
+	if err != nil {
+		return ptrace.Traces{}, err
+	}
+	span.SetStartTimestamp(pcommon.NewTimestampFromTime(startTime))
+	endTime, err := time.Parse(timeFormatLayout, end)
+	if err != nil {
+		return ptrace.Traces{}, err
+	}
+	span.SetEndTimestamp(pcommon.NewTimestampFromTime(endTime))
+	return traceData, nil
+}
+
+func (r *telemetryAPIReceiver) createTraces(slice []event) (ptrace.Traces, error) {
 	for _, el := range slice {
 		r.logger.Debug(fmt.Sprintf("Event: %s", el.Type), zap.Any("event", el))
 		switch el.Type {
@@ -181,120 +416,108 @@ func (r *telemetryAPIReceiver) processTraces(slice []event) {
 		// case "platform.logsDropped":
 	}
 	if len(r.lastPlatformStartTime) > 0 && len(r.lastPlatformEndTime) > 0 {
-		if td, err := r.createPlatformInitSpan(r.lastPlatformStartTime, r.lastPlatformEndTime); err == nil {
-			err := r.nextTraces.ConsumeTraces(context.Background(), td)
-			if err == nil {
-				r.lastPlatformEndTime = ""
-				r.lastPlatformStartTime = ""
-			} else {
-				r.logger.Error("error receiving traces", zap.Error(err))
-			}
+		td, err := r.createPlatformInitSpan(r.lastPlatformStartTime, r.lastPlatformEndTime)
+		if err == nil {
+			r.lastPlatformEndTime = ""
+			r.lastPlatformStartTime = ""
 		}
+		return td, err
 	}
+	return ptrace.Traces{}, nil
 }
 
-func (r *telemetryAPIReceiver) processMetrics(slice []event) {
+func (r *telemetryAPIReceiver) createMetrics(slice []event) (pmetric.Metrics, error) {
 	metrics := pmetric.NewMetrics()
 	rm := metrics.ResourceMetrics().AppendEmpty()
 	r.resource.CopyTo(rm.Resource())
 	sm := rm.ScopeMetrics().AppendEmpty()
-
 	for _, el := range slice {
 		timestamp, err := time.Parse(timeFormatLayout, el.Time)
 		if err != nil {
 			r.logger.Error("error parsing time", zap.Error(err))
-			return
+			return pmetric.Metrics{}, err
 		}
 		switch el.Type {
-		// A report of function initialization.
-		case "platform.initReport":
-			if record, ok := el.Record.(map[string]interface{}); ok {
-				if m, ok := record["metrics"]; ok {
-					if me, ok := m.(map[string]interface{}); ok {
-						if v, ok := me["durationMs"]; ok {
-							if val, ok := v.(float64); ok {
-								metric := sm.Metrics().AppendEmpty()
-								metric.SetName("sw.apm.lambda.initReport.durationMs")
-								metric.SetUnit("ms")
-								dp := metric.SetEmptyGauge().DataPoints().AppendEmpty()
-								dp.SetTimestamp(pcommon.NewTimestampFromTime(timestamp))
-								if r.firstPlatformInitReportTime.IsZero() {
-									r.firstPlatformInitReportTime = timestamp
-								}
-								dp.SetStartTimestamp(pcommon.NewTimestampFromTime(r.firstPlatformInitReportTime))
-								dp.SetDoubleValue(val)
-							}
-						}
-					}
-				}
-			}
-		// The runtime finished processing an event with either success or failure.
-		case "platform.runtimeDone":
-			if record, ok := el.Record.(map[string]interface{}); ok {
-				if m, ok := record["metrics"]; ok {
-					if me, ok := m.(map[string]interface{}); ok {
-						if v, ok := me["durationMs"]; ok {
-							if val, ok := v.(float64); ok {
-								metric := sm.Metrics().AppendEmpty()
-								metric.SetName("sw.apm.lambda.runtimeDone.durationMs")
-								metric.SetUnit("ms")
-								dp := metric.SetEmptyGauge().DataPoints().AppendEmpty()
-								dp.SetTimestamp(pcommon.NewTimestampFromTime(timestamp))
-								if r.firstPlatformRuntimeDoneTime.IsZero() {
-									r.firstPlatformRuntimeDoneTime = timestamp
-								}
-								dp.SetStartTimestamp(pcommon.NewTimestampFromTime(r.firstPlatformRuntimeDoneTime))
-								dp.SetDoubleValue(val)
-							}
-						}
-						if v, ok := me["producedBytes"]; ok {
-							if val, ok := v.(int64); ok {
-								metric := sm.Metrics().AppendEmpty()
-								metric.SetName("sw.apm.lambda.runtimeDone.producedBytes")
-								metric.SetUnit("byte")
-								dp := metric.SetEmptyGauge().DataPoints().AppendEmpty()
-								dp.SetTimestamp(pcommon.NewTimestampFromTime(timestamp))
-								if r.firstPlatformRuntimeDoneTime.IsZero() {
-									r.firstPlatformRuntimeDoneTime = timestamp
-								}
-								dp.SetStartTimestamp(pcommon.NewTimestampFromTime(r.firstPlatformRuntimeDoneTime))
-								dp.SetIntValue(val)
-							}
-						}
-					}
-				}
-			}
+		//// A report of function initialization.
+		//case "platform.initReport":
+		//	if record, ok := el.Record.(map[string]interface{}); ok {
+		//		if m, ok := record["metrics"]; ok {
+		//			if me, ok := m.(map[string]interface{}); ok {
+		//				if v, ok := me["durationMs"]; ok {
+		//					if val, ok := v.(float64); ok {
+		//						metric := sm.Metrics().AppendEmpty()
+		//						metric.SetName("sw.apm.lambda.initReport.durationMs")
+		//						metric.SetUnit("ms")
+		//						dp := metric.SetEmptyGauge().DataPoints().AppendEmpty()
+		//						dp.SetTimestamp(pcommon.NewTimestampFromTime(timestamp))
+		//						if r.firstPlatformInitReportTime.IsZero() {
+		//							r.firstPlatformInitReportTime = timestamp
+		//						}
+		//						dp.SetStartTimestamp(pcommon.NewTimestampFromTime(r.firstPlatformInitReportTime))
+		//						dp.SetDoubleValue(val)
+		//					}
+		//				}
+		//			}
+		//		}
+		//	}
+		//// The runtime finished processing an event with either success or failure.
+		//case "platform.runtimeDone":
+		//	if record, ok := el.Record.(map[string]interface{}); ok {
+		//		if m, ok := record["metrics"]; ok {
+		//			if me, ok := m.(map[string]interface{}); ok {
+		//				if v, ok := me["durationMs"]; ok {
+		//					if val, ok := v.(float64); ok {
+		//						metric := sm.Metrics().AppendEmpty()
+		//						metric.SetName("sw.apm.lambda.runtimeDone.durationMs")
+		//						metric.SetUnit("ms")
+		//						dp := metric.SetEmptyGauge().DataPoints().AppendEmpty()
+		//						dp.SetTimestamp(pcommon.NewTimestampFromTime(timestamp))
+		//						if r.firstPlatformRuntimeDoneTime.IsZero() {
+		//							r.firstPlatformRuntimeDoneTime = timestamp
+		//						}
+		//						dp.SetStartTimestamp(pcommon.NewTimestampFromTime(r.firstPlatformRuntimeDoneTime))
+		//						dp.SetDoubleValue(val)
+		//					}
+		//				}
+		//				if v, ok := me["producedBytes"]; ok {
+		//					if val, ok := v.(int64); ok {
+		//						metric := sm.Metrics().AppendEmpty()
+		//						metric.SetName("sw.apm.lambda.runtimeDone.producedBytes")
+		//						metric.SetUnit("byte")
+		//						dp := metric.SetEmptyGauge().DataPoints().AppendEmpty()
+		//						dp.SetTimestamp(pcommon.NewTimestampFromTime(timestamp))
+		//						if r.firstPlatformRuntimeDoneTime.IsZero() {
+		//							r.firstPlatformRuntimeDoneTime = timestamp
+		//						}
+		//						dp.SetStartTimestamp(pcommon.NewTimestampFromTime(r.firstPlatformRuntimeDoneTime))
+		//						dp.SetIntValue(val)
+		//					}
+		//				}
+		//			}
+		//		}
+		//	}
 		// A report of function invocation.
 		case "platform.report":
 			if record, ok := el.Record.(map[string]interface{}); ok {
 				if m, ok := record["metrics"]; ok {
 					if me, ok := m.(map[string]interface{}); ok {
-						if v, ok := me["billedDurationMs"]; ok {
-							if val, ok := v.(int64); ok {
-								metric := sm.Metrics().AppendEmpty()
-								metric.SetName("sw.apm.lambda.report.billedDurationMs")
-								metric.SetUnit("ms")
-								dp := metric.SetEmptyGauge().DataPoints().AppendEmpty()
-								dp.SetTimestamp(pcommon.NewTimestampFromTime(timestamp))
-								if r.firstPlatformReportTime.IsZero() {
-									r.firstPlatformReportTime = timestamp
-								}
-								dp.SetStartTimestamp(pcommon.NewTimestampFromTime(r.firstPlatformReportTime))
-								dp.SetIntValue(val)
-							}
-						}
 						if v, ok := me["durationMs"]; ok {
 							if val, ok := v.(float64); ok {
 								metric := sm.Metrics().AppendEmpty()
-								metric.SetName("sw.apm.lambda.report.durationMs")
-								metric.SetUnit("ms")
-								dp := metric.SetEmptyGauge().DataPoints().AppendEmpty()
+								metric.SetName("faas.invoke_duration")
+								metric.SetUnit("s")
+								histogram := metric.SetEmptyHistogram()
+								histogram.SetAggregationTemporality(pmetric.AggregationTemporalityDelta)
+								dp := histogram.DataPoints().AppendEmpty()
+								dp.ExplicitBounds().FromRaw([]float64{0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10})
+								dp.Attributes().PutStr("faas.trigger", "other")
 								dp.SetTimestamp(pcommon.NewTimestampFromTime(timestamp))
 								if r.firstPlatformReportTime.IsZero() {
 									r.firstPlatformReportTime = timestamp
 								}
 								dp.SetStartTimestamp(pcommon.NewTimestampFromTime(r.firstPlatformReportTime))
-								dp.SetDoubleValue(val)
+								dp.SetCount(1)
+								dp.SetValue(val / 1000)
 							}
 						}
 						if v, ok := me["initDurationMs"]; ok {
@@ -380,41 +603,7 @@ func (r *telemetryAPIReceiver) processMetrics(slice []event) {
 			}
 		}
 	}
-
-	if metrics.MetricCount() > 0 {
-		if err := r.nextMetrics.ConsumeMetrics(context.Background(), metrics); err != nil {
-			r.logger.Error("error receiving metrics", zap.Error(err))
-		}
-	}
-}
-
-func (r *telemetryAPIReceiver) createPlatformInitSpan(start, end string) (ptrace.Traces, error) {
-	traceData := ptrace.NewTraces()
-	rs := traceData.ResourceSpans().AppendEmpty()
-	r.resource.CopyTo(rs.Resource())
-	ss := rs.ScopeSpans().AppendEmpty()
-	ss.Scope().SetName(scopeName)
-	span := ss.Spans().AppendEmpty()
-	span.SetTraceID(newTraceID())
-	span.SetSpanID(newSpanID())
-	span.SetName("platform.initRuntimeDone")
-	span.SetKind(ptrace.SpanKindInternal)
-	span.Attributes().PutBool(semconv.AttributeFaaSColdstart, true)
-	startTime, err := time.Parse(timeFormatLayout, start)
-	if err != nil {
-		return ptrace.Traces{}, err
-	}
-	span.SetStartTimestamp(pcommon.NewTimestampFromTime(startTime))
-	endTime, err := time.Parse(timeFormatLayout, end)
-	if err != nil {
-		return ptrace.Traces{}, err
-	}
-	span.SetEndTimestamp(pcommon.NewTimestampFromTime(endTime))
-	return traceData, nil
-}
-
-func (r *telemetryAPIReceiver) createMetrics(slice []event) (pmetric.Metrics, error) {
-	return pmetric.Metrics{}, nil
+	return metrics, nil
 }
 
 func (r *telemetryAPIReceiver) createLogs(slice []event) (plog.Logs, error) {
