@@ -49,7 +49,7 @@ func NewClient(logger *zap.Logger) *Client {
 	}
 }
 
-func (c *Client) SubscribeEvents(ctx context.Context, eventTypes []EventType, extensionID string, listenerURI string) (string, error) {
+func (c *Client) Subscribe(ctx context.Context, eventTypes []EventType, extensionID string, listenerURI string) (string, error) {
 	bufferingConfig := BufferingCfg{
 		MaxItems:  1000,
 		MaxBytes:  256 * 1024,
@@ -102,15 +102,6 @@ func (c *Client) SubscribeEvents(ctx context.Context, eventTypes []EventType, ex
 	c.logger.Info("Subscription success", zap.String("response", string(body)))
 
 	return string(body), nil
-}
-
-func (c *Client) Subscribe(ctx context.Context, extensionID string, listenerURI string) (string, error) {
-	eventTypes := []EventType{
-		Platform,
-		// Function,
-		// Extension,
-	}
-	return c.SubscribeEvents(ctx, eventTypes, extensionID, listenerURI)
 }
 
 func httpPutWithHeaders(ctx context.Context, client *http.Client, url string, data []byte, headers map[string]string) (*http.Response, error) {
