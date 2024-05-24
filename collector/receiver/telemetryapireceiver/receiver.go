@@ -21,7 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/golang-collections/go-datastructures/queue"
-	"github.com/open-telemetry/opentelemetry-lambda/collector/internal/telemetryapi"
+	telemetryapi "github.com/open-telemetry/opentelemetry-lambda/collector/receiver/telemetryapireceiver/internal/telemetryapi"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/pdata/pcommon"
@@ -116,7 +116,7 @@ func (r *telemetryAPIReceiver) httpHandler(w http.ResponseWriter, req *http.Requ
 		return
 	}
 
-	var slice []event
+	var slice []telemetryapi.Event
 	if err := json.Unmarshal(body, &slice); err != nil {
 		r.logger.Error("error unmarshalling body", zap.Error(err))
 		return
@@ -382,7 +382,7 @@ func (r *telemetryAPIReceiver) createPlatformInitSpan(start, end string) (ptrace
 	return traceData, nil
 }
 
-func (r *telemetryAPIReceiver) createTraces(slice []event) (ptrace.Traces, error) {
+func (r *telemetryAPIReceiver) createTraces(slice []telemetryapi.Event) (ptrace.Traces, error) {
 	for _, el := range slice {
 		r.logger.Debug(fmt.Sprintf("Event: %s", el.Type), zap.Any("event", el))
 		switch el.Type {
@@ -426,7 +426,7 @@ func (r *telemetryAPIReceiver) createTraces(slice []event) (ptrace.Traces, error
 	return ptrace.Traces{}, nil
 }
 
-func (r *telemetryAPIReceiver) createMetrics(slice []event) (pmetric.Metrics, error) {
+func (r *telemetryAPIReceiver) createMetrics(slice []telemetryapi.Event) (pmetric.Metrics, error) {
 	metrics := pmetric.NewMetrics()
 	rm := metrics.ResourceMetrics().AppendEmpty()
 	r.resource.CopyTo(rm.Resource())
@@ -502,7 +502,7 @@ func (r *telemetryAPIReceiver) createMetrics(slice []event) (pmetric.Metrics, er
 				if m, ok := record["metrics"]; ok {
 					if me, ok := m.(map[string]interface{}); ok {
 						if v, ok := me["durationMs"]; ok {
-							if val, ok := v.(float64); ok {
+							if _, ok := v.(float64); ok {
 								metric := sm.Metrics().AppendEmpty()
 								metric.SetName("faas.invoke_duration")
 								metric.SetUnit("s")
@@ -517,7 +517,7 @@ func (r *telemetryAPIReceiver) createMetrics(slice []event) (pmetric.Metrics, er
 								}
 								dp.SetStartTimestamp(pcommon.NewTimestampFromTime(r.firstPlatformReportTime))
 								dp.SetCount(1)
-								dp.SetValue(val / 1000)
+								// dp.SetValue(val / 1000)
 							}
 						}
 						if v, ok := me["initDurationMs"]; ok {
@@ -606,7 +606,7 @@ func (r *telemetryAPIReceiver) createMetrics(slice []event) (pmetric.Metrics, er
 	return metrics, nil
 }
 
-func (r *telemetryAPIReceiver) createLogs(slice []event) (plog.Logs, error) {
+func (r *telemetryAPIReceiver) createLogs(slice []telemetryapi.Event) (plog.Logs, error) {
 	log := plog.NewLogs()
 	resourceLog := log.ResourceLogs().AppendEmpty()
 	r.resource.CopyTo(resourceLog.Resource())

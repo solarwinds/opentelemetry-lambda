@@ -20,6 +20,7 @@ import (
 	"testing"
 	"time"
 
+	telemetryapi "github.com/open-telemetry/opentelemetry-lambda/collector/receiver/telemetryapireceiver/internal/telemetryapi"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/pdata/pcommon"
@@ -164,7 +165,7 @@ func TestCreatePlatformInitSpan(t *testing.T) {
 func TestCreateMetrics(t *testing.T) {
 	testCases := []struct {
 		desc                      string
-		slice                     []event
+		slice                     []telemetryapi.Event
 		expectedLogRecords        int
 		expectedType              string
 		expectedTimestamp         string
@@ -177,7 +178,7 @@ func TestCreateMetrics(t *testing.T) {
 	}{
 		{
 			desc: "platform.initReport",
-			slice: []event{
+			slice: []telemetryapi.Event{
 				{
 					Time: "2024-05-15T23:58:26.858Z",
 					Type: "platform.initReport",
@@ -202,7 +203,7 @@ func TestCreateMetrics(t *testing.T) {
 		},
 		{
 			desc: "platform.report",
-			slice: []event{
+			slice: []telemetryapi.Event{
 				{
 					Time: "2024-05-15T23:58:39.317Z",
 					Type: "platform.report",
@@ -262,7 +263,7 @@ func TestCreateMetrics(t *testing.T) {
 func TestCreateLogs(t *testing.T) {
 	testCases := []struct {
 		desc                      string
-		slice                     []event
+		slice                     []telemetryapi.Event
 		expectedLogRecords        int
 		expectedType              string
 		expectedTimestamp         string
@@ -280,7 +281,7 @@ func TestCreateLogs(t *testing.T) {
 		},
 		{
 			desc: "Invalid Timestamp",
-			slice: []event{
+			slice: []telemetryapi.Event{
 				{
 					Time:   "invalid",
 					Type:   "function",
@@ -291,7 +292,7 @@ func TestCreateLogs(t *testing.T) {
 		},
 		{
 			desc: "function text",
-			slice: []event{
+			slice: []telemetryapi.Event{
 				{
 					Time:   "2022-10-12T00:03:50.000Z",
 					Type:   "function",
@@ -309,7 +310,7 @@ func TestCreateLogs(t *testing.T) {
 		},
 		{
 			desc: "function json",
-			slice: []event{
+			slice: []telemetryapi.Event{
 				{
 					Time: "2022-10-12T00:03:50.000Z",
 					Type: "function",
@@ -333,7 +334,7 @@ func TestCreateLogs(t *testing.T) {
 		},
 		{
 			desc: "extension text",
-			slice: []event{
+			slice: []telemetryapi.Event{
 				{
 					Time:   "2022-10-12T00:03:50.000Z",
 					Type:   "extension",
@@ -351,7 +352,7 @@ func TestCreateLogs(t *testing.T) {
 		},
 		{
 			desc: "extension json",
-			slice: []event{
+			slice: []telemetryapi.Event{
 				{
 					Time: "2022-10-12T00:03:50.000Z",
 					Type: "extension",
@@ -375,7 +376,7 @@ func TestCreateLogs(t *testing.T) {
 		},
 		{
 			desc: "platform.initReport",
-			slice: []event{
+			slice: []telemetryapi.Event{
 				{
 					Time: "2024-05-15T23:58:26.858Z",
 					Type: "platform.initReport",
