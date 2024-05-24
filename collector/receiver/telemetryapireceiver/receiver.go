@@ -20,6 +20,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	telemetryapi "github.com/open-telemetry/opentelemetry-lambda/collector/receiver/telemetryapireceiver/internal/telemetryapi"
 	"io"
 	"math/rand"
 	"net/http"
@@ -34,8 +35,6 @@ import (
 	"go.opentelemetry.io/collector/receiver"
 	semconv "go.opentelemetry.io/collector/semconv/v1.5.0"
 	"go.uber.org/zap"
-
-	"github.com/open-telemetry/opentelemetry-lambda/collector/internal/telemetryapi"
 )
 
 const defaultListenerPort = "4325"
@@ -107,7 +106,7 @@ func (r *telemetryAPIReceiver) httpHandler(w http.ResponseWriter, req *http.Requ
 		return
 	}
 
-	var slice []event
+	var slice []telemetryapi.Event
 	if err := json.Unmarshal(body, &slice); err != nil {
 		r.logger.Error("error unmarshalling body", zap.Error(err))
 		return
