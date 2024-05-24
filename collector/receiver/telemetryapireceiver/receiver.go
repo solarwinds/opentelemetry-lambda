@@ -20,6 +20,13 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"io"
+	"math/rand"
+	"net/http"
+	"os"
+	"strings"
+	"time"
+
 	"github.com/golang-collections/go-datastructures/queue"
 	telemetryapi "github.com/open-telemetry/opentelemetry-lambda/collector/receiver/telemetryapireceiver/internal/telemetryapi"
 	"go.opentelemetry.io/collector/component"
@@ -31,12 +38,6 @@ import (
 	"go.opentelemetry.io/collector/receiver"
 	semconv "go.opentelemetry.io/collector/semconv/v1.25.0"
 	"go.uber.org/zap"
-	"io"
-	"math/rand"
-	"net/http"
-	"os"
-	"strings"
-	"time"
 )
 
 const defaultListenerPort = "4325"
@@ -45,20 +46,16 @@ const timeFormatLayout = "2006-01-02T15:04:05.000Z"
 const scopeName = "github.com/open-telemetry/opentelemetry-lambda/collector/receiver/telemetryapi"
 
 type telemetryAPIReceiver struct {
-	httpServer                     *http.Server
-	logger                         *zap.Logger
-	queue                          *queue.Queue // queue is a synchronous queue and is used to put the received log events to be dispatched later
-	nextTraces                     consumer.Traces
-	nextMetrics                    consumer.Metrics
-	nextLogs                       consumer.Logs
-	lastPlatformStartTime          string
-	lastPlatformEndTime            string
-	firstPlatformInitReportTime    time.Time
-	firstPlatformRuntimeDoneTime   time.Time
-	firstPlatformReportTime        time.Time
-	firstPlatformRestoreReportTime time.Time
-	extensionID                    string
-	resource                       pcommon.Resource
+	httpServer            *http.Server
+	logger                *zap.Logger
+	queue                 *queue.Queue // queue is a synchronous queue and is used to put the received log events to be dispatched later
+	nextTraces            consumer.Traces
+	nextMetrics           consumer.Metrics
+	nextLogs              consumer.Logs
+	lastPlatformStartTime string
+	lastPlatformEndTime   string
+	extensionID           string
+	resource              pcommon.Resource
 }
 
 func (r *telemetryAPIReceiver) Start(ctx context.Context, host component.Host) error {
@@ -160,31 +157,6 @@ func (r *telemetryAPIReceiver) httpHandler(w http.ResponseWriter, req *http.Requ
 
 	r.logger.Debug("logEvents received", zap.Int("count", len(slice)), zap.Int64("queue_length", r.queue.Len()))
 	slice = nil
-}
-
-func (r *telemetryAPIReceiver) createPlatformInitSpan(start, end string) (ptrace.Traces, error) {
-	traceData := ptrace.NewTraces()
-	rs := traceData.ResourceSpans().AppendEmpty()
-	r.resource.CopyTo(rs.Resource())
-	ss := rs.ScopeSpans().AppendEmpty()
-	ss.Scope().SetName(scopeName)
-	span := ss.Spans().AppendEmpty()
-	span.SetTraceID(newTraceID())
-	span.SetSpanID(newSpanID())
-	span.SetName("platform.initRuntimeDone")
-	span.SetKind(ptrace.SpanKindInternal)
-	span.Attributes().PutBool(semconv.AttributeFaaSColdstart, true)
-	startTime, err := time.Parse(timeFormatLayout, start)
-	if err != nil {
-		return ptrace.Traces{}, err
-	}
-	span.SetStartTimestamp(pcommon.NewTimestampFromTime(startTime))
-	endTime, err := time.Parse(timeFormatLayout, end)
-	if err != nil {
-		return ptrace.Traces{}, err
-	}
-	span.SetEndTimestamp(pcommon.NewTimestampFromTime(endTime))
-	return traceData, nil
 }
 
 func (r *telemetryAPIReceiver) createTraces(slice []telemetryapi.Event) (ptrace.Traces, error) {
@@ -354,6 +326,31 @@ func (r *telemetryAPIReceiver) registerMetricsConsumer(next consumer.Metrics) {
 
 func (r *telemetryAPIReceiver) registerLogsConsumer(next consumer.Logs) {
 	r.nextLogs = next
+}
+
+func (r *telemetryAPIReceiver) createPlatformInitSpan(start, end string) (ptrace.Traces, error) {
+	traceData := ptrace.NewTraces()
+	rs := traceData.ResourceSpans().AppendEmpty()
+	r.resource.CopyTo(rs.Resource())
+	ss := rs.ScopeSpans().AppendEmpty()
+	ss.Scope().SetName(scopeName)
+	span := ss.Spans().AppendEmpty()
+	span.SetTraceID(newTraceID())
+	span.SetSpanID(newSpanID())
+	span.SetName("platform.initRuntimeDone")
+	span.SetKind(ptrace.SpanKindInternal)
+	span.Attributes().PutBool(semconv.AttributeFaaSColdstart, true)
+	startTime, err := time.Parse(timeFormatLayout, start)
+	if err != nil {
+		return ptrace.Traces{}, err
+	}
+	span.SetStartTimestamp(pcommon.NewTimestampFromTime(startTime))
+	endTime, err := time.Parse(timeFormatLayout, end)
+	if err != nil {
+		return ptrace.Traces{}, err
+	}
+	span.SetEndTimestamp(pcommon.NewTimestampFromTime(endTime))
+	return traceData, nil
 }
 
 func newTelemetryAPIReceiver(

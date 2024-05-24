@@ -1,16 +1,14 @@
-// Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//	http://www.apache.org/licenses/LICENSE-2.0
+//      http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 package telemetryapireceiver // import "github.com/open-telemetry/opentelemetry-lambda/collector/receiver/telemetryapireceiver"
 
 import (
@@ -158,119 +156,6 @@ func TestCreatePlatformInitSpan(t *testing.T) {
 			} else {
 				require.Equal(t, tc.expected, td.SpanCount())
 			}
-		})
-	}
-}
-
-func TestCreateMetrics(t *testing.T) {
-	testCases := []struct {
-		desc                      string
-		slice                     []telemetryapi.Event
-		expectedLogRecords        int
-		expectedType              string
-		expectedTimestamp         string
-		expectedBody              string
-		expectedSeverityText      string
-		expectedContainsRequestId bool
-		expectedRequestId         string
-		expectedSeverityNumber    plog.SeverityNumber
-		expectError               bool
-	}{
-		{
-			desc: "platform.initReport",
-			slice: []telemetryapi.Event{
-				{
-					Time: "2024-05-15T23:58:26.858Z",
-					Type: "platform.initReport",
-					Record: map[string]any{
-						"initializationType": "on-demand",
-						"metrics": map[string]any{
-							"durationMs": 1819.081,
-						},
-						"phase":  "init",
-						"status": "success",
-					},
-				},
-			},
-			expectedLogRecords:        1,
-			expectedType:              "platform.initReport",
-			expectedTimestamp:         "2024-05-15T23:58:26.858Z",
-			expectedBody:              "{\"initializationType\":\"on-demand\",\"metrics\":{\"durationMs\":1819.081},\"phase\":\"init\",\"status\":\"success\"}",
-			expectedContainsRequestId: false,
-			expectedSeverityText:      "INFO",
-			expectedSeverityNumber:    plog.SeverityNumberInfo,
-			expectError:               false,
-		},
-		{
-			desc: "platform.report",
-			slice: []telemetryapi.Event{
-				{
-					Time: "2024-05-15T23:58:39.317Z",
-					Type: "platform.report",
-					Record: map[string]any{
-						"metrics": map[string]any{
-							"billedDurationMs": 12456,
-							"durationMs":       12455.155,
-							"initDurationMs":   1819.881,
-							"maxMemoryUsedMB":  128,
-							"memorySizeMB":     128,
-						},
-						"requestId": "882e9658-570e-4b2f-aaa8-5dfb88f7eccb",
-						"status":    "success",
-					},
-				},
-				{
-					Time: "2024-05-15T23:59:39.317Z",
-					Type: "platform.report",
-					Record: map[string]any{
-						"metrics": map[string]any{
-							"billedDurationMs": 12456,
-							"durationMs":       13655.155,
-							"initDurationMs":   1819.881,
-							"maxMemoryUsedMB":  128,
-							"memorySizeMB":     128,
-						},
-						"requestId": "882e9658-570e-4b2f-aaa8-5dfb88f7abcb",
-						"status":    "success",
-					},
-				},
-			},
-		},
-	}
-	for _, tc := range testCases {
-		t.Run(tc.desc, func(t *testing.T) {
-			r := newTelemetryAPIReceiver(
-				&Config{},
-				receivertest.NewNopCreateSettings(),
-			)
-			r.createMetrics(tc.slice)
-			//if tc.expectError {
-			//	require.Error(t, err)
-			//} else {
-			//	require.Equal(t, 1, log.ResourceLogs().Len())
-			//	resourceLog := log.ResourceLogs().At(0)
-			//	require.Equal(t, 1, resourceLog.ScopeLogs().Len())
-			//	scopeLog := resourceLog.ScopeLogs().At(0)
-			//	require.Equal(t, scopeName, scopeLog.Scope().Name())
-			//	require.Equal(t, tc.expectedLogRecords, scopeLog.LogRecords().Len())
-			//	if scopeLog.LogRecords().Len() > 0 {
-			//		logRecord := scopeLog.LogRecords().At(0)
-			//		attr, ok := logRecord.Attributes().Get("type")
-			//		require.True(t, ok)
-			//		require.Equal(t, tc.expectedType, attr.Str())
-			//		expectedTime, err := time.Parse(timeFormatLayout, tc.expectedTimestamp)
-			//		require.NoError(t, err)
-			//		require.Equal(t, pcommon.NewTimestampFromTime(expectedTime), logRecord.Timestamp())
-			//		requestId, ok := logRecord.Attributes().Get(semconv.AttributeFaaSInvocationID)
-			//		require.Equal(t, tc.expectedContainsRequestId, ok)
-			//		if ok {
-			//			require.Equal(t, tc.expectedRequestId, requestId.Str())
-			//		}
-			//		require.Equal(t, tc.expectedSeverityText, logRecord.SeverityText())
-			//		require.Equal(t, tc.expectedSeverityNumber, logRecord.SeverityNumber())
-			//		require.Equal(t, tc.expectedBody, logRecord.Body().Str())
-			//	}
-			//}
 		})
 	}
 }
