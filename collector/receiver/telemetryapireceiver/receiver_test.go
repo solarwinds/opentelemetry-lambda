@@ -219,6 +219,21 @@ func TestCreateMetrics(t *testing.T) {
 						"status":    "success",
 					},
 				},
+				{
+					Time: "2024-05-15T23:59:39.317Z",
+					Type: "platform.report",
+					Record: map[string]any{
+						"metrics": map[string]any{
+							"billedDurationMs": 12456,
+							"durationMs":       13655.155,
+							"initDurationMs":   1819.881,
+							"maxMemoryUsedMB":  128,
+							"memorySizeMB":     128,
+						},
+						"requestId": "882e9658-570e-4b2f-aaa8-5dfb88f7abcb",
+						"status":    "success",
+					},
+				},
 			},
 		},
 	}

@@ -46,7 +46,7 @@ service:
       processors: [resource,resourcedetection,decouple]
       exporters: [otlp,logging]
     metrics:
-      receivers: [otlp,telemetryapi]
+      receivers: [otlp]
       processors: [resource,resourcedetection,decouple]
       exporters: [otlp,logging]
     logs:
