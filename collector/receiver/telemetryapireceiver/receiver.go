@@ -237,7 +237,6 @@ func (r *telemetryAPIReceiver) createLogs(slice []telemetryapi.Event) (plog.Logs
 				}
 				if level, ok := record["level"].(string); ok {
 					level = strings.ToUpper(level)
-					logRecord.SetSeverityText(level)
 					switch level {
 					case "TRACE":
 						logRecord.SetSeverityNumber(1)
@@ -287,8 +286,11 @@ func (r *telemetryAPIReceiver) createLogs(slice []telemetryapi.Event) (plog.Logs
 						logRecord.SetSeverityNumber(23)
 					case "FATAL4":
 						logRecord.SetSeverityNumber(24)
+					case "CRITICAL":
+						logRecord.SetSeverityNumber(21)
 					default:
 					}
+					logRecord.SetSeverityText(logRecord.SeverityNumber().String())
 				}
 				if requestId, ok := record["requestId"].(string); ok {
 					logRecord.Attributes().PutStr(semconv.AttributeFaaSInvocationID, requestId)
@@ -303,8 +305,8 @@ func (r *telemetryAPIReceiver) createLogs(slice []telemetryapi.Event) (plog.Logs
 				}
 			}
 		} else {
-			logRecord.SetSeverityText("INFO")
 			logRecord.SetSeverityNumber(9)
+			logRecord.SetSeverityText(logRecord.SeverityNumber().String())
 			if j, err := json.Marshal(el.Record); err == nil {
 				logRecord.Body().SetStr(string(j))
 			} else {
