@@ -108,6 +108,7 @@ func TestHandler(t *testing.T) {
 				&Config{},
 				receivertest.NewNopCreateSettings(),
 			)
+			r.registerTracesConsumer(&consumer)
 			req := httptest.NewRequest("POST",
 				"http://localhost:53612/someevent", strings.NewReader(tc.body))
 			rec := httptest.NewRecorder()

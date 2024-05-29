@@ -19,6 +19,7 @@ import (
 	crand "crypto/rand"
 	"encoding/binary"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"math/rand"
@@ -200,7 +201,7 @@ func (r *telemetryAPIReceiver) createTraces(slice []telemetryapi.Event) (ptrace.
 		}
 		return td, err
 	}
-	return ptrace.Traces{}, nil
+	return ptrace.Traces{}, errors.New("no traces created")
 }
 
 func (r *telemetryAPIReceiver) createMetrics(slice []telemetryapi.Event) (pmetric.Metrics, error) {
@@ -288,6 +289,8 @@ func (r *telemetryAPIReceiver) createLogs(slice []telemetryapi.Event) (plog.Logs
 						logRecord.SetSeverityNumber(24)
 					case "CRITICAL":
 						logRecord.SetSeverityNumber(21)
+					case "ALL":
+						logRecord.SetSeverityNumber(1)
 					default:
 					}
 					logRecord.SetSeverityText(logRecord.SeverityNumber().String())
