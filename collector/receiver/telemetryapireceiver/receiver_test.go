@@ -294,7 +294,7 @@ func TestCreateLogs(t *testing.T) {
 					},
 				},
 			},
-			expectedLogRecords:        1,
+			expectedLogRecords:        0,
 			expectedType:              "platform.initReport",
 			expectedTimestamp:         "2024-05-15T23:58:26.858Z",
 			expectedBody:              "{\"initializationType\":\"on-demand\",\"metrics\":{\"durationMs\":1819.081},\"phase\":\"init\",\"status\":\"success\"}",

@@ -216,16 +216,16 @@ func (r *telemetryAPIReceiver) createLogs(slice []telemetryapi.Event) (plog.Logs
 	scopeLog.Scope().SetName(scopeName)
 	for _, el := range slice {
 		r.logger.Debug(fmt.Sprintf("Event: %s", el.Type), zap.Any("event", el))
-		logRecord := scopeLog.LogRecords().AppendEmpty()
-		logRecord.Attributes().PutStr("type", el.Type)
-		if t, err := time.Parse(timeFormatLayout, el.Time); err == nil {
-			logRecord.SetTimestamp(pcommon.NewTimestampFromTime(t))
-			logRecord.SetObservedTimestamp(pcommon.NewTimestampFromTime(time.Now()))
-		} else {
-			r.logger.Error("error parsing time", zap.Error(err))
-			return plog.Logs{}, err
-		}
 		if el.Type == string(telemetryapi.Function) || el.Type == string(telemetryapi.Extension) {
+			logRecord := scopeLog.LogRecords().AppendEmpty()
+			logRecord.Attributes().PutStr("type", el.Type)
+			if t, err := time.Parse(timeFormatLayout, el.Time); err == nil {
+				logRecord.SetTimestamp(pcommon.NewTimestampFromTime(t))
+				logRecord.SetObservedTimestamp(pcommon.NewTimestampFromTime(time.Now()))
+			} else {
+				r.logger.Error("error parsing time", zap.Error(err))
+				return plog.Logs{}, err
+			}
 			if record, ok := el.Record.(map[string]interface{}); ok {
 				// in JSON format https://docs.aws.amazon.com/lambda/latest/dg/telemetry-schema-reference.html#telemetry-api-function
 				if timestamp, ok := record["timestamp"].(string); ok {
@@ -307,16 +307,17 @@ func (r *telemetryAPIReceiver) createLogs(slice []telemetryapi.Event) (plog.Logs
 					logRecord.Body().SetStr(line)
 				}
 			}
-		} else {
-			logRecord.SetSeverityNumber(9)
-			logRecord.SetSeverityText(logRecord.SeverityNumber().String())
-			if j, err := json.Marshal(el.Record); err == nil {
-				logRecord.Body().SetStr(string(j))
-			} else {
-				r.logger.Error("error stringify record", zap.Error(err))
-				return plog.Logs{}, err
-			}
 		}
+		//} else {
+		//	logRecord.SetSeverityNumber(9)
+		//	logRecord.SetSeverityText(logRecord.SeverityNumber().String())
+		//	if j, err := json.Marshal(el.Record); err == nil {
+		//		logRecord.Body().SetStr(string(j))
+		//	} else {
+		//		r.logger.Error("error stringify record", zap.Error(err))
+		//		return plog.Logs{}, err
+		//	}
+		//}
 	}
 	return log, nil
 }
