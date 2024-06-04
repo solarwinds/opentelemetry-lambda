@@ -71,7 +71,7 @@ func (r *telemetryAPIReceiver) Start(ctx context.Context, host component.Host) e
 	}()
 
 	telemetryClient := telemetryapi.NewClient(r.logger)
-	_, err := telemetryClient.Subscribe(ctx, []telemetryapi.EventType{telemetryapi.Platform, telemetryapi.Function}, r.extensionID, fmt.Sprintf("http://%s/", address))
+	_, err := telemetryClient.Subscribe(ctx, []telemetryapi.EventType{telemetryapi.Function}, r.extensionID, fmt.Sprintf("http://%s/", address))
 	if err != nil {
 		r.logger.Info("Listening for requests", zap.String("address", address), zap.String("extensionID", r.extensionID))
 		return err
@@ -120,29 +120,29 @@ func (r *telemetryAPIReceiver) httpHandler(w http.ResponseWriter, req *http.Requ
 		return
 	}
 
-	// traces
-	if r.nextTraces != nil {
-		if traces, err := r.createTraces(slice); err == nil {
-			if traces.SpanCount() > 0 {
-				err := r.nextTraces.ConsumeTraces(context.Background(), traces)
-				if err != nil {
-					r.logger.Error("error receiving traces", zap.Error(err))
-				}
-			}
-		}
-	}
-
-	// metrics
-	if r.nextMetrics != nil {
-		if metrics, err := r.createMetrics(slice); err == nil {
-			if metrics.MetricCount() > 0 {
-				err := r.nextMetrics.ConsumeMetrics(context.Background(), metrics)
-				if err != nil {
-					r.logger.Error("error receiving metrics", zap.Error(err))
-				}
-			}
-		}
-	}
+	//// traces
+	//if r.nextTraces != nil {
+	//	if traces, err := r.createTraces(slice); err == nil {
+	//		if traces.SpanCount() > 0 {
+	//			err := r.nextTraces.ConsumeTraces(context.Background(), traces)
+	//			if err != nil {
+	//				r.logger.Error("error receiving traces", zap.Error(err))
+	//			}
+	//		}
+	//	}
+	//}
+	//
+	//// metrics
+	//if r.nextMetrics != nil {
+	//	if metrics, err := r.createMetrics(slice); err == nil {
+	//		if metrics.MetricCount() > 0 {
+	//			err := r.nextMetrics.ConsumeMetrics(context.Background(), metrics)
+	//			if err != nil {
+	//				r.logger.Error("error receiving metrics", zap.Error(err))
+	//			}
+	//		}
+	//	}
+	//}
 
 	// Logs
 	if r.nextLogs != nil {
@@ -205,7 +205,7 @@ func (r *telemetryAPIReceiver) createTraces(slice []telemetryapi.Event) (ptrace.
 }
 
 func (r *telemetryAPIReceiver) createMetrics(slice []telemetryapi.Event) (pmetric.Metrics, error) {
-	return pmetric.Metrics{}, nil
+	return pmetric.Metrics{}, errors.New("no metrics created")
 }
 
 func (r *telemetryAPIReceiver) createLogs(slice []telemetryapi.Event) (plog.Logs, error) {

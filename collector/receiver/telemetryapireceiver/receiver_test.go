@@ -98,7 +98,7 @@ func TestHandler(t *testing.T) {
 				{"time":"2006-01-02T15:04:04.000Z", "type":"platform.initStart", "record": {}},
 				{"time":"2006-01-02T15:04:05.000Z", "type":"platform.initRuntimeDone", "record": {}}
 			]`,
-			expectedSpans: 1,
+			expectedSpans: 0,
 		},
 	}
 	for _, tc := range testCases {
