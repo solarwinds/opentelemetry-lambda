@@ -21,6 +21,7 @@ import (
 	"testing"
 	"time"
 
+	telemetryapi "github.com/open-telemetry/opentelemetry-lambda/collector/receiver/telemetryapireceiver/internal/telemetryapi"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/pdata/pcommon"
@@ -103,7 +104,7 @@ func TestHandler(t *testing.T) {
 				{"time":"2006-01-02T15:04:04.000Z", "type":"platform.initStart", "record": {}},
 				{"time":"2006-01-02T15:04:05.000Z", "type":"platform.initRuntimeDone", "record": {}}
 			]`,
-			expectedSpans: 1,
+			expectedSpans: 0,
 		},
 	}
 	for _, tc := range testCases {
@@ -174,7 +175,7 @@ func TestCreateLogs(t *testing.T) {
 
 	testCases := []struct {
 		desc                      string
-		slice                     []event
+		slice                     []telemetryapi.event
 		expectedLogRecords        int
 		expectedType              string
 		expectedTimestamp         string
@@ -192,7 +193,7 @@ func TestCreateLogs(t *testing.T) {
 		},
 		{
 			desc: "Invalid Timestamp",
-			slice: []event{
+			slice: []telemetryapi.event{
 				{
 					Time:   "invalid",
 					Type:   "function",
@@ -203,7 +204,7 @@ func TestCreateLogs(t *testing.T) {
 		},
 		{
 			desc: "function text",
-			slice: []event{
+			slice: []telemetryapi.Event{
 				{
 					Time:   "2022-10-12T00:03:50.000Z",
 					Type:   "function",
@@ -221,7 +222,7 @@ func TestCreateLogs(t *testing.T) {
 		},
 		{
 			desc: "function json",
-			slice: []event{
+			slice: []telemetryapi.Event{
 				{
 					Time: "2022-10-12T00:03:50.000Z",
 					Type: "function",
@@ -245,7 +246,7 @@ func TestCreateLogs(t *testing.T) {
 		},
 		{
 			desc: "extension text",
-			slice: []event{
+			slice: []telemetryapi.Event{
 				{
 					Time:   "2022-10-12T00:03:50.000Z",
 					Type:   "extension",
@@ -263,7 +264,7 @@ func TestCreateLogs(t *testing.T) {
 		},
 		{
 			desc: "extension json",
-			slice: []event{
+			slice: []telemetryapi.Event{
 				{
 					Time: "2022-10-12T00:03:50.000Z",
 					Type: "extension",
@@ -287,7 +288,7 @@ func TestCreateLogs(t *testing.T) {
 		},
 		{
 			desc: "extension json anything",
-			slice: []event{
+			slice: []telemetryapi.event{
 				{
 					Time: "2022-10-12T00:03:50.000Z",
 					Type: "extension",

@@ -19,6 +19,7 @@ import (
 	crand "crypto/rand"
 	"encoding/binary"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"math/rand"
@@ -29,6 +30,7 @@ import (
 	"time"
 
 	"github.com/golang-collections/go-datastructures/queue"
+	telemetryapi "github.com/open-telemetry/opentelemetry-lambda/collector/receiver/telemetryapireceiver/internal/telemetryapi"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/pdata/pcommon"
@@ -37,8 +39,6 @@ import (
 	"go.opentelemetry.io/collector/receiver"
 	semconv "go.opentelemetry.io/collector/semconv/v1.25.0"
 	"go.uber.org/zap"
-
-	"github.com/open-telemetry/opentelemetry-lambda/collector/internal/telemetryapi"
 )
 
 const initialQueueSize = 5
@@ -116,12 +116,53 @@ func (r *telemetryAPIReceiver) httpHandler(w http.ResponseWriter, req *http.Requ
 		return
 	}
 
-	var slice []event
+	var slice []telemetryapi.Event
 	if err := json.Unmarshal(body, &slice); err != nil {
 		r.logger.Error("error unmarshalling body", zap.Error(err))
 		return
 	}
 
+	//// traces
+	//if r.nextTraces != nil {
+	//	if traces, err := r.createTraces(slice); err == nil {
+	//		if traces.SpanCount() > 0 {
+	//			err := r.nextTraces.ConsumeTraces(context.Background(), traces)
+	//			if err != nil {
+	//				r.logger.Error("error receiving traces", zap.Error(err))
+	//			}
+	//		}
+	//	}
+	//}
+	//
+	//// metrics
+	//if r.nextMetrics != nil {
+	//	if metrics, err := r.createMetrics(slice); err == nil {
+	//		if metrics.MetricCount() > 0 {
+	//			err := r.nextMetrics.ConsumeMetrics(context.Background(), metrics)
+	//			if err != nil {
+	//				r.logger.Error("error receiving metrics", zap.Error(err))
+	//			}
+	//		}
+	//	}
+	//}
+
+	// Logs
+	if r.nextLogs != nil {
+		if logs, err := r.createLogs(slice); err == nil {
+			if logs.LogRecordCount() > 0 {
+				err := r.nextLogs.ConsumeLogs(context.Background(), logs)
+				if err != nil {
+					r.logger.Error("error receiving logs", zap.Error(err))
+				}
+			}
+		}
+	}
+
+	r.logger.Debug("logEvents received", zap.Int("count", len(slice)), zap.Int64("queue_length", r.queue.Len()))
+	slice = nil
+}
+
+func (r *telemetryAPIReceiver) createTraces(slice []telemetryapi.Event) (ptrace.Traces, error) {
 	for _, el := range slice {
 		r.logger.Debug(fmt.Sprintf("Event: %s", el.Type), zap.Any("event", el))
 		switch el.Type {
@@ -179,9 +220,19 @@ func (r *telemetryAPIReceiver) httpHandler(w http.ResponseWriter, req *http.Requ
 			}
 		}
 	}
+	return log, nil
+}
 
-	r.logger.Debug("logEvents received", zap.Int("count", len(slice)), zap.Int64("queue_length", r.queue.Len()))
-	slice = nil
+func (r *telemetryAPIReceiver) registerTracesConsumer(next consumer.Traces) {
+	r.nextTraces = next
+}
+
+func (r *telemetryAPIReceiver) registerMetricsConsumer(next consumer.Metrics) {
+	r.nextMetrics = next
+}
+
+func (r *telemetryAPIReceiver) registerLogsConsumer(next consumer.Logs) {
+	r.nextLogs = next
 }
 
 func (r *telemetryAPIReceiver) createLogs(slice []event) (plog.Logs, error) {
@@ -281,7 +332,6 @@ func (r *telemetryAPIReceiver) createPlatformInitSpan(start, end string) (ptrace
 	traceData := ptrace.NewTraces()
 	rs := traceData.ResourceSpans().AppendEmpty()
 	r.resource.CopyTo(rs.Resource())
-
 	ss := rs.ScopeSpans().AppendEmpty()
 	ss.Scope().SetName(scopeName)
 	span := ss.Spans().AppendEmpty()

@@ -1,10 +1,10 @@
-name: "Release Collector Lambda layer"
+name: "Release Staging Collector Lambda layer"
 
 on:
   # (Using tag push instead of release to allow filtering by tag prefix.)
   push:
     tags:
-      - layer-collector/**
+      - layer-staging-collector/**
 
 permissions:
   id-token: write
@@ -76,6 +76,6 @@ jobs:
       layer-name: opentelemetry-collector
       component-version: ${{needs.build-layer.outputs.COLLECTOR_VERSION}}
       architecture: ${{ matrix.architecture }}
-      release-group: prod
+      release-group: staging
       aws_region: ${{ matrix.aws_region }}
     secrets: inherit
