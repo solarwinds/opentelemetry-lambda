@@ -134,7 +134,7 @@ func (r *telemetryAPIReceiver) httpHandler(w http.ResponseWriter, req *http.Requ
 		}
 	}
 
-	// Logs
+	// logs
 	if r.nextLogs != nil {
 		if logs, err := r.createLogs(slice); err == nil {
 			if logs.LogRecordCount() > 0 {
