@@ -104,7 +104,7 @@ func TestHandler(t *testing.T) {
 				{"time":"2006-01-02T15:04:04.000Z", "type":"platform.initStart", "record": {}},
 				{"time":"2006-01-02T15:04:05.000Z", "type":"platform.initRuntimeDone", "record": {}}
 			]`,
-			expectedSpans: 0,
+			expectedSpans: 1,
 		},
 	}
 	for _, tc := range testCases {
@@ -175,7 +175,7 @@ func TestCreateLogs(t *testing.T) {
 
 	testCases := []struct {
 		desc                      string
-		slice                     []telemetryapi.event
+		slice                     []telemetryapi.Event
 		expectedLogRecords        int
 		expectedType              string
 		expectedTimestamp         string
@@ -193,7 +193,7 @@ func TestCreateLogs(t *testing.T) {
 		},
 		{
 			desc: "Invalid Timestamp",
-			slice: []telemetryapi.event{
+			slice: []telemetryapi.Event{
 				{
 					Time:   "invalid",
 					Type:   "function",
@@ -288,7 +288,7 @@ func TestCreateLogs(t *testing.T) {
 		},
 		{
 			desc: "extension json anything",
-			slice: []telemetryapi.event{
+			slice: []telemetryapi.Event{
 				{
 					Time: "2022-10-12T00:03:50.000Z",
 					Type: "extension",

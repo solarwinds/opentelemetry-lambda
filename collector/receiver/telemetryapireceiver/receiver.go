@@ -122,29 +122,17 @@ func (r *telemetryAPIReceiver) httpHandler(w http.ResponseWriter, req *http.Requ
 		return
 	}
 
-	//// traces
-	//if r.nextTraces != nil {
-	//	if traces, err := r.createTraces(slice); err == nil {
-	//		if traces.SpanCount() > 0 {
-	//			err := r.nextTraces.ConsumeTraces(context.Background(), traces)
-	//			if err != nil {
-	//				r.logger.Error("error receiving traces", zap.Error(err))
-	//			}
-	//		}
-	//	}
-	//}
-	//
-	//// metrics
-	//if r.nextMetrics != nil {
-	//	if metrics, err := r.createMetrics(slice); err == nil {
-	//		if metrics.MetricCount() > 0 {
-	//			err := r.nextMetrics.ConsumeMetrics(context.Background(), metrics)
-	//			if err != nil {
-	//				r.logger.Error("error receiving metrics", zap.Error(err))
-	//			}
-	//		}
-	//	}
-	//}
+	// traces
+	if r.nextTraces != nil {
+		if traces, err := r.createTraces(slice); err == nil {
+			if traces.SpanCount() > 0 {
+				err := r.nextTraces.ConsumeTraces(context.Background(), traces)
+				if err != nil {
+					r.logger.Error("error receiving traces", zap.Error(err))
+				}
+			}
+		}
+	}
 
 	// Logs
 	if r.nextLogs != nil {
@@ -196,46 +184,18 @@ func (r *telemetryAPIReceiver) createTraces(slice []telemetryapi.Event) (ptrace.
 		// case "platform.logsDropped":
 	}
 	if len(r.lastPlatformStartTime) > 0 && len(r.lastPlatformEndTime) > 0 {
-		if td, err := r.createPlatformInitSpan(r.lastPlatformStartTime, r.lastPlatformEndTime); err == nil {
-			if r.nextTraces != nil {
-				err := r.nextTraces.ConsumeTraces(context.Background(), td)
-				if err == nil {
-					r.lastPlatformEndTime = ""
-					r.lastPlatformStartTime = ""
-				} else {
-					r.logger.Error("error receiving traces", zap.Error(err))
-				}
-			}
+		td, err := r.createPlatformInitSpan(r.lastPlatformStartTime, r.lastPlatformEndTime)
+		if err == nil {
+			r.lastPlatformEndTime = ""
+			r.lastPlatformStartTime = ""
 		}
+		return td, err
 	}
 
-	// Logs
-	if r.nextLogs != nil {
-		if logs, err := r.createLogs(slice); err == nil {
-			if logs.LogRecordCount() > 0 {
-				err := r.nextLogs.ConsumeLogs(context.Background(), logs)
-				if err != nil {
-					r.logger.Error("error receiving logs", zap.Error(err))
-				}
-			}
-		}
-	}
-	return log, nil
+	return ptrace.Traces{}, errors.New("no traces created")
 }
 
-func (r *telemetryAPIReceiver) registerTracesConsumer(next consumer.Traces) {
-	r.nextTraces = next
-}
-
-func (r *telemetryAPIReceiver) registerMetricsConsumer(next consumer.Metrics) {
-	r.nextMetrics = next
-}
-
-func (r *telemetryAPIReceiver) registerLogsConsumer(next consumer.Logs) {
-	r.nextLogs = next
-}
-
-func (r *telemetryAPIReceiver) createLogs(slice []event) (plog.Logs, error) {
+func (r *telemetryAPIReceiver) createLogs(slice []telemetryapi.Event) (plog.Logs, error) {
 	log := plog.NewLogs()
 	resourceLog := log.ResourceLogs().AppendEmpty()
 	r.resource.CopyTo(resourceLog.Resource())
