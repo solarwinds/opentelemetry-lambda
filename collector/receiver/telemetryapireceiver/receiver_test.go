@@ -466,3 +466,26 @@ func TestSeverityTextToNumber(t *testing.T) {
 
 	}
 }
+
+func TestParseTimestamp(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		timestamp string
+		expected  time.Time
+	}{
+		{
+			timestamp: "2024-07-05T21:12:37Z",
+			expected:  time.Date(2024, time.July, 5, 21, 12, 37, 0, time.UTC),
+		},
+		{
+			timestamp: "2024-07-09T10:53:34.689Z",
+			expected:  time.Date(2024, time.July, 9, 10, 53, 34, 689*1000*1000, time.UTC),
+		},
+	}
+	for _, tc := range testCases {
+		parsed, err := parseTimestamp(tc.timestamp)
+		require.NoError(t, err)
+		require.Equal(t, tc.expected, parsed)
+	}
+}
