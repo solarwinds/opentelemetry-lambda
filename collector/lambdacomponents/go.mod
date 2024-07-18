@@ -144,7 +144,7 @@ require (
 	github.com/rs/cors v1.10.1 // indirect
 	github.com/shirou/gopsutil/v3 v3.24.4 // indirect
 	github.com/shoenig/go-m1cpu v0.1.6 // indirect
-	github.com/solarwindscloud/apm-proto v1.0.3 // indirect
+	github.com/solarwindscloud/apm-proto v1.0.5 // indirect
 	github.com/spf13/cobra v1.8.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
