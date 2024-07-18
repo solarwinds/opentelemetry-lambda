@@ -207,7 +207,7 @@ func (extension *solarwindsapmSettingsExtension) Start(ctx context.Context, _ co
 	} else {
 		extension.logger.Error("Bundled the hardcoded cert")
 	}
-  var err error
+	var err error
 	extension.conn, err = grpc.Dial(extension.config.Endpoint, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{RootCAs: certPool})))
 	if err != nil {
 		return err
