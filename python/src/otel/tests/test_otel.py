@@ -59,7 +59,7 @@ class MockLambdaContext:
 
 MOCK_LAMBDA_CONTEXT = MockLambdaContext(
     aws_request_id="mock_aws_request_id",
-    invoked_function_arn="arn://mock-lambda-function-arn",
+    invoked_function_arn="arn:aws:lambda:us-west-2:123456789012:function:my-function",
 )
 
 MOCK_XRAY_TRACE_ID = 0x5FB7331105E8BB83207FA31D4D9CDB4C
@@ -227,8 +227,8 @@ class TestAwsLambdaInstrumentor(TestBase):
         self.assertSpanHasAttributes(
             span,
             {
-                ResourceAttributes.FAAS_ID: MOCK_LAMBDA_CONTEXT.invoked_function_arn,
-                SpanAttributes.FAAS_EXECUTION: MOCK_LAMBDA_CONTEXT.aws_request_id,
+                ResourceAttributes.CLOUD_RESOURCE_ID: MOCK_LAMBDA_CONTEXT.invoked_function_arn,
+                SpanAttributes.FAAS_INVOCATION_ID: MOCK_LAMBDA_CONTEXT.aws_request_id,
             },
         )
 
