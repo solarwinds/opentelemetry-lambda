@@ -21,6 +21,7 @@ updates:
       - "/collector/processor/coldstartprocessor"
       - "/collector/processor/decoupleprocessor"
       - "/collector/receiver/telemetryapireceiver"
+      - "/collector/extension/solarwindsapmsettingsextension"
       - "/go/sample-apps/function"
     schedule:
       interval: "weekly"
