@@ -21,7 +21,7 @@ import (
 
 const (
 	JSONOutputFile      = "/tmp/solarwinds-apm-settings.json"
-	GrpcContextDeadline = time.Duration(1) * time.Second
+	GrpcContextDeadline = time.Duration(2) * time.Second
 )
 
 type solarwindsapmSettingsExtension struct {
@@ -178,15 +178,15 @@ func (extension *solarwindsapmSettingsExtension) Start(ctx context.Context, _ co
 	if err != nil {
 		return err
 	}
-	extension.conn, err = grpc.NewClient(extension.config.Endpoint, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{RootCAs: systemCertPool})))
+	extension.conn, err = grpc.Dial(extension.config.Endpoint, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{RootCAs: systemCertPool})))
 	if err != nil {
 		return err
 	}
 	extension.logger.Info("grpc.Dial to " + extension.config.Endpoint)
 	extension.client = collectorpb.NewTraceCollectorClient(extension.conn)
 
-	// initial refresh
-	refresh(extension)
+	//// initial refresh
+	//refresh(extension)
 
 	go func() {
 		ticker := time.NewTicker(extension.config.Interval)
