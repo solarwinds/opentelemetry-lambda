@@ -22,43 +22,6 @@ import (
 const (
 	JSONOutputFile      = "/tmp/solarwinds-apm-settings.json"
 	GrpcContextDeadline = time.Duration(1) * time.Second
-	Cert                = `-----BEGIN CERTIFICATE-----
-MIIGeDCCBWCgAwIBAgIQA3Oe8N8Yjiru3H/RGzOVkDANBgkqhkiG9w0BAQsFADA8
-MQswCQYDVQQGEwJVUzEPMA0GA1UEChMGQW1hem9uMRwwGgYDVQQDExNBbWF6b24g
-UlNBIDIwNDggTTAzMB4XDTI0MDEyMTAwMDAwMFoXDTI1MDIxOTIzNTk1OVowJzEl
-MCMGA1UEAwwcKi5uYS0wMS5jbG91ZC5zb2xhcndpbmRzLmNvbTCCASIwDQYJKoZI
-hvcNAQEBBQADggEPADCCAQoCggEBAJzFsCYa1dmTHgjIpY0FMdsatA8+ipChW/FD
-R2fRSjVx4SAOl+RNhuXnWIpFwLOp6kr9/T6XEagu4NHoPqdRjx7wsij201FuciJd
-GbHQO17a2amklHCrAoyyTd3sld5U8RT4vRUtWTFR0zX+fLJrCS/Ecb0O92xP8J0p
-Rts9D5SBWHgFk5NkB6INl+EVVmwhMUHHdhHtimmuyISuCKdLCdwrUrHoLj6LI1aG
-WvNLhPxBK5QMLqGBXwzmjJPNM5+fIr833WGf7San3+DtF+ACN+kvWYBwEOoWVEsb
-C9upzkgQ0mrqij50bu4xlznAQv8EyxZvhVUoCLnBRpq44eAcCw8CAwEAAaOCA4kw
-ggOFMB8GA1UdIwQYMBaAFFXZGF/SHMwB4Vi0vqvZVUIB1y4CMB0GA1UdDgQWBBQz
-puQomVZ2Ft+6WcSyWLVHO4EZfzCBuQYDVR0RBIGxMIGughwqLm5hLTAxLmNsb3Vk
-LnNvbGFyd2luZHMuY29tgiYqLmNvbGxlY3Rvci5kYy0wMS5jbG91ZC5zb2xhcndp
-bmRzLmNvbYIgKi5jb2xsZWN0b3IuY2xvdWQuc29sYXJ3aW5kcy5jb22CHCouZGMt
-MDEuY2xvdWQuc29sYXJ3aW5kcy5jb22CJiouY29sbGVjdG9yLm5hLTAxLmNsb3Vk
-LnNvbGFyd2luZHMuY29tMBMGA1UdIAQMMAowCAYGZ4EMAQIBMA4GA1UdDwEB/wQE
-AwIFoDAdBgNVHSUEFjAUBggrBgEFBQcDAQYIKwYBBQUHAwIwOwYDVR0fBDQwMjAw
-oC6gLIYqaHR0cDovL2NybC5yMm0wMy5hbWF6b250cnVzdC5jb20vcjJtMDMuY3Js
-MHUGCCsGAQUFBwEBBGkwZzAtBggrBgEFBQcwAYYhaHR0cDovL29jc3AucjJtMDMu
-YW1hem9udHJ1c3QuY29tMDYGCCsGAQUFBzAChipodHRwOi8vY3J0LnIybTAzLmFt
-YXpvbnRydXN0LmNvbS9yMm0wMy5jZXIwDAYDVR0TAQH/BAIwADCCAX8GCisGAQQB
-1nkCBAIEggFvBIIBawFpAHcATnWjJ1yaEMM4W2zU3z9S6x3w4I4bjWnAsfpksWKa
-Od8AAAGNKVzSFQAABAMASDBGAiEA9vyqHQW6/weVAF+M0fF2nAFWny8zOxnlKBZh
-UIGav6wCIQDj5pdnkH20v5x3yeRI3U4G+Gd5tzUMSKC9DgegE402HQB2AH1ZHhLh
-eCp7HGFnfF79+NCHXBSgTpWeuQMv2Q6MLnm4AAABjSlc0kAAAAQDAEcwRQIgc1HX
-ZloOkamcWsgICGJZMGroKtdVSr1ICAD9m+EmJWsCIQCeran8qAK8nH6uHtBK8mjs
-tEIf8iR8SMAhgmS2Jaw8QQB2AObSMWNAd4zBEEEG13G5zsHSQPaWhIb7uocyHf0e
-N45QAAABjSlc0l4AAAQDAEcwRQIhAK4CV77Lwm3PNQLw2PaSPEFmJIKVoefHyGxF
-FJ7FPWe2AiAMbJAlGLX8e7+Mrl5AvWnFzFLzA8sZLHkJBHirQ/XX0jANBgkqhkiG
-9w0BAQsFAAOCAQEAitigIgKeHfs/AzjcrsBp/jyVdCAykSMHfkMlqklArSfzfXtt
-Ljo1Kfri76Mf5VSMWiRc1toaVNlNwn6+lWL276pPgzKq8RCemGu5gsrlHqLsJ1kX
-je+ou/+2NPpBURd868jmLiiNscCcp4UHWPpfaoeijIGb5G1BStiSzvaYe4OGTkTA
-AvJ87WeatZOmgknRDIRKqz7jIlMQgSI8iycxS+/kBOUO7KzsJp30jQTXi8UK2riM
-j33Li5/9wBKv8q0cy5uNwHokP2IuIC6OkO0wF0Q69L1pOttftFbUMn6xexjJbUru
-7FZXpJ1569+Yk28hNbeIqqu+cia0zgpz26pOkg==
------END CERTIFICATE-----`
 )
 
 type solarwindsapmSettingsExtension struct {
@@ -211,15 +174,11 @@ func (extension *solarwindsapmSettingsExtension) Start(ctx context.Context, _ co
 	extension.logger.Info("Starting up solarwinds apm settings extension")
 	ctx = context.Background()
 	ctx, extension.cancel = context.WithCancel(ctx)
-	certPool := x509.NewCertPool()
-	cert := []byte(Cert)
-	if ok := certPool.AppendCertsFromPEM(cert); !ok {
-		extension.logger.Error("Unable to bundle cert")
-	} else {
-		extension.logger.Error("Bundled the hardcoded cert")
+	systemCertPool, err := x509.SystemCertPool()
+	if err != nil {
+		return err
 	}
-	var err error
-	extension.conn, err = grpc.Dial(extension.config.Endpoint, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{RootCAs: certPool})))
+	extension.conn, err = grpc.NewClient(extension.config.Endpoint, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{RootCAs: systemCertPool})))
 	if err != nil {
 		return err
 	}
