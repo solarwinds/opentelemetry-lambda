@@ -78,10 +78,10 @@ func (c *Client) Subscribe(ctx context.Context, eventTypes []EventType, extensio
 	headers := make(map[string]string)
 	headers[lambdaAgentIdentifierHeaderKey] = extensionID
 
-	c.logger.Info("Subscribing", zap.String("baseURL", c.baseURL), zap.Any("types", eventTypes))
+	c.logger.Info("Subscribing", zap.String("baseURL", c.baseURL), zap.Any("types", eventTypes), zap.String("extensionID", extensionID))
 	resp, err := httpPutWithHeaders(ctx, c.httpClient, c.baseURL, data, headers)
 	if err != nil {
-		c.logger.Error("Subscription failed", zap.Error(err))
+		c.logger.Error("Subscription failed"+err.Error(), zap.Error(err))
 		return "", err
 	}
 	defer resp.Body.Close()
