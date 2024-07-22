@@ -49,13 +49,7 @@ func NewClient(logger *zap.Logger) *Client {
 	}
 }
 
-func (c *Client) Subscribe(ctx context.Context, extensionID string, listenerURI string) (string, error) {
-	eventTypes := []EventType{
-		Platform,
-		// Function,
-		// Extension,
-	}
-
+func (c *Client) Subscribe(ctx context.Context, eventTypes []EventType, extensionID string, listenerURI string) (string, error) {
 	bufferingConfig := BufferingCfg{
 		MaxItems:  1000,
 		MaxBytes:  256 * 1024,
@@ -84,7 +78,7 @@ func (c *Client) Subscribe(ctx context.Context, extensionID string, listenerURI 
 	headers := make(map[string]string)
 	headers[lambdaAgentIdentifierHeaderKey] = extensionID
 
-	c.logger.Info("Subscribing", zap.String("baseURL", c.baseURL))
+	c.logger.Info("Subscribing", zap.String("baseURL", c.baseURL), zap.Any("types", eventTypes), zap.String("extensionID", extensionID))
 	resp, err := httpPutWithHeaders(ctx, c.httpClient, c.baseURL, data, headers)
 	if err != nil {
 		c.logger.Error("Subscription failed", zap.Error(err))
