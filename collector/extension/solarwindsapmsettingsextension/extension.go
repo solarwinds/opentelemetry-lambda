@@ -21,7 +21,7 @@ import (
 
 const (
 	JSONOutputFile      = "/tmp/solarwinds-apm-settings.json"
-	GrpcContextDeadline = time.Duration(10) * time.Second
+	GrpcContextDeadline = time.Duration(5) * time.Second
 )
 
 type solarwindsapmSettingsExtension struct {
@@ -176,12 +176,14 @@ func (extension *solarwindsapmSettingsExtension) Start(ctx context.Context, _ co
 	ctx, extension.cancel = context.WithCancel(ctx)
 	systemCertPool, err := x509.SystemCertPool()
 	if err != nil {
+		extension.logger.Error("Getting system cert pool failed: ", zap.Error(err))
 		return err
 	}
 	subjects := systemCertPool.Subjects()
 	extension.logger.Info("Loading system certificates", zap.Int("numberOfCertificates", len(subjects)))
 	extension.conn, err = grpc.NewClient(extension.config.Endpoint, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{RootCAs: systemCertPool})))
 	if err != nil {
+		extension.logger.Error("grpc.NewClient creation failed: ", zap.Error(err))
 		return err
 	}
 	extension.logger.Info("Created a grpc.NewClient", zap.String("endpoint", extension.config.Endpoint))

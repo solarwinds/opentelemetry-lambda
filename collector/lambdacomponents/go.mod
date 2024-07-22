@@ -128,6 +128,7 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/sampling v0.102.0 // indirect
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/prometheus v0.102.0 // indirect
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/prometheusremotewrite v0.102.0 // indirect
+	github.com/open-telemetry/opentelemetry-lambda/collector v0.0.0-00010101000000-000000000000 // indirect
 	github.com/open-telemetry/opentelemetry-lambda/collector/lambdalifecycle v0.0.0-00010101000000-000000000000 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.0 // indirect
