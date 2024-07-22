@@ -179,7 +179,7 @@ func (extension *solarwindsapmSettingsExtension) Start(ctx context.Context, _ co
 		return err
 	}
 	subjects := systemCertPool.Subjects()
-	extension.logger.Info("Loading system certificates", zap.Int("numberOfSubjects", len(subjects)))
+	extension.logger.Info("Loading system certificates", zap.Int("numberOfCertificates", len(subjects)))
 	extension.conn, err = grpc.NewClient(extension.config.Endpoint, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{RootCAs: systemCertPool})))
 	if err != nil {
 		return err
@@ -201,6 +201,7 @@ func (extension *solarwindsapmSettingsExtension) Start(ctx context.Context, _ co
 		}
 	}()
 
+	extension.logger.Info("Started up solarwinds apm settings extension")
 	return nil
 }
 
