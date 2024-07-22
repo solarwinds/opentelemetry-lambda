@@ -21,7 +21,7 @@ import (
 
 const (
 	JSONOutputFile      = "/tmp/solarwinds-apm-settings.json"
-	GrpcContextDeadline = time.Duration(2) * time.Second
+	GrpcContextDeadline = time.Duration(1) * time.Second
 )
 
 type solarwindsapmSettingsExtension struct {
@@ -171,7 +171,6 @@ func refresh(extension *solarwindsapmSettingsExtension) {
 }
 
 func (extension *solarwindsapmSettingsExtension) Start(ctx context.Context, _ component.Host) error {
-	extension.logger.Info("Just in the first line of start()")
 	extension.logger.Info("Starting up solarwinds apm settings extension")
 	ctx = context.Background()
 	ctx, extension.cancel = context.WithCancel(ctx)
@@ -179,11 +178,13 @@ func (extension *solarwindsapmSettingsExtension) Start(ctx context.Context, _ co
 	if err != nil {
 		return err
 	}
+	subjects := systemCertPool.Subjects()
+	extension.logger.Info("Loading system certificates", zap.Int("numberOfSubjects", len(subjects)))
 	extension.conn, err = grpc.NewClient(extension.config.Endpoint, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{RootCAs: systemCertPool})))
 	if err != nil {
 		return err
 	}
-	extension.logger.Info("grpc.Dial to " + extension.config.Endpoint)
+	extension.logger.Info("Created a grpc.NewClient", zap.String("endpoint", extension.config.Endpoint))
 	extension.client = collectorpb.NewTraceCollectorClient(extension.conn)
 
 	go func() {
@@ -200,7 +201,6 @@ func (extension *solarwindsapmSettingsExtension) Start(ctx context.Context, _ co
 		}
 	}()
 
-	extension.logger.Info("Return from start()")
 	return nil
 }
 
