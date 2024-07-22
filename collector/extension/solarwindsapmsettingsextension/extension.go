@@ -21,7 +21,7 @@ import (
 
 const (
 	JSONOutputFile      = "/tmp/solarwinds-apm-settings.json"
-	GrpcContextDeadline = time.Duration(1) * time.Second
+	GrpcContextDeadline = time.Duration(10) * time.Second
 )
 
 type solarwindsapmSettingsExtension struct {
