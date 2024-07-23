@@ -53,7 +53,7 @@ func (c *Client) Subscribe(ctx context.Context, eventTypes []EventType, extensio
 	bufferingConfig := BufferingCfg{
 		MaxItems:  1000,
 		MaxBytes:  256 * 1024,
-		TimeoutMS: 100,
+		TimeoutMS: 25,
 	}
 
 	destination := Destination{
