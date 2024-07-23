@@ -181,7 +181,7 @@ func (extension *solarwindsapmSettingsExtension) Start(_ context.Context, _ comp
 	}
 	extension.logger.Info("Got system cert pool")
 	subjects := systemCertPool.Subjects()
-	extension.logger.Info("Loading system certificates", zap.Int("numberOfCertificates", len(subjects)))
+	extension.logger.Info("Loaded system certificates", zap.Int("numberOfCertificates", len(subjects)))
 	extension.conn, err = grpc.NewClient(extension.config.Endpoint, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{RootCAs: systemCertPool})))
 	if err != nil {
 		extension.logger.Error("grpc.NewClient creation failed: ", zap.Error(err))
@@ -207,7 +207,6 @@ func (extension *solarwindsapmSettingsExtension) Start(_ context.Context, _ comp
 		}
 	}()
 
-	extension.logger.Info("Started up solarwinds apm settings extension")
 	return nil
 }
 
