@@ -172,6 +172,8 @@ func refresh(extension *solarwindsapmSettingsExtension) {
 
 func (extension *solarwindsapmSettingsExtension) Start(_ context.Context, _ component.Host) error {
 	extension.logger.Info("Starting up solarwinds apm settings extension")
+	ctx := context.Background()
+	ctx, extension.cancel = context.WithCancel(ctx)
 	systemCertPool, err := x509.SystemCertPool()
 	if err != nil {
 		extension.logger.Error("Getting system cert pool failed: ", zap.Error(err))
@@ -188,10 +190,8 @@ func (extension *solarwindsapmSettingsExtension) Start(_ context.Context, _ comp
 	extension.logger.Info("Created a grpc.NewClient", zap.String("endpoint", extension.config.Endpoint))
 	extension.client = collectorpb.NewTraceCollectorClient(extension.conn)
 
+	// initial refresh
 	refresh(extension)
-
-	ctx := context.Background()
-	ctx, extension.cancel = context.WithCancel(ctx)
 
 	go func() {
 		ticker := time.NewTicker(extension.config.Interval)
