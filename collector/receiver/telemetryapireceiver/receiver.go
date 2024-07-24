@@ -76,6 +76,8 @@ func (r *telemetryAPIReceiver) Start(ctx context.Context, _ component.Host) erro
 			r.logger.Error("Cannot register Telemetry API client", zap.Error(err))
 			return err
 		}
+	} else {
+		r.logger.Info("types list is empty. Nothing subscribed")
 	}
 	return nil
 }
