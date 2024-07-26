@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"go.opentelemetry.io/collector/pdata/pmetric"
 	"io"
 	"math/rand"
 	"net/http"
@@ -30,7 +31,7 @@ import (
 	"time"
 
 	"github.com/golang-collections/go-datastructures/queue"
-	telemetryapi "github.com/open-telemetry/opentelemetry-lambda/collector/internal/telemetryapi"
+	telemetryapi "github.com/open-telemetry/opentelemetry-lambda/collector/receiver/telemetryapireceiver/internal/telemetryapi"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/pdata/pcommon"
@@ -49,6 +50,7 @@ type telemetryAPIReceiver struct {
 	logger                *zap.Logger
 	queue                 *queue.Queue // queue is a synchronous queue and is used to put the received log events to be dispatched later
 	nextTraces            consumer.Traces
+	nextMetrics           consumer.Metrics
 	nextLogs              consumer.Logs
 	lastPlatformStartTime string
 	lastPlatformEndTime   string
@@ -56,6 +58,10 @@ type telemetryAPIReceiver struct {
 	port                  int
 	types                 []telemetryapi.EventType
 	resource              pcommon.Resource
+	coldStartCounter      int64
+	errorsCounter         int64
+	invocationsCounter    int64
+	timeoutsCounter       int64
 }
 
 func (r *telemetryAPIReceiver) Start(ctx context.Context, _ component.Host) error {
@@ -135,6 +141,18 @@ func (r *telemetryAPIReceiver) httpHandler(_ http.ResponseWriter, req *http.Requ
 		}
 	}
 
+	// metrics
+	if r.nextMetrics != nil {
+		if metrics, err := r.createMetrics(slice); err == nil {
+			if metrics.DataPointCount() > 0 {
+				err := r.nextMetrics.ConsumeMetrics(context.Background(), metrics)
+				if err != nil {
+					r.logger.Error("error receiving metrics", zap.Error(err))
+				}
+			}
+		}
+	}
+
 	// logs
 	if r.nextLogs != nil {
 		if logs, err := r.createLogs(slice); err == nil {
@@ -196,9 +214,58 @@ func (r *telemetryAPIReceiver) createTraces(slice []telemetryapi.Event) (ptrace.
 	return ptrace.Traces{}, errors.New("no traces created")
 }
 
+func (r *telemetryAPIReceiver) createMetrics(slice []telemetryapi.Event) (pmetric.Metrics, error) {
+	metrics := pmetric.NewMetrics()
+	resourceMetric := metrics.ResourceMetrics().AppendEmpty()
+	r.resource.CopyTo(resourceMetric.Resource())
+	scopeMetric := resourceMetric.ScopeMetrics().AppendEmpty()
+	scopeMetric.Scope().SetName(scopeName)
+	for _, el := range slice {
+		r.logger.Debug(fmt.Sprintf("Event: %s", el.Type), zap.Any("event", el))
+		switch el.Type {
+		case string(telemetryapi.PlatformInitReport):
+			r.coldStartCounter++
+			metrics := scopeMetric.Metrics().AppendEmpty()
+			metrics.SetName(semconv.AttributeFaaSColdstart)
+			dp := metrics.SetEmptySum().DataPoints().AppendEmpty()
+			dp.SetIntValue(r.coldStartCounter)
+			dp.Attributes().PutStr(semconv.AttributeFaaSTrigger, semconv.AttributeFaaSTriggerOther)
+			metrics.Metadata().PutStr("type", el.Type)
+		case string(telemetryapi.PlatformReport):
+			r.invocationsCounter++
+			metrics := scopeMetric.Metrics().AppendEmpty()
+			metrics.SetName("faas.invocations")
+			dp := metrics.SetEmptySum().DataPoints().AppendEmpty()
+			dp.SetIntValue(r.invocationsCounter)
+			dp.Attributes().PutStr(semconv.AttributeFaaSTrigger, semconv.AttributeFaaSTriggerOther)
+			metrics.Metadata().PutStr("type", el.Type)
+
+			// Function invocation started.
+			// case "platform.start":
+			// The runtime finished processing an event with either success or failure.
+			// case "platform.runtimeDone":
+			// A report of function invocation.
+			// case "platform.report":
+			// Runtime restore started (reserved for future use)
+			// case "platform.restoreStart":
+			// Runtime restore completed (reserved for future use)
+			// case "platform.restoreRuntimeDone":
+			// Report of runtime restore (reserved for future use)
+			// case "platform.restoreReport":
+			// The extension subscribed to the Telemetry API.
+			// case "platform.telemetrySubscription":
+			// Lambda dropped log entries.
+			// case "platform.logsDropped":
+
+		}
+	}
+
+	return metrics, nil
+}
+
 func (r *telemetryAPIReceiver) createLogs(slice []telemetryapi.Event) (plog.Logs, error) {
-	log := plog.NewLogs()
-	resourceLog := log.ResourceLogs().AppendEmpty()
+	logs := plog.NewLogs()
+	resourceLog := logs.ResourceLogs().AppendEmpty()
 	r.resource.CopyTo(resourceLog.Resource())
 	scopeLog := resourceLog.ScopeLogs().AppendEmpty()
 	scopeLog.Scope().SetName(scopeName)
@@ -242,7 +309,7 @@ func (r *telemetryAPIReceiver) createLogs(slice []telemetryapi.Event) (plog.Logs
 			}
 		}
 	}
-	return log, nil
+	return logs, nil
 }
 
 func parseTimestamp(timeText string) (time.Time, error) {
@@ -288,6 +355,10 @@ func severityTextToNumber(severityText string) plog.SeverityNumber {
 
 func (r *telemetryAPIReceiver) registerTracesConsumer(next consumer.Traces) {
 	r.nextTraces = next
+}
+
+func (r *telemetryAPIReceiver) registerMetricsConsumer(next consumer.Metrics) {
+	r.nextMetrics = next
 }
 
 func (r *telemetryAPIReceiver) registerLogsConsumer(next consumer.Logs) {
@@ -360,12 +431,16 @@ func newTelemetryAPIReceiver(
 	}
 
 	return &telemetryAPIReceiver{
-		logger:      set.Logger,
-		queue:       queue.New(initialQueueSize),
-		extensionID: cfg.extensionID,
-		port:        cfg.Port,
-		types:       subscribedTypes,
-		resource:    r,
+		logger:             set.Logger,
+		queue:              queue.New(initialQueueSize),
+		extensionID:        cfg.extensionID,
+		port:               cfg.Port,
+		types:              subscribedTypes,
+		resource:           r,
+		coldStartCounter:   0,
+		errorsCounter:      0,
+		invocationsCounter: 0,
+		timeoutsCounter:    0,
 	}
 }
 
