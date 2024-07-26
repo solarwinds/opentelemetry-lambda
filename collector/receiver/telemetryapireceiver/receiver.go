@@ -260,7 +260,7 @@ func (r *telemetryAPIReceiver) createMetrics(slice []telemetryapi.Event) (pmetri
 		}
 	}
 
-	return pmetric.Metrics{}, errors.New("no metrics created")
+	return metrics, nil
 }
 
 func (r *telemetryAPIReceiver) createLogs(slice []telemetryapi.Event) (plog.Logs, error) {
