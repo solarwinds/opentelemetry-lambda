@@ -222,13 +222,22 @@ func (r *telemetryAPIReceiver) createMetrics(slice []telemetryapi.Event) (pmetri
 	scopeMetric.Scope().SetName(scopeName)
 	for _, el := range slice {
 		r.logger.Debug(fmt.Sprintf("Event: %s", el.Type), zap.Any("event", el))
+
+		t, err := parseTimestamp(el.Time)
+		if err != nil {
+			return pmetric.Metrics{}, err
+		}
 		switch el.Type {
 		case string(telemetryapi.PlatformInitReport):
 			r.coldStartCounter++
 			metrics := scopeMetric.Metrics().AppendEmpty()
 			metrics.SetName(semconv.AttributeFaaSColdstart)
-			dp := metrics.SetEmptySum().DataPoints().AppendEmpty()
+			sum := metrics.SetEmptySum()
+			sum.SetIsMonotonic(true)
+			dp := sum.DataPoints().AppendEmpty()
 			dp.SetIntValue(r.coldStartCounter)
+			dp.SetTimestamp(pcommon.NewTimestampFromTime(t))
+
 			dp.Attributes().PutStr(semconv.AttributeFaaSTrigger, semconv.AttributeFaaSTriggerOther)
 			metrics.Metadata().PutStr("type", el.Type)
 		case string(telemetryapi.PlatformReport):
