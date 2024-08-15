@@ -2,13 +2,15 @@ package solarwindsapmsettingsextension
 
 import (
 	"context"
+	"github.com/google/uuid"
+	"go.opentelemetry.io/collector/component"
+	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/config/configgrpc"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/extension"
-	"go.uber.org/zap"
 )
 
 func TestCreateExtension(t *testing.T) {
@@ -46,10 +48,18 @@ func TestCreateExtension(t *testing.T) {
 	}
 }
 
+// NewNopSettings returns a new nop settings for extension.Factory Create* functions.
+func NewNopSettings() extension.Settings {
+	return extension.Settings{
+		ID:                component.NewIDWithName(component.MustNewType("nop"), uuid.NewString()),
+		TelemetrySettings: componenttest.NewNopTelemetrySettings(),
+		BuildInfo:         component.NewDefaultBuildInfo(),
+	}
+}
+
 // create extension
 func createAnExtension(c *Config, t *testing.T) extension.Extension {
-	logger, err := zap.NewProduction()
-	ex, err := newSolarwindsApmSettingsExtension(c, logger)
+	ex, err := newSolarwindsApmSettingsExtension(c, NewNopSettings())
 	require.NoError(t, err)
 	err = ex.Start(context.TODO(), nil)
 	require.NoError(t, err)

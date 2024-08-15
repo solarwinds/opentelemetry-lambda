@@ -11,9 +11,9 @@ import (
 )
 
 type Config struct {
-	configgrpc.ClientConfig `mapstructure:",squash"`
-	Key                     string        `mapstructure:"key"`
-	Interval                time.Duration `mapstructure:"interval"`
+	ClientConfig configgrpc.ClientConfig `mapstructure:",squash"` // squash for configuration compatibility
+	Key          string                  `mapstructure:"key"`
+	Interval     time.Duration           `mapstructure:"interval"`
 }
 
 const (

@@ -33,10 +33,10 @@ type solarwindsapmSettingsExtension struct {
 	client collectorpb.TraceCollectorClient
 }
 
-func newSolarwindsApmSettingsExtension(extensionCfg *Config, logger *zap.Logger) (extension.Extension, error) {
+func newSolarwindsApmSettingsExtension(extensionCfg *Config, settings extension.Settings) (extension.Extension, error) {
 	settingsExtension := &solarwindsapmSettingsExtension{
 		config: extensionCfg,
-		logger: logger,
+		logger: settings.TelemetrySettings.Logger,
 	}
 	return settingsExtension, nil
 }
