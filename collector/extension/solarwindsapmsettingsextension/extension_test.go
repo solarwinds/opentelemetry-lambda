@@ -2,6 +2,7 @@ package solarwindsapmsettingsextension
 
 import (
 	"context"
+	"go.opentelemetry.io/collector/config/configgrpc"
 	"testing"
 	"time"
 
@@ -20,14 +21,18 @@ func TestCreateExtension(t *testing.T) {
 		{
 			name: "default",
 			cfg: &Config{
-				Endpoint: DefaultEndpoint,
+				ClientConfig: configgrpc.ClientConfig{
+					Endpoint: DefaultEndpoint,
+				},
 				Interval: DefaultInterval,
 			},
 		},
 		{
 			name: "anything",
 			cfg: &Config{
-				Endpoint: "0.0.0.0:1234",
+				ClientConfig: configgrpc.ClientConfig{
+					Endpoint: "0.0.0.0:1234",
+				},
 				Key:      "something",
 				Interval: time.Duration(10) * time.Second,
 			},

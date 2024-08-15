@@ -1,6 +1,7 @@
 package solarwindsapmsettingsextension
 
 import (
+	"go.opentelemetry.io/collector/config/configgrpc"
 	"os"
 	"path/filepath"
 	"testing"
@@ -28,7 +29,9 @@ func TestLoadConfig(t *testing.T) {
 		{
 			id: component.NewIDWithName(metadata.Type, "1"),
 			expected: &Config{
-				Endpoint: "apm.collector.na-01.cloud.solarwinds.com:443",
+				ClientConfig: configgrpc.ClientConfig{
+					Endpoint: "apm.collector.na-01.cloud.solarwinds.com:443",
+				},
 				Key:      "something:name",
 				Interval: time.Duration(10) * time.Second,
 			},
@@ -36,7 +39,9 @@ func TestLoadConfig(t *testing.T) {
 		{
 			id: component.NewIDWithName(metadata.Type, "2"),
 			expected: &Config{
-				Endpoint: "apm.collector.na-02.cloud.solarwinds.com:443",
+				ClientConfig: configgrpc.ClientConfig{
+					Endpoint: "apm.collector.na-02.cloud.solarwinds.com:443",
+				},
 				Key:      "something:name",
 				Interval: time.Duration(10) * time.Second,
 			},
@@ -44,7 +49,9 @@ func TestLoadConfig(t *testing.T) {
 		{
 			id: component.NewIDWithName(metadata.Type, "3"),
 			expected: &Config{
-				Endpoint: "apm.collector.eu-01.cloud.solarwinds.com:443",
+				ClientConfig: configgrpc.ClientConfig{
+					Endpoint: "apm.collector.eu-01.cloud.solarwinds.com:443",
+				},
 				Key:      "something:name",
 				Interval: time.Duration(10) * time.Second,
 			},
@@ -52,7 +59,9 @@ func TestLoadConfig(t *testing.T) {
 		{
 			id: component.NewIDWithName(metadata.Type, "4"),
 			expected: &Config{
-				Endpoint: "apm.collector.apj-01.cloud.solarwinds.com:443",
+				ClientConfig: configgrpc.ClientConfig{
+					Endpoint: "apm.collector.apj-01.cloud.solarwinds.com:443",
+				},
 				Key:      "something:name",
 				Interval: time.Duration(10) * time.Second,
 			},
@@ -60,7 +69,9 @@ func TestLoadConfig(t *testing.T) {
 		{
 			id: component.NewIDWithName(metadata.Type, "5"),
 			expected: &Config{
-				Endpoint: "apm.collector.na-01.st-ssp.solarwinds.com:443",
+				ClientConfig: configgrpc.ClientConfig{
+					Endpoint: "apm.collector.na-01.st-ssp.solarwinds.com:443",
+				},
 				Key:      "something:name",
 				Interval: time.Duration(10) * time.Second,
 			},
@@ -68,7 +79,9 @@ func TestLoadConfig(t *testing.T) {
 		{
 			id: component.NewIDWithName(metadata.Type, "6"),
 			expected: &Config{
-				Endpoint: "apm.collector.na-01.dev-ssp.solarwinds.com:443",
+				ClientConfig: configgrpc.ClientConfig{
+					Endpoint: "apm.collector.na-01.dev-ssp.solarwinds.com:443",
+				},
 				Key:      "something:name",
 				Interval: time.Duration(10) * time.Second,
 			},
@@ -76,7 +89,9 @@ func TestLoadConfig(t *testing.T) {
 		{
 			id: component.NewIDWithName(metadata.Type, "7"),
 			expected: &Config{
-				Endpoint: DefaultEndpoint,
+				ClientConfig: configgrpc.ClientConfig{
+					Endpoint: DefaultEndpoint,
+				},
 				Key:      "something:name",
 				Interval: time.Duration(10) * time.Second,
 			},
@@ -84,7 +99,9 @@ func TestLoadConfig(t *testing.T) {
 		{
 			id: component.NewIDWithName(metadata.Type, "8"),
 			expected: &Config{
-				Endpoint: DefaultEndpoint,
+				ClientConfig: configgrpc.ClientConfig{
+					Endpoint: DefaultEndpoint,
+				},
 				Key:      "something:name",
 				Interval: time.Duration(10) * time.Second,
 			},
@@ -92,7 +109,9 @@ func TestLoadConfig(t *testing.T) {
 		{
 			id: component.NewIDWithName(metadata.Type, "9"),
 			expected: &Config{
-				Endpoint: DefaultEndpoint,
+				ClientConfig: configgrpc.ClientConfig{
+					Endpoint: DefaultEndpoint,
+				},
 				Key:      "something:name",
 				Interval: time.Duration(10) * time.Second,
 			},
@@ -100,7 +119,9 @@ func TestLoadConfig(t *testing.T) {
 		{
 			id: component.NewIDWithName(metadata.Type, "10"),
 			expected: &Config{
-				Endpoint: DefaultEndpoint,
+				ClientConfig: configgrpc.ClientConfig{
+					Endpoint: DefaultEndpoint,
+				},
 				Key:      "something:name",
 				Interval: time.Duration(10) * time.Second,
 			},
@@ -108,7 +129,9 @@ func TestLoadConfig(t *testing.T) {
 		{
 			id: component.NewIDWithName(metadata.Type, "11"),
 			expected: &Config{
-				Endpoint: DefaultEndpoint,
+				ClientConfig: configgrpc.ClientConfig{
+					Endpoint: DefaultEndpoint,
+				},
 				Key:      "something:name",
 				Interval: time.Duration(10) * time.Second,
 			},
@@ -116,7 +139,9 @@ func TestLoadConfig(t *testing.T) {
 		{
 			id: component.NewIDWithName(metadata.Type, "12"),
 			expected: &Config{
-				Endpoint: DefaultEndpoint,
+				ClientConfig: configgrpc.ClientConfig{
+					Endpoint: DefaultEndpoint,
+				},
 				Key:      "something:name",
 				Interval: time.Duration(10) * time.Second,
 			},
@@ -124,7 +149,9 @@ func TestLoadConfig(t *testing.T) {
 		{
 			id: component.NewIDWithName(metadata.Type, "13"),
 			expected: &Config{
-				Endpoint: DefaultEndpoint,
+				ClientConfig: configgrpc.ClientConfig{
+					Endpoint: DefaultEndpoint,
+				},
 				Key:      "something:name",
 				Interval: time.Duration(10) * time.Second,
 			},
@@ -132,7 +159,9 @@ func TestLoadConfig(t *testing.T) {
 		{
 			id: component.NewIDWithName(metadata.Type, "14"),
 			expected: &Config{
-				Endpoint: DefaultEndpoint,
+				ClientConfig: configgrpc.ClientConfig{
+					Endpoint: DefaultEndpoint,
+				},
 				Key:      "something:name",
 				Interval: time.Duration(10) * time.Second,
 			},
@@ -140,7 +169,9 @@ func TestLoadConfig(t *testing.T) {
 		{
 			id: component.NewIDWithName(metadata.Type, "15"),
 			expected: &Config{
-				Endpoint: DefaultEndpoint,
+				ClientConfig: configgrpc.ClientConfig{
+					Endpoint: DefaultEndpoint,
+				},
 				Key:      "something:name",
 				Interval: time.Duration(10) * time.Second,
 			},
@@ -148,7 +179,9 @@ func TestLoadConfig(t *testing.T) {
 		{
 			id: component.NewIDWithName(metadata.Type, "16"),
 			expected: &Config{
-				Endpoint: DefaultEndpoint,
+				ClientConfig: configgrpc.ClientConfig{
+					Endpoint: DefaultEndpoint,
+				},
 				Key:      "",
 				Interval: time.Duration(10) * time.Second,
 			},
@@ -156,7 +189,9 @@ func TestLoadConfig(t *testing.T) {
 		{
 			id: component.NewIDWithName(metadata.Type, "17"),
 			expected: &Config{
-				Endpoint: DefaultEndpoint,
+				ClientConfig: configgrpc.ClientConfig{
+					Endpoint: DefaultEndpoint,
+				},
 				Key:      ":",
 				Interval: time.Duration(10) * time.Second,
 			},
@@ -164,7 +199,9 @@ func TestLoadConfig(t *testing.T) {
 		{
 			id: component.NewIDWithName(metadata.Type, "18"),
 			expected: &Config{
-				Endpoint: DefaultEndpoint,
+				ClientConfig: configgrpc.ClientConfig{
+					Endpoint: DefaultEndpoint,
+				},
 				Key:      "::",
 				Interval: time.Duration(10) * time.Second,
 			},
@@ -172,7 +209,9 @@ func TestLoadConfig(t *testing.T) {
 		{
 			id: component.NewIDWithName(metadata.Type, "19"),
 			expected: &Config{
-				Endpoint: DefaultEndpoint,
+				ClientConfig: configgrpc.ClientConfig{
+					Endpoint: DefaultEndpoint,
+				},
 				Key:      ":name",
 				Interval: time.Duration(10) * time.Second,
 			},
@@ -180,7 +219,9 @@ func TestLoadConfig(t *testing.T) {
 		{
 			id: component.NewIDWithName(metadata.Type, "20"),
 			expected: &Config{
-				Endpoint: DefaultEndpoint,
+				ClientConfig: configgrpc.ClientConfig{
+					Endpoint: DefaultEndpoint,
+				},
 				Key:      "token:",
 				Interval: time.Duration(10) * time.Second,
 			},
@@ -188,7 +229,9 @@ func TestLoadConfig(t *testing.T) {
 		{
 			id: component.NewIDWithName(metadata.Type, "21"),
 			expected: &Config{
-				Endpoint: DefaultEndpoint,
+				ClientConfig: configgrpc.ClientConfig{
+					Endpoint: DefaultEndpoint,
+				},
 				Key:      "token:name",
 				Interval: MinimumInterval,
 			},
@@ -196,7 +239,9 @@ func TestLoadConfig(t *testing.T) {
 		{
 			id: component.NewIDWithName(metadata.Type, "22"),
 			expected: &Config{
-				Endpoint: DefaultEndpoint,
+				ClientConfig: configgrpc.ClientConfig{
+					Endpoint: DefaultEndpoint,
+				},
 				Key:      "token:name",
 				Interval: MaximumInterval,
 			},
@@ -204,7 +249,9 @@ func TestLoadConfig(t *testing.T) {
 		{
 			id: component.NewIDWithName(metadata.Type, "23"),
 			expected: &Config{
-				Endpoint: DefaultEndpoint,
+				ClientConfig: configgrpc.ClientConfig{
+					Endpoint: DefaultEndpoint,
+				},
 				Key:      "token:name",
 				Interval: MinimumInterval,
 			},
@@ -218,7 +265,7 @@ func TestLoadConfig(t *testing.T) {
 			cfg := factory.CreateDefaultConfig()
 			sub, err := cm.Sub(tt.id.String())
 			require.NoError(t, err)
-			require.NoError(t, component.UnmarshalConfig(sub, cfg))
+			require.NoError(t, sub.Unmarshal(cfg))
 			assert.NoError(t, component.ValidateConfig(cfg))
 			assert.Equal(t, tt.expected, cfg)
 		})

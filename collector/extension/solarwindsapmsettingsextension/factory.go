@@ -8,7 +8,7 @@ import (
 	"github.com/open-telemetry/opentelemetry-lambda/collector/extension/solarwindsapmsettingsextension/internal/metadata"
 )
 
-func createExtension(_ context.Context, settings extension.CreateSettings, cfg component.Config) (extension.Extension, error) {
+func createExtension(_ context.Context, settings extension.Settings, cfg component.Config) (extension.Extension, error) {
 	return newSolarwindsApmSettingsExtension(cfg.(*Config), settings.Logger)
 }
 

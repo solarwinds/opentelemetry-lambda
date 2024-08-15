@@ -15,12 +15,13 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"math"
 	"os"
+	"path"
 	"strconv"
 	"time"
 )
 
 const (
-	jsonOutputFile      = "/tmp/solarwinds-apm-settings.json"
+	jsonOutputFile      = "solarwinds-apm-settings.json"
 	grpcContextDeadline = 1 * time.Second
 )
 
@@ -41,7 +42,7 @@ func newSolarwindsApmSettingsExtension(extensionCfg *Config, logger *zap.Logger)
 }
 
 func refresh(extension *solarwindsapmSettingsExtension) {
-	extension.logger.Info("Time to refresh from " + extension.config.Endpoint)
+	extension.logger.Info("Time to refresh from " + extension.config.ClientConfig.Endpoint)
 	if hostname, err := os.Hostname(); err != nil {
 		extension.logger.Error("Unable to call os.Hostname() " + err.Error())
 	} else {
@@ -56,7 +57,7 @@ func refresh(extension *solarwindsapmSettingsExtension) {
 			ClientVersion: "2",
 		}
 		if response, err := extension.client.GetSettings(ctx, request); err != nil {
-			extension.logger.Error("Unable to getSettings from " + extension.config.Endpoint + " " + err.Error())
+			extension.logger.Error("Unable to getSettings from " + extension.config.ClientConfig.Endpoint + " " + err.Error())
 		} else {
 			switch result := response.GetResult(); result {
 			case collectorpb.ResultCode_OK:
@@ -144,13 +145,14 @@ func refresh(extension *solarwindsapmSettingsExtension) {
 				if content, err := json.Marshal(settings); err != nil {
 					extension.logger.Warn("Error to marshal setting JSON[] byte from settings " + err.Error())
 				} else {
-					if err := os.WriteFile(jsonOutputFile, content, 0644); err != nil {
-						extension.logger.Error("Unable to write " + jsonOutputFile + " " + err.Error())
+					outputFile := path.Join(os.TempDir(), jsonOutputFile)
+					if err := os.WriteFile(outputFile, content, 0644); err != nil {
+						extension.logger.Error("Unable to write " + outputFile + " " + err.Error())
 					} else {
 						if len(response.GetWarning()) > 0 {
-							extension.logger.Warn(jsonOutputFile + " is refreshed (soft disabled)")
+							extension.logger.Warn(outputFile + " is refreshed (soft disabled)")
 						} else {
-							extension.logger.Info(jsonOutputFile + " is refreshed")
+							extension.logger.Info(outputFile + " is refreshed")
 						}
 						extension.logger.Info(string(content))
 					}
@@ -182,12 +184,12 @@ func (extension *solarwindsapmSettingsExtension) Start(_ context.Context, _ comp
 	extension.logger.Info("Got system cert pool")
 	subjects := systemCertPool.Subjects()
 	extension.logger.Info("Loaded system certificates", zap.Int("numberOfCertificates", len(subjects)))
-	extension.conn, err = grpc.NewClient(extension.config.Endpoint, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{RootCAs: systemCertPool})))
+	extension.conn, err = grpc.NewClient(extension.config.ClientConfig.Endpoint, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{RootCAs: systemCertPool})))
 	if err != nil {
 		extension.logger.Error("grpc.NewClient creation failed: ", zap.Error(err))
 		return err
 	}
-	extension.logger.Info("Created a grpc.NewClient", zap.String("endpoint", extension.config.Endpoint))
+	extension.logger.Info("Created a grpc.NewClient", zap.String("endpoint", extension.config.ClientConfig.Endpoint))
 	extension.client = collectorpb.NewTraceCollectorClient(extension.conn)
 
 	// initial refresh
