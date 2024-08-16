@@ -6,7 +6,6 @@ import (
 	"crypto/x509"
 	"encoding/binary"
 	"encoding/json"
-	"google.golang.org/grpc/credentials"
 	"math"
 	"os"
 	"path"
@@ -17,6 +16,7 @@ import (
 	"go.opentelemetry.io/collector/extension"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 const (
@@ -48,12 +48,8 @@ func (extension *solarwindsapmSettingsExtension) Start(_ context.Context, host c
 	ctx, extension.cancel = context.WithCancel(ctx)
 	systemCertPool, err := x509.SystemCertPool()
 	if err != nil {
-		extension.logger.Error("getting system cert pool failed: ", zap.Error(err))
 		return err
 	}
-	extension.logger.Info("got system cert pool")
-	subjects := systemCertPool.Subjects()
-	extension.logger.Info("loaded system certificates", zap.Int("numberOfCertificates", len(subjects)))
 	extension.conn, err = extension.config.ClientConfig.ToClientConn(ctx, host, extension.telemetrySettings, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{RootCAs: systemCertPool})))
 	if err != nil {
 		extension.logger.Error("grpc.NewClient creation failed: ", zap.Error(err))
