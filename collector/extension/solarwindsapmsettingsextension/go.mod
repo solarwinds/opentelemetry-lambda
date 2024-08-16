@@ -1,8 +1,6 @@
 module github.com/open-telemetry/opentelemetry-lambda/collector/extension/solarwindsapmsettingsextension
 
-go 1.21.0
-
-toolchain go1.22.5
+go 1.22.0
 
 require (
 	github.com/google/uuid v1.6.0
@@ -16,7 +14,6 @@ require (
 	go.opentelemetry.io/otel/trace v1.28.0
 	go.uber.org/zap v1.27.0
 	google.golang.org/grpc v1.65.0
-	google.golang.org/protobuf v1.34.2
 )
 
 require (
@@ -43,6 +40,7 @@ require (
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.55.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
 	go.opentelemetry.io/collector v0.107.0 // indirect
 	go.opentelemetry.io/collector/client v1.13.0 // indirect
 	go.opentelemetry.io/collector/config/configauth v0.107.0 // indirect
@@ -66,5 +64,6 @@ require (
 	golang.org/x/sys v0.22.0 // indirect
 	golang.org/x/text v0.16.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240701130421-f6361c86f094 // indirect
+	google.golang.org/protobuf v1.34.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

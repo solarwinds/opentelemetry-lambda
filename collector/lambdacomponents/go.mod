@@ -1,8 +1,8 @@
 module github.com/open-telemetry/opentelemetry-lambda/collector/lambdacomponents
 
-go 1.21.0
+go 1.22.0
 
-toolchain go1.22.2
+toolchain go1.22.5
 
 require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/exporter/prometheusremotewriteexporter v0.104.0

@@ -1,9 +1,10 @@
 package solarwindsapmsettingsextension
 
 import (
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/collector/component/componenttest"
-	"testing"
 )
 
 func TestCreateDefaultConfig(t *testing.T) {

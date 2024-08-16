@@ -1,7 +1,6 @@
 package solarwindsapmsettingsextension
 
 import (
-	"go.opentelemetry.io/collector/config/configgrpc"
 	"os"
 	"path/filepath"
 	"testing"
@@ -10,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component"
+	"go.opentelemetry.io/collector/config/configgrpc"
 	"go.opentelemetry.io/collector/confmap/confmaptest"
 
 	"github.com/open-telemetry/opentelemetry-lambda/collector/extension/solarwindsapmsettingsextension/internal/metadata"
