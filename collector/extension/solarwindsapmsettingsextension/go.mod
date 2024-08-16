@@ -6,7 +6,7 @@ toolchain go1.22.5
 
 require (
 	github.com/google/uuid v1.6.0
-	github.com/solarwindscloud/apm-proto v1.0.5
+	github.com/solarwindscloud/apm-proto v1.0.7
 	github.com/stretchr/testify v1.9.0
 	go.opentelemetry.io/collector/component v0.107.0
 	go.opentelemetry.io/collector/config/configgrpc v0.107.0

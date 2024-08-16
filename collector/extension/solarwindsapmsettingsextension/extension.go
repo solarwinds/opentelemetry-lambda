@@ -2,8 +2,6 @@ package solarwindsapmsettingsextension
 
 import (
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"encoding/binary"
 	"encoding/json"
 	"github.com/solarwindscloud/apm-proto/go/collectorpb"
@@ -11,7 +9,6 @@ import (
 	"go.opentelemetry.io/collector/extension"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 	"google.golang.org/protobuf/encoding/protojson"
 	"math"
 	"os"
@@ -26,17 +23,19 @@ const (
 )
 
 type solarwindsapmSettingsExtension struct {
-	logger *zap.Logger
-	config *Config
-	cancel context.CancelFunc
-	conn   *grpc.ClientConn
-	client collectorpb.TraceCollectorClient
+	logger            *zap.Logger
+	telemetrySettings component.TelemetrySettings
+	config            *Config
+	cancel            context.CancelFunc
+	conn              *grpc.ClientConn
+	client            collectorpb.TraceCollectorClient
 }
 
 func newSolarwindsApmSettingsExtension(extensionCfg *Config, settings extension.Settings) (extension.Extension, error) {
 	settingsExtension := &solarwindsapmSettingsExtension{
-		config: extensionCfg,
-		logger: settings.TelemetrySettings.Logger,
+		config:            extensionCfg,
+		logger:            settings.TelemetrySettings.Logger,
+		telemetrySettings: settings.TelemetrySettings,
 	}
 	return settingsExtension, nil
 }
@@ -172,19 +171,12 @@ func refresh(extension *solarwindsapmSettingsExtension) {
 	}
 }
 
-func (extension *solarwindsapmSettingsExtension) Start(_ context.Context, _ component.Host) error {
+func (extension *solarwindsapmSettingsExtension) Start(_ context.Context, host component.Host) error {
 	extension.logger.Info("Starting up solarwinds apm settings extension")
 	ctx := context.Background()
 	ctx, extension.cancel = context.WithCancel(ctx)
-	systemCertPool, err := x509.SystemCertPool()
-	if err != nil {
-		extension.logger.Error("Getting system cert pool failed: ", zap.Error(err))
-		return err
-	}
-	extension.logger.Info("Got system cert pool")
-	subjects := systemCertPool.Subjects()
-	extension.logger.Info("Loaded system certificates", zap.Int("numberOfCertificates", len(subjects)))
-	extension.conn, err = grpc.NewClient(extension.config.ClientConfig.Endpoint, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{RootCAs: systemCertPool})))
+	var err error
+	extension.conn, err = extension.config.ClientConfig.ToClientConn(ctx, host, extension.telemetrySettings)
 	if err != nil {
 		extension.logger.Error("grpc.NewClient creation failed: ", zap.Error(err))
 		return err
