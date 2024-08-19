@@ -233,18 +233,28 @@ func (r *telemetryAPIReceiver) createMetrics(slice []telemetryapi.Event) (pmetri
 		}
 		switch el.Type {
 		case string(telemetryapi.PlatformInitReport):
-			r.coldStartCounter++
-			metrics := scopeMetric.Metrics().AppendEmpty()
-			metrics.Metadata().PutStr("type", el.Type)
-			metrics.SetName(semconv.AttributeFaaSColdstart)
-			sum := metrics.SetEmptySum()
-			sum.SetIsMonotonic(true)
-			dp := sum.DataPoints().AppendEmpty()
-			dp.SetIntValue(r.coldStartCounter)
-			dp.SetStartTimestamp(pcommon.NewTimestampFromTime(r.metricsStartTime))
-			dp.SetTimestamp(pcommon.NewTimestampFromTime(time.Now()))
-			dp.Attributes().PutStr(semconv.AttributeFaaSTrigger, semconv.AttributeFaaSTriggerOther)
-
+			jsonStr, err := json.Marshal(el.Record)
+			if err != nil {
+				return pmetric.Metrics{}, err
+			}
+			var report platformInitReport
+			if err := json.Unmarshal(jsonStr, &report); err != nil {
+				return pmetric.Metrics{}, err
+			} else {
+				if report.Phase == initPhaseInit {
+					r.coldStartCounter++
+					metrics := scopeMetric.Metrics().AppendEmpty()
+					metrics.Metadata().PutStr("type", el.Type)
+					metrics.SetName(semconv.AttributeFaaSColdstart)
+					sum := metrics.SetEmptySum()
+					sum.SetIsMonotonic(true)
+					dp := sum.DataPoints().AppendEmpty()
+					dp.SetIntValue(r.coldStartCounter)
+					dp.SetStartTimestamp(pcommon.NewTimestampFromTime(r.metricsStartTime))
+					dp.SetTimestamp(pcommon.NewTimestampFromTime(time.Now()))
+					dp.Attributes().PutStr(semconv.AttributeFaaSTrigger, semconv.AttributeFaaSTriggerOther)
+				}
+			}
 		case string(telemetryapi.PlatformReport):
 			r.invocationsCounter++
 			metrics := scopeMetric.Metrics().AppendEmpty()
@@ -257,6 +267,41 @@ func (r *telemetryAPIReceiver) createMetrics(slice []telemetryapi.Event) (pmetri
 			dp.SetStartTimestamp(pcommon.NewTimestampFromTime(r.metricsStartTime))
 			dp.SetTimestamp(pcommon.NewTimestampFromTime(time.Now()))
 			dp.Attributes().PutStr(semconv.AttributeFaaSTrigger, semconv.AttributeFaaSTriggerOther)
+			jsonStr, err := json.Marshal(el.Record)
+			if err != nil {
+				return pmetric.Metrics{}, err
+			}
+			var report platformReport
+			if err := json.Unmarshal(jsonStr, &report); err != nil {
+				return pmetric.Metrics{}, err
+			} else {
+				if report.Status != statusSuccess {
+					r.errorsCounter++
+					metrics := scopeMetric.Metrics().AppendEmpty()
+					metrics.Metadata().PutStr("type", el.Type)
+					metrics.SetName("faas.errors")
+					sum := metrics.SetEmptySum()
+					sum.SetIsMonotonic(true)
+					dp := sum.DataPoints().AppendEmpty()
+					dp.SetIntValue(r.errorsCounter)
+					dp.SetStartTimestamp(pcommon.NewTimestampFromTime(r.metricsStartTime))
+					dp.SetTimestamp(pcommon.NewTimestampFromTime(time.Now()))
+					dp.Attributes().PutStr(semconv.AttributeFaaSTrigger, semconv.AttributeFaaSTriggerOther)
+				}
+				if report.Status == statusTimeout {
+					r.timeoutsCounter++
+					metrics := scopeMetric.Metrics().AppendEmpty()
+					metrics.Metadata().PutStr("type", el.Type)
+					metrics.SetName("faas.timeouts")
+					sum := metrics.SetEmptySum()
+					sum.SetIsMonotonic(true)
+					dp := sum.DataPoints().AppendEmpty()
+					dp.SetIntValue(r.timeoutsCounter)
+					dp.SetStartTimestamp(pcommon.NewTimestampFromTime(r.metricsStartTime))
+					dp.SetTimestamp(pcommon.NewTimestampFromTime(time.Now()))
+					dp.Attributes().PutStr(semconv.AttributeFaaSTrigger, semconv.AttributeFaaSTriggerOther)
+				}
+			}
 
 			// Function invocation started.
 			// case "platform.start":
