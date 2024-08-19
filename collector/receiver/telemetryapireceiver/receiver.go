@@ -58,6 +58,7 @@ type telemetryAPIReceiver struct {
 	port                  int
 	types                 []telemetryapi.EventType
 	resource              pcommon.Resource
+	metricsStartTime      time.Time
 	coldStartCounter      int64
 	errorsCounter         int64
 	invocationsCounter    int64
@@ -222,32 +223,40 @@ func (r *telemetryAPIReceiver) createMetrics(slice []telemetryapi.Event) (pmetri
 	scopeMetric.Scope().SetName(scopeName)
 	for _, el := range slice {
 		r.logger.Debug(fmt.Sprintf("Event: %s", el.Type), zap.Any("event", el))
+		if r.metricsStartTime.IsZero() {
+			if t, err := parseTimestamp(el.Time); err == nil {
+				r.metricsStartTime = t
+			} else {
+				return pmetric.Metrics{}, err
+			}
 
-		t, err := parseTimestamp(el.Time)
-		if err != nil {
-			return pmetric.Metrics{}, err
 		}
 		switch el.Type {
 		case string(telemetryapi.PlatformInitReport):
 			r.coldStartCounter++
 			metrics := scopeMetric.Metrics().AppendEmpty()
+			metrics.Metadata().PutStr("type", el.Type)
 			metrics.SetName(semconv.AttributeFaaSColdstart)
 			sum := metrics.SetEmptySum()
 			sum.SetIsMonotonic(true)
 			dp := sum.DataPoints().AppendEmpty()
 			dp.SetIntValue(r.coldStartCounter)
-			dp.SetTimestamp(pcommon.NewTimestampFromTime(t))
-
+			dp.SetStartTimestamp(pcommon.NewTimestampFromTime(r.metricsStartTime))
+			dp.SetTimestamp(pcommon.NewTimestampFromTime(time.Now()))
 			dp.Attributes().PutStr(semconv.AttributeFaaSTrigger, semconv.AttributeFaaSTriggerOther)
-			metrics.Metadata().PutStr("type", el.Type)
+
 		case string(telemetryapi.PlatformReport):
 			r.invocationsCounter++
 			metrics := scopeMetric.Metrics().AppendEmpty()
-			metrics.SetName("faas.invocations")
-			dp := metrics.SetEmptySum().DataPoints().AppendEmpty()
-			dp.SetIntValue(r.invocationsCounter)
-			dp.Attributes().PutStr(semconv.AttributeFaaSTrigger, semconv.AttributeFaaSTriggerOther)
 			metrics.Metadata().PutStr("type", el.Type)
+			metrics.SetName("faas.invocations")
+			sum := metrics.SetEmptySum()
+			sum.SetIsMonotonic(true)
+			dp := sum.DataPoints().AppendEmpty()
+			dp.SetIntValue(r.invocationsCounter)
+			dp.SetStartTimestamp(pcommon.NewTimestampFromTime(r.metricsStartTime))
+			dp.SetTimestamp(pcommon.NewTimestampFromTime(time.Now()))
+			dp.Attributes().PutStr(semconv.AttributeFaaSTrigger, semconv.AttributeFaaSTriggerOther)
 
 			// Function invocation started.
 			// case "platform.start":
