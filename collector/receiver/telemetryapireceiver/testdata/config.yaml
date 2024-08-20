@@ -2,7 +2,7 @@ telemetryapi:
 telemetryapi/1:
   port: 12345
 telemetryapi/2:
-  port: "12345"
+  port: 0x12d4
 telemetryapi/3:
   port: 12345
   types: ["platform"]

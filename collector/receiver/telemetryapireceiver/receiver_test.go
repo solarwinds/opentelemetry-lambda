@@ -16,6 +16,7 @@ package telemetryapireceiver // import "github.com/open-telemetry/opentelemetry-
 
 import (
 	"context"
+	"go.opentelemetry.io/collector/pdata/pmetric"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -174,39 +175,187 @@ func TestCreateMetrics(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		desc                      string
-		slice                     []telemetryapi.Event
-		expectedMetrics           int
-		expectedType              string
-		expectedTimestamp         string
-		expectedBody              string
-		expectedSeverityText      string
-		expectedContainsRequestId bool
-		expectedRequestId         string
-		expectedSeverityNumber    plog.SeverityNumber
-		expectError               bool
+		desc            string
+		slice           []telemetryapi.Event
+		expectedType    string
+		expectedMetrics []map[string]any
+		expectError     bool
 	}{
 		{
-			desc:            "no slice",
-			expectedMetrics: 0,
-			expectError:     false,
+			desc:        "no slice",
+			expectError: false,
 		},
 		{
-			desc: "no slice",
+			desc: "platform.initReport",
 			slice: []telemetryapi.Event{
 				{
-					Time: "2022-10-12T00:03:50.000Z",
-					Type: "function",
+					Time: "2022-10-12T00:01:15.000Z",
+					Type: "platform.initReport",
 					Record: map[string]any{
-						"timestamp": "2022-10-12T00:03:50.000Z",
-						"level":     "INFO",
-						"requestId": "79b4f56e-95b1-4643-9700-2807f4e68189",
-						"message":   "Hello world, I am a function!",
+						"initializationType": "on-demand",
+						"status":             "success",
+						"phase":              "init",
+						"metrics": map[string]any{
+							"durationMs": 125.33,
+						},
+						"spans": []map[string]any{
+							{
+								"name":       "someTimeSpan",
+								"start":      "2022-06-02T12:02:33.913Z",
+								"durationMs": 90.1,
+							},
+						},
 					},
 				},
 			},
-			expectedMetrics: 0,
-			expectError:     false,
+			expectedMetrics: []map[string]any{
+				{
+					"Name":  semconv.AttributeFaaSColdstart,
+					"Value": int64(1),
+				},
+			},
+			expectedType: "platform.initReport",
+			expectError:  false,
+		},
+		{
+			desc: "platform.Report success",
+			slice: []telemetryapi.Event{
+				{
+					Time: "2022-10-12T00:01:15.000Z",
+					Type: "platform.report",
+					Record: map[string]any{
+						"status":    "success",
+						"requestId": "6d68ca91-49c9-448d-89b8-7ca3e6dc66aa",
+						"metrics": map[string]any{
+							"billedDurationMs": 694,
+							"durationMs":       693.92,
+							"initDurationMs":   397.68,
+							"maxMemoryUsedMB":  84,
+							"memorySizeMB":     128,
+						},
+						"spans": []map[string]any{
+							{
+								"name":       "someTimeSpan",
+								"start":      "2022-06-02T12:02:33.913Z",
+								"durationMs": 90.1,
+							},
+						},
+					},
+				},
+			},
+			expectedType: "platform.report",
+			expectedMetrics: []map[string]any{
+				{
+					"Name":  "faas.invocations",
+					"Value": int64(1),
+				},
+			},
+			expectError: false,
+		},
+		{
+			desc: "platform.Report error",
+			slice: []telemetryapi.Event{
+				{
+					Time: "2022-10-12T00:01:15.000Z",
+					Type: "platform.report",
+					Record: map[string]any{
+						"status":    "error",
+						"errorType": "error type",
+						"requestId": "6d68ca91-49c9-448d-89b8-7ca3e6dc66aa",
+						"metrics": map[string]any{
+							"billedDurationMs": 694,
+							"durationMs":       693.92,
+							"initDurationMs":   397.68,
+							"maxMemoryUsedMB":  84,
+							"memorySizeMB":     128,
+						},
+						"spans": []map[string]any{},
+					},
+				},
+			},
+			expectedType: "platform.report",
+			expectedMetrics: []map[string]any{
+				{
+					"Name":  "faas.invocations",
+					"Value": int64(1),
+				},
+				{
+					"Name":  "faas.errors",
+					"Value": int64(1),
+				},
+			},
+			expectError: false,
+		},
+		{
+			desc: "platform.Report failure",
+			slice: []telemetryapi.Event{
+				{
+					Time: "2022-10-12T00:01:15.000Z",
+					Type: "platform.report",
+					Record: map[string]any{
+						"status":    "failure",
+						"errorType": "error type",
+						"requestId": "6d68ca91-49c9-448d-89b8-7ca3e6dc66aa",
+						"metrics": map[string]any{
+							"billedDurationMs": 694,
+							"durationMs":       693.92,
+							"initDurationMs":   397.68,
+							"maxMemoryUsedMB":  84,
+							"memorySizeMB":     128,
+						},
+						"spans": []map[string]any{},
+					},
+				},
+			},
+			expectedType: "platform.report",
+			expectedMetrics: []map[string]any{
+				{
+					"Name":  "faas.invocations",
+					"Value": int64(1),
+				},
+				{
+					"Name":  "faas.errors",
+					"Value": int64(1),
+				},
+			},
+			expectError: false,
+		},
+		{
+			desc: "platform.Report timeout",
+			slice: []telemetryapi.Event{
+				{
+					Time: "2022-10-12T00:01:15.000Z",
+					Type: "platform.report",
+					Record: map[string]any{
+						"status":    "timeout",
+						"requestId": "6d68ca91-49c9-448d-89b8-7ca3e6dc66aa",
+						"metrics": map[string]any{
+							"billedDurationMs": 694,
+							"durationMs":       693.92,
+							"initDurationMs":   397.68,
+							"maxMemoryUsedMB":  84,
+							"memorySizeMB":     128,
+						},
+						"spans": []map[string]any{},
+					},
+				},
+			},
+			expectedType: "platform.report",
+			expectedMetrics: []map[string]any{
+				{
+					"Name":  "faas.invocations",
+					"Value": int64(1),
+				},
+				{
+					"Name":  "faas.errors",
+					"Value": int64(1),
+				},
+				{
+					"Name":  "faas.timeouts",
+					"Value": int64(1),
+				},
+			},
+			expectError: false,
 		},
 	}
 	for _, tc := range testCases {
@@ -224,25 +373,17 @@ func TestCreateMetrics(t *testing.T) {
 				require.Equal(t, 1, resourceMetric.ScopeMetrics().Len())
 				scopeMetric := resourceMetric.ScopeMetrics().At(0)
 				require.Equal(t, scopeName, scopeMetric.Scope().Name())
-				require.Equal(t, tc.expectedMetrics, scopeMetric.Metrics().Len())
-				if scopeMetric.Metrics().Len() > 0 {
-					// metric := scopeMetric.Metrics().At(0)
-
-					//	logRecord := scopeLog.LogRecords().At(0)
-					//	attr, ok := logRecord.Attributes().Get("type")
-					//	require.True(t, ok)
-					//	require.Equal(t, tc.expectedType, attr.Str())
-					//	expectedTime, err := time.Parse(time.RFC3339, tc.expectedTimestamp)
-					//	require.NoError(t, err)
-					//	require.Equal(t, pcommon.NewTimestampFromTime(expectedTime), logRecord.Timestamp())
-					//	requestId, ok := logRecord.Attributes().Get(semconv.AttributeFaaSInvocationID)
-					//	require.Equal(t, tc.expectedContainsRequestId, ok)
-					//	if ok {
-					//		require.Equal(t, tc.expectedRequestId, requestId.Str())
-					//	}
-					//	require.Equal(t, tc.expectedSeverityText, logRecord.SeverityText())
-					//	require.Equal(t, tc.expectedSeverityNumber, logRecord.SeverityNumber())
-					//	require.Equal(t, tc.expectedBody, logRecord.Body().Str())
+				require.Equal(t, len(tc.expectedMetrics), scopeMetric.Metrics().Len())
+				for idx, m := range tc.expectedMetrics {
+					metric := scopeMetric.Metrics().At(idx)
+					attr, ok := metric.Metadata().Get("type")
+					require.True(t, ok)
+					require.Equal(t, tc.expectedType, attr.Str())
+					require.Equal(t, m["Name"], metric.Name())
+					require.True(t, metric.Sum().IsMonotonic())
+					require.Equal(t, pmetric.AggregationTemporalityCumulative, metric.Sum().AggregationTemporality())
+					require.Equal(t, 1, metric.Sum().DataPoints().Len())
+					require.Equal(t, m["Value"], metric.Sum().DataPoints().At(0).IntValue())
 				}
 			}
 		})
