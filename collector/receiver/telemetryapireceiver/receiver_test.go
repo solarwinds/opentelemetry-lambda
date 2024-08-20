@@ -170,6 +170,68 @@ func TestCreatePlatformInitSpan(t *testing.T) {
 	}
 }
 
+func TestCreateMetrics(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		desc                      string
+		slice                     []telemetryapi.Event
+		expectedMetrics           int
+		expectedType              string
+		expectedTimestamp         string
+		expectedBody              string
+		expectedSeverityText      string
+		expectedContainsRequestId bool
+		expectedRequestId         string
+		expectedSeverityNumber    plog.SeverityNumber
+		expectError               bool
+	}{
+		{
+			desc:            "no slice",
+			expectedMetrics: 0,
+			expectError:     false,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			r := newTelemetryAPIReceiver(
+				&Config{},
+				receivertest.NewNopCreateSettings(),
+			)
+			metrics, err := r.createMetrics(tc.slice)
+			if tc.expectError {
+				require.Error(t, err)
+			} else {
+				require.Equal(t, 1, metrics.ResourceMetrics().Len())
+				resourceMetric := metrics.ResourceMetrics().At(0)
+				require.Equal(t, 1, resourceMetric.ScopeMetrics().Len())
+				scopeMetric := resourceMetric.ScopeMetrics().At(0)
+				require.Equal(t, scopeName, scopeMetric.Scope().Name())
+				require.Equal(t, tc.expectedMetrics, scopeMetric.Metrics().Len())
+				if scopeMetric.Metrics().Len() > 0 {
+					// metric := scopeMetric.Metrics().At(0)
+
+					//	logRecord := scopeLog.LogRecords().At(0)
+					//	attr, ok := logRecord.Attributes().Get("type")
+					//	require.True(t, ok)
+					//	require.Equal(t, tc.expectedType, attr.Str())
+					//	expectedTime, err := time.Parse(time.RFC3339, tc.expectedTimestamp)
+					//	require.NoError(t, err)
+					//	require.Equal(t, pcommon.NewTimestampFromTime(expectedTime), logRecord.Timestamp())
+					//	requestId, ok := logRecord.Attributes().Get(semconv.AttributeFaaSInvocationID)
+					//	require.Equal(t, tc.expectedContainsRequestId, ok)
+					//	if ok {
+					//		require.Equal(t, tc.expectedRequestId, requestId.Str())
+					//	}
+					//	require.Equal(t, tc.expectedSeverityText, logRecord.SeverityText())
+					//	require.Equal(t, tc.expectedSeverityNumber, logRecord.SeverityNumber())
+					//	require.Equal(t, tc.expectedBody, logRecord.Body().Str())
+				}
+			}
+		})
+	}
+}
+
 func TestCreateLogs(t *testing.T) {
 	t.Parallel()
 

@@ -302,24 +302,6 @@ func (r *telemetryAPIReceiver) createMetrics(slice []telemetryapi.Event) (pmetri
 					dp.Attributes().PutStr(semconv.AttributeFaaSTrigger, semconv.AttributeFaaSTriggerOther)
 				}
 			}
-
-			// Function invocation started.
-			// case "platform.start":
-			// The runtime finished processing an event with either success or failure.
-			// case "platform.runtimeDone":
-			// A report of function invocation.
-			// case "platform.report":
-			// Runtime restore started (reserved for future use)
-			// case "platform.restoreStart":
-			// Runtime restore completed (reserved for future use)
-			// case "platform.restoreRuntimeDone":
-			// Report of runtime restore (reserved for future use)
-			// case "platform.restoreReport":
-			// The extension subscribed to the Telemetry API.
-			// case "platform.telemetrySubscription":
-			// Lambda dropped log entries.
-			// case "platform.logsDropped":
-
 		}
 	}
 
