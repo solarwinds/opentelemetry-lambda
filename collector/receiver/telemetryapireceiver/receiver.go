@@ -440,9 +440,8 @@ func newTelemetryAPIReceiver(
 	set receiver.CreateSettings,
 ) *telemetryAPIReceiver {
 	envResourceMap := map[string]string{
-		"AWS_LAMBDA_FUNCTION_MEMORY_SIZE": semconv.AttributeFaaSMaxMemory,
-		"AWS_LAMBDA_FUNCTION_VERSION":     semconv.AttributeFaaSVersion,
-		"AWS_REGION":                      semconv.AttributeFaaSInvokedRegion,
+		"AWS_LAMBDA_FUNCTION_VERSION": semconv.AttributeFaaSVersion,
+		"AWS_REGION":                  semconv.AttributeFaaSInvokedRegion,
 	}
 	r := pcommon.NewResource()
 	r.Attributes().PutStr(semconv.AttributeFaaSInvokedProvider, semconv.AttributeFaaSInvokedProviderAWS)
@@ -455,6 +454,11 @@ func newTelemetryAPIReceiver(
 	}
 	if val, ok := os.LookupEnv("AWS_LAMBDA_FUNCTION_NAME"); ok {
 		r.Attributes().PutStr(semconv.AttributeFaaSName, val)
+	}
+	if val, ok := os.LookupEnv("AWS_LAMBDA_FUNCTION_MEMORY_SIZE"); ok {
+		if mb, err := strconv.Atoi(val); err == nil {
+			r.Attributes().PutInt(semconv.AttributeFaaSMaxMemory, int64(mb)*1024*1024)
+		}
 	}
 
 	for env, resourceAttribute := range envResourceMap {
