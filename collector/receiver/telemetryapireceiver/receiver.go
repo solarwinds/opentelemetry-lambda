@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/google/uuid"
 	"go.opentelemetry.io/collector/pdata/pmetric"
 	"io"
 	"math/rand"
@@ -456,6 +457,7 @@ func newTelemetryAPIReceiver(
 	} else {
 		r.Attributes().PutStr(semconv.AttributeServiceName, "unknown_service")
 	}
+	r.Attributes().PutStr(semconv.AttributeServiceInstanceID, uuid.New().String())
 	if val, ok := os.LookupEnv("AWS_LAMBDA_FUNCTION_NAME"); ok {
 		r.Attributes().PutStr(semconv.AttributeFaaSName, val)
 	}
