@@ -14,7 +14,9 @@ receivers:
     types: ${SW_APM_TELEMETRY_API_SUBSCRIPTION}
 
 processors:
-  decouple:
+  batch:
+    send_batch_size: 50
+    timeout: 25ms
   resourcedetection:
     detectors: [env, system, lambda]
     timeout: 0.2s
@@ -44,15 +46,15 @@ service:
   pipelines:
     traces:
       receivers: [otlp]
-      processors: [resource,resourcedetection,decouple]
+      processors: [resource,resourcedetection,batch]
       exporters: [otlp,logging]
     metrics:
       receivers: [otlp,telemetryapi]
-      processors: [resource,resourcedetection,decouple]
+      processors: [resource,resourcedetection,batch]
       exporters: [otlp,logging]
     logs:
       receivers: [otlp,telemetryapi]
-      processors: [resource,resourcedetection,decouple]
+      processors: [resource,resourcedetection,batch]
       exporters: [otlp,logging]
   telemetry:
     metrics:
