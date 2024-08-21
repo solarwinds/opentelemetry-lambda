@@ -53,7 +53,7 @@ func TestNewFactory(t *testing.T) {
 				cfg := factory.CreateDefaultConfig()
 				_, err := factory.CreateTracesReceiver(
 					context.Background(),
-					receivertest.NewNopCreateSettings(),
+					receivertest.NewNopSettings(),
 					cfg,
 					consumertest.NewNop(),
 				)
@@ -66,7 +66,7 @@ func TestNewFactory(t *testing.T) {
 				factory := NewFactory("test")
 				_, err := factory.CreateTracesReceiver(
 					context.Background(),
-					receivertest.NewNopCreateSettings(),
+					receivertest.NewNopSettings(),
 					nil,
 					consumertest.NewNop(),
 				)
@@ -80,7 +80,7 @@ func TestNewFactory(t *testing.T) {
 				cfg := factory.CreateDefaultConfig()
 				_, err := factory.CreateMetricsReceiver(
 					context.Background(),
-					receivertest.NewNopCreateSettings(),
+					receivertest.NewNopSettings(),
 					cfg,
 					consumertest.NewNop(),
 				)
@@ -93,7 +93,7 @@ func TestNewFactory(t *testing.T) {
 				factory := NewFactory("test")
 				_, err := factory.CreateMetricsReceiver(
 					context.Background(),
-					receivertest.NewNopCreateSettings(),
+					receivertest.NewNopSettings(),
 					nil,
 					consumertest.NewNop(),
 				)
@@ -107,7 +107,7 @@ func TestNewFactory(t *testing.T) {
 				cfg := factory.CreateDefaultConfig()
 				_, err := factory.CreateLogsReceiver(
 					context.Background(),
-					receivertest.NewNopCreateSettings(),
+					receivertest.NewNopSettings(),
 					cfg,
 					consumertest.NewNop(),
 				)
@@ -120,7 +120,7 @@ func TestNewFactory(t *testing.T) {
 				factory := NewFactory("test")
 				_, err := factory.CreateLogsReceiver(
 					context.Background(),
-					receivertest.NewNopCreateSettings(),
+					receivertest.NewNopSettings(),
 					nil,
 					consumertest.NewNop(),
 				)

@@ -51,7 +51,7 @@ func NewFactory(extensionID string) receiver.Factory {
 		receiver.WithLogs(createLogsReceiver, stability))
 }
 
-func createTracesReceiver(ctx context.Context, params receiver.CreateSettings, rConf component.Config, next consumer.Traces) (receiver.Traces, error) {
+func createTracesReceiver(ctx context.Context, params receiver.Settings, rConf component.Config, next consumer.Traces) (receiver.Traces, error) {
 	cfg, ok := rConf.(*Config)
 	if !ok {
 		return nil, errConfigNotTelemetryAPI
@@ -63,7 +63,7 @@ func createTracesReceiver(ctx context.Context, params receiver.CreateSettings, r
 	return r, nil
 }
 
-func createMetricsReceiver(ctx context.Context, params receiver.CreateSettings, rConf component.Config, next consumer.Metrics) (receiver.Metrics, error) {
+func createMetricsReceiver(ctx context.Context, params receiver.Settings, rConf component.Config, next consumer.Metrics) (receiver.Metrics, error) {
 	cfg, ok := rConf.(*Config)
 	if !ok {
 		return nil, errConfigNotTelemetryAPI
@@ -75,7 +75,7 @@ func createMetricsReceiver(ctx context.Context, params receiver.CreateSettings, 
 	return r, nil
 }
 
-func createLogsReceiver(ctx context.Context, params receiver.CreateSettings, rConf component.Config, next consumer.Logs) (receiver.Logs, error) {
+func createLogsReceiver(ctx context.Context, params receiver.Settings, rConf component.Config, next consumer.Logs) (receiver.Logs, error) {
 	cfg, ok := rConf.(*Config)
 	if !ok {
 		return nil, errConfigNotTelemetryAPI

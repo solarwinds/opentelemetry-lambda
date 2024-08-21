@@ -22,7 +22,7 @@ import (
 	"testing"
 	"time"
 
-	telemetryapi "github.com/open-telemetry/opentelemetry-lambda/collector/receiver/telemetryapireceiver/internal/telemetryapi"
+	telemetryapi "github.com/open-telemetry/opentelemetry-lambda/collector/internal/telemetryapi"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/pdata/pcommon"
@@ -113,7 +113,7 @@ func TestHandler(t *testing.T) {
 			consumer := mockConsumer{}
 			r := newTelemetryAPIReceiver(
 				&Config{},
-				receivertest.NewNopCreateSettings(),
+				receivertest.NewNopSettings(),
 			)
 			r.registerTracesConsumer(&consumer)
 			req := httptest.NewRequest("POST",
@@ -159,7 +159,7 @@ func TestCreatePlatformInitSpan(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			r := newTelemetryAPIReceiver(
 				&Config{},
-				receivertest.NewNopCreateSettings(),
+				receivertest.NewNopSettings(),
 			)
 			td, err := r.createPlatformInitSpan(tc.start, tc.end)
 			if tc.expectError {
@@ -362,7 +362,7 @@ func TestCreateMetrics(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			r := newTelemetryAPIReceiver(
 				&Config{},
-				receivertest.NewNopCreateSettings(),
+				receivertest.NewNopSettings(),
 			)
 			metrics, err := r.createMetrics(tc.slice)
 			if tc.expectError {
@@ -535,7 +535,7 @@ func TestCreateLogs(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			r := newTelemetryAPIReceiver(
 				&Config{},
-				receivertest.NewNopCreateSettings(),
+				receivertest.NewNopSettings(),
 			)
 			log, err := r.createLogs(tc.slice)
 			if tc.expectError {

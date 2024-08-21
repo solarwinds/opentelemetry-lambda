@@ -31,7 +31,7 @@ import (
 	"time"
 
 	"github.com/golang-collections/go-datastructures/queue"
-	telemetryapi "github.com/open-telemetry/opentelemetry-lambda/collector/receiver/telemetryapireceiver/internal/telemetryapi"
+	telemetryapi "github.com/open-telemetry/opentelemetry-lambda/collector/internal/telemetryapi"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/pdata/pcommon"
@@ -441,7 +441,7 @@ func (r *telemetryAPIReceiver) createPlatformInitSpan(start, end string) (ptrace
 
 func newTelemetryAPIReceiver(
 	cfg *Config,
-	set receiver.CreateSettings,
+	set receiver.Settings,
 ) *telemetryAPIReceiver {
 	envResourceMap := map[string]string{
 		"AWS_LAMBDA_FUNCTION_VERSION": semconv.AttributeFaaSVersion,
