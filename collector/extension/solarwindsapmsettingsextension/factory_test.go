@@ -1,9 +1,10 @@
 package solarwindsapmsettingsextension
 
 import (
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/collector/component/componenttest"
-	"testing"
 )
 
 func TestCreateDefaultConfig(t *testing.T) {
@@ -13,7 +14,7 @@ func TestCreateDefaultConfig(t *testing.T) {
 	assert.NoError(t, componenttest.CheckConfigStruct(cfg))
 	ocfg, ok := factory.CreateDefaultConfig().(*Config)
 	assert.True(t, ok)
-	assert.Equal(t, ocfg.Endpoint, DefaultEndpoint, "Wrong default endpoint")
+	assert.Equal(t, ocfg.ClientConfig.Endpoint, DefaultEndpoint, "Wrong default endpoint")
 	assert.Empty(t, ocfg.Key, "There is no default key")
 	assert.Equal(t, ocfg.Interval, DefaultInterval, "Wrong default interval")
 }
