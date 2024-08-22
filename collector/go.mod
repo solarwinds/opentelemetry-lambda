@@ -197,6 +197,7 @@ require (
 	go.opentelemetry.io/collector/config/internal v0.107.0 // indirect
 	go.opentelemetry.io/collector/connector v0.105.0 // indirect
 	go.opentelemetry.io/collector/consumer v0.107.0 // indirect
+	go.opentelemetry.io/collector/consumer/consumerprofiles v0.107.0 // indirect
 	go.opentelemetry.io/collector/exporter v0.105.0 // indirect
 	go.opentelemetry.io/collector/exporter/loggingexporter v0.105.0 // indirect
 	go.opentelemetry.io/collector/exporter/otlpexporter v0.105.0 // indirect
@@ -206,6 +207,7 @@ require (
 	go.opentelemetry.io/collector/featuregate v1.13.0 // indirect
 	go.opentelemetry.io/collector/internal/globalgates v0.107.0 // indirect
 	go.opentelemetry.io/collector/pdata v1.13.0 // indirect
+	go.opentelemetry.io/collector/pdata/pprofile v0.107.0 // indirect
 	go.opentelemetry.io/collector/processor v0.105.0 // indirect
 	go.opentelemetry.io/collector/processor/batchprocessor v0.105.0 // indirect
 	go.opentelemetry.io/collector/processor/memorylimiterprocessor v0.105.0 // indirect
