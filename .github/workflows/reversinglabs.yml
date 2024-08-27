@@ -22,9 +22,7 @@ jobs:
         shell: bash
         run: |
           LAYER_VERSION=$(echo "$GITHUB_REF_NAME" | sed -r 's/.*\/[^0-9\.]*//g')
-          echo "layer_version=$LAYER_VERSION" >> $GITHUB_ENV
-          echo GITHUB_ENV:
-          cat $GITHUB_ENV
+          echo "layer_version=$LAYER_VERSION" >> $GITHUB_OUTPUT
       - name: Print version (in case some debugging is needed)
         run: |
           echo "Layer version:       ${{ steps.construct_layer_version.outputs.layer_version }}"
