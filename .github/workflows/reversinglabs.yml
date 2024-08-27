@@ -1,0 +1,51 @@
+name: Reversinglabs scanner
+
+on:
+  workflow_call:
+    inputs:
+      artifact-name:
+        description: 'This should correspond to a actions/upload-artifact name earlier in the build.'
+        required: true
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+  statuses: write
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Construct Layer Name
+        shell: bash
+        run: |
+          LAYER_VERSION=$(echo "$GITHUB_REF_NAME" | sed -r 's/.*\/[^0-9\.]*//g')
+          echo "LAYER_VERSION=$LAYER_VERSION" >> $GITHUB_ENV          
+          echo GITHUB_ENV:
+          cat $GITHUB_ENV
+      - name: Download built layer
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.artifact-name }}
+      - name: Display structure of downloaded files
+        run: ls -R
+      - name: Package
+        run: zip -r scan.zip .
+      - name: Scan artifacts on the Portal
+        id: rl-scan
+        env:
+          RLPORTAL_ACCESS_TOKEN: ${{ secrets.RLPORTAL_ACCESS_TOKEN }}
+        uses: reversinglabs/gh-action-rl-scanner-cloud-only@v1
+        with:
+          artifact-to-scan: scan.zip
+          rl-verbose: true
+          rl-portal-server: solarwinds
+          rl-portal-org: SolarWinds
+          rl-portal-group: "SaaS-Agents-SWO"
+          rl-package-url: opentelemetry-lambda/${{ inputs.artifact-name }}@$LAYER_VERSION
+      - name: report the scan status
+        if: success() || failure()
+        run: |
+          echo "The status is: '${{ steps.rl-scan.outputs.status }}'"
+          echo "The description is: '${{ steps.rl-scan.outputs.description }}'"
