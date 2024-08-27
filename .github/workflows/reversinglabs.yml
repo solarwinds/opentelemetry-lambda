@@ -17,13 +17,17 @@ jobs:
   scan:
     runs-on: ubuntu-latest
     steps:
-      - name: Construct Layer Name
+      - name: Construct Layer Version
+        id: construct_layer_version
         shell: bash
         run: |
           LAYER_VERSION=$(echo "$GITHUB_REF_NAME" | sed -r 's/.*\/[^0-9\.]*//g')
-          echo "LAYER_VERSION=$LAYER_VERSION" >> $GITHUB_ENV          
+          echo "layer_version=$LAYER_VERSION" >> $GITHUB_ENV
           echo GITHUB_ENV:
           cat $GITHUB_ENV
+      - name: Print version (in case some debugging is needed)
+        run: |
+          echo "Layer version:       ${{ steps.construct_layer_version.outputs.layer_version }}"
       - name: Download built layer
         uses: actions/download-artifact@v4
         with:
@@ -43,7 +47,7 @@ jobs:
           rl-portal-server: solarwinds
           rl-portal-org: SolarWinds
           rl-portal-group: "SaaS-Agents-SWO"
-          rl-package-url: opentelemetry-lambda/${{ inputs.artifact-name }}@$LAYER_VERSION
+          rl-package-url: opentelemetry-lambda/${{ inputs.artifact-name }}@${{ steps.construct_layer_version.outputs.layer_version }}
       - name: report the scan status
         if: success() || failure()
         run: |
