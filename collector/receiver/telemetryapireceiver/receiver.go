@@ -248,13 +248,7 @@ func (r *telemetryAPIReceiver) createMetrics(slice []telemetryapi.Event) (pmetri
 					metrics.Metadata().PutStr("type", el.Type)
 					metrics.SetName(semconv.AttributeFaaSColdstart)
 					sum := metrics.SetEmptySum()
-					sum.SetIsMonotonic(true)
-					sum.SetAggregationTemporality(pmetric.AggregationTemporalityCumulative)
-					dp := sum.DataPoints().AppendEmpty()
-					dp.SetIntValue(r.coldStartCounter)
-					dp.SetStartTimestamp(pcommon.NewTimestampFromTime(r.metricsStartTime))
-					dp.SetTimestamp(pcommon.NewTimestampFromTime(time.Now()))
-					dp.Attributes().PutStr(semconv.AttributeFaaSTrigger, semconv.AttributeFaaSTriggerOther)
+					sumHelper(sum, r.coldStartCounter, r.metricsStartTime)
 				}
 			}
 		case string(telemetryapi.PlatformReport):
@@ -263,13 +257,7 @@ func (r *telemetryAPIReceiver) createMetrics(slice []telemetryapi.Event) (pmetri
 			metrics.Metadata().PutStr("type", el.Type)
 			metrics.SetName("faas.invocations")
 			sum := metrics.SetEmptySum()
-			sum.SetIsMonotonic(true)
-			sum.SetAggregationTemporality(pmetric.AggregationTemporalityCumulative)
-			dp := sum.DataPoints().AppendEmpty()
-			dp.SetIntValue(r.invocationsCounter)
-			dp.SetStartTimestamp(pcommon.NewTimestampFromTime(r.metricsStartTime))
-			dp.SetTimestamp(pcommon.NewTimestampFromTime(time.Now()))
-			dp.Attributes().PutStr(semconv.AttributeFaaSTrigger, semconv.AttributeFaaSTriggerOther)
+			sumHelper(sum, r.invocationsCounter, r.metricsStartTime)
 			jsonStr, err := json.Marshal(el.Record)
 			if err != nil {
 				return pmetric.Metrics{}, err
@@ -284,13 +272,7 @@ func (r *telemetryAPIReceiver) createMetrics(slice []telemetryapi.Event) (pmetri
 					metrics.Metadata().PutStr("type", el.Type)
 					metrics.SetName("faas.errors")
 					sum := metrics.SetEmptySum()
-					sum.SetIsMonotonic(true)
-					sum.SetAggregationTemporality(pmetric.AggregationTemporalityCumulative)
-					dp := sum.DataPoints().AppendEmpty()
-					dp.SetIntValue(r.errorsCounter)
-					dp.SetStartTimestamp(pcommon.NewTimestampFromTime(r.metricsStartTime))
-					dp.SetTimestamp(pcommon.NewTimestampFromTime(time.Now()))
-					dp.Attributes().PutStr(semconv.AttributeFaaSTrigger, semconv.AttributeFaaSTriggerOther)
+					sumHelper(sum, r.errorsCounter, r.metricsStartTime)
 				}
 				if report.Status == statusTimeout {
 					r.timeoutsCounter++
@@ -298,13 +280,7 @@ func (r *telemetryAPIReceiver) createMetrics(slice []telemetryapi.Event) (pmetri
 					metrics.Metadata().PutStr("type", el.Type)
 					metrics.SetName("faas.timeouts")
 					sum := metrics.SetEmptySum()
-					sum.SetIsMonotonic(true)
-					sum.SetAggregationTemporality(pmetric.AggregationTemporalityCumulative)
-					dp := sum.DataPoints().AppendEmpty()
-					dp.SetIntValue(r.timeoutsCounter)
-					dp.SetStartTimestamp(pcommon.NewTimestampFromTime(r.metricsStartTime))
-					dp.SetTimestamp(pcommon.NewTimestampFromTime(time.Now()))
-					dp.Attributes().PutStr(semconv.AttributeFaaSTrigger, semconv.AttributeFaaSTriggerOther)
+					sumHelper(sum, r.timeoutsCounter, r.metricsStartTime)
 				}
 			}
 		}
@@ -360,6 +336,16 @@ func (r *telemetryAPIReceiver) createLogs(slice []telemetryapi.Event) (plog.Logs
 		}
 	}
 	return logs, nil
+}
+
+func sumHelper(sum pmetric.Sum, count int64, metricsStartTime time.Time) {
+	sum.SetIsMonotonic(true)
+	sum.SetAggregationTemporality(pmetric.AggregationTemporalityCumulative)
+	dp := sum.DataPoints().AppendEmpty()
+	dp.SetIntValue(count)
+	dp.SetStartTimestamp(pcommon.NewTimestampFromTime(metricsStartTime))
+	dp.SetTimestamp(pcommon.NewTimestampFromTime(time.Now()))
+	dp.Attributes().PutStr(semconv.AttributeFaaSTrigger, semconv.AttributeFaaSTriggerOther)
 }
 
 func parseTimestamp(timeText string) (time.Time, error) {
