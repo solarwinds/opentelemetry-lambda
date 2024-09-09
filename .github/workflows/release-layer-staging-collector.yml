@@ -1,14 +1,15 @@
-name: "Release Collector Lambda layer"
+name: "Release Staging Collector Lambda layer"
 
 on:
   # (Using tag push instead of release to allow filtering by tag prefix.)
   push:
     tags:
-      - layer-collector/**
+      - layer-staging-collector/**
 
 permissions:
   id-token: write
   contents: read
+  statuses: write
 
 jobs:
   build-layer:
@@ -46,6 +47,18 @@ jobs:
           COLLECTOR_VERSION=$( ${{ github.workspace }}/collector/build/extensions/collector -v)
           echo "COLLECTOR_VERSION=$COLLECTOR_VERSION" >> $GITHUB_OUTPUT
 
+  scan:
+    uses: ./.github/workflows/reversinglabs.yml
+    needs: build-layer
+    strategy:
+      matrix:
+        architecture:
+          - x86_64
+          - arm64
+    with:
+      artifact-name: opentelemetry-collector-layer-${{ matrix.architecture }}.zip
+    secrets: inherit
+
   publish-layer:
     uses: ./.github/workflows/layer-publish.yml
     needs: build-layer
@@ -76,6 +89,6 @@ jobs:
       layer-name: opentelemetry-collector
       component-version: ${{needs.build-layer.outputs.COLLECTOR_VERSION}}
       architecture: ${{ matrix.architecture }}
-      release-group: prod
+      release-group: staging
       aws_region: ${{ matrix.aws_region }}
     secrets: inherit

@@ -47,6 +47,7 @@ func NewFactory(extensionID string) receiver.Factory {
 			}
 		},
 		receiver.WithTraces(createTracesReceiver, stability),
+		receiver.WithMetrics(createMetricsReceiver, stability),
 		receiver.WithLogs(createLogsReceiver, stability))
 }
 
@@ -60,6 +61,19 @@ func createTracesReceiver(ctx context.Context, params receiver.Settings, rConf c
 		return t
 	})
 	r.Unwrap().(*telemetryAPIReceiver).registerTracesConsumer(next)
+	return r, nil
+}
+
+func createMetricsReceiver(ctx context.Context, params receiver.Settings, rConf component.Config, next consumer.Metrics) (receiver.Metrics, error) {
+	cfg, ok := rConf.(*Config)
+	if !ok {
+		return nil, errConfigNotTelemetryAPI
+	}
+	r := receivers.GetOrAdd(cfg, func() component.Component {
+		t, _ := newTelemetryAPIReceiver(cfg, params)
+		return t
+	})
+	r.Unwrap().(*telemetryAPIReceiver).registerMetricsConsumer(next)
 	return r, nil
 }
 
