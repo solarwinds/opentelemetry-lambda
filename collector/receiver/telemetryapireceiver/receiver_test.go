@@ -24,8 +24,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/pdata/pcommon"
-	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.opentelemetry.io/collector/pdata/plog"
+	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.opentelemetry.io/collector/pdata/ptrace"
 	"go.opentelemetry.io/collector/receiver/receivertest"
 	semconv "go.opentelemetry.io/collector/semconv/v1.25.0"
@@ -177,7 +177,7 @@ func TestCreateMetrics(t *testing.T) {
 
 	testCases := []struct {
 		desc            string
-		slice           []telemetryapi.Event
+		slice           []event
 		expectedType    string
 		expectedMetrics []map[string]any
 		expectError     bool
@@ -188,7 +188,7 @@ func TestCreateMetrics(t *testing.T) {
 		},
 		{
 			desc: "platform.initReport",
-			slice: []telemetryapi.Event{
+			slice: []event{
 				{
 					Time: "2022-10-12T00:01:15.000Z",
 					Type: "platform.initReport",
@@ -220,7 +220,7 @@ func TestCreateMetrics(t *testing.T) {
 		},
 		{
 			desc: "platform.Report success",
-			slice: []telemetryapi.Event{
+			slice: []event{
 				{
 					Time: "2022-10-12T00:01:15.000Z",
 					Type: "platform.report",
@@ -255,7 +255,7 @@ func TestCreateMetrics(t *testing.T) {
 		},
 		{
 			desc: "platform.Report error",
-			slice: []telemetryapi.Event{
+			slice: []event{
 				{
 					Time: "2022-10-12T00:01:15.000Z",
 					Type: "platform.report",
@@ -289,7 +289,7 @@ func TestCreateMetrics(t *testing.T) {
 		},
 		{
 			desc: "platform.Report failure",
-			slice: []telemetryapi.Event{
+			slice: []event{
 				{
 					Time: "2022-10-12T00:01:15.000Z",
 					Type: "platform.report",
@@ -323,7 +323,7 @@ func TestCreateMetrics(t *testing.T) {
 		},
 		{
 			desc: "platform.Report timeout",
-			slice: []telemetryapi.Event{
+			slice: []event{
 				{
 					Time: "2022-10-12T00:01:15.000Z",
 					Type: "platform.report",
@@ -363,7 +363,7 @@ func TestCreateMetrics(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			r, err := newTelemetryAPIReceiver(
 				&Config{},
-				receivertest.NewSettings(),
+				receivertest.NewNopSettings(),
 			)
 			require.NoError(t, err)
 			metrics, err := r.createMetrics(tc.slice)
@@ -611,29 +611,6 @@ func TestSeverityTextToNumber(t *testing.T) {
 	others := []string{"", "UNKNOWN", "other", "anything"}
 	for _, level := range others {
 		require.Equal(t, plog.SeverityNumberUnspecified, severityTextToNumber(level))
-	}
-}
-
-func TestParseTimestamp(t *testing.T) {
-	t.Parallel()
-
-	testCases := []struct {
-		timestamp string
-		expected  time.Time
-	}{
-		{
-			timestamp: "2024-07-05T21:12:37Z",
-			expected:  time.Date(2024, time.July, 5, 21, 12, 37, 0, time.UTC),
-		},
-		{
-			timestamp: "2024-07-09T10:53:34.689Z",
-			expected:  time.Date(2024, time.July, 9, 10, 53, 34, 689*1000*1000, time.UTC),
-		},
-	}
-	for _, tc := range testCases {
-		parsed, err := parseTimestamp(tc.timestamp)
-		require.NoError(t, err)
-		require.Equal(t, tc.expected, parsed)
 	}
 }
 
