@@ -49,7 +49,7 @@ service:
       processors: [resource,resourcedetection,batch]
       exporters: [otlp,logging]
     metrics:
-      receivers: [otlp]
+      receivers: [otlp,telemetryapi]
       processors: [resource,resourcedetection,batch]
       exporters: [otlp,logging]
     logs:

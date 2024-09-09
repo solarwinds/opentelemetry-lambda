@@ -47,7 +47,7 @@ func TestLoadConfig(t *testing.T) {
 			id: component.NewIDWithName(component.MustNewType("telemetryapi"), "2"),
 			expected: &Config{
 				extensionID: "extensionID",
-				Port:        12345,
+				Port:        0x12d4,
 				Types:       []string{platform, function, extension},
 			},
 		},
