@@ -107,7 +107,6 @@ func (lm *manager) Run(ctx context.Context) error {
 			lm.logger.Warn("Failed to process events", zap.Error(err))
 		}
 	}()
-
 	lm.wg.Wait()
 	return nil
 }

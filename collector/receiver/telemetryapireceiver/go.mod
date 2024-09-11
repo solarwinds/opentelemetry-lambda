@@ -9,7 +9,7 @@ replace github.com/open-telemetry/opentelemetry-lambda/collector => ../../
 require (
 	github.com/golang-collections/go-datastructures v0.0.0-20150211160725-59788d5eb259
 	github.com/google/uuid v1.6.0
-	github.com/open-telemetry/opentelemetry-lambda/collector v0.0.0-20240821162552-fc5738cd7088
+	github.com/open-telemetry/opentelemetry-lambda/collector v0.98.0
 	github.com/stretchr/testify v1.9.0
 	go.opentelemetry.io/collector/component v0.107.0
 	go.opentelemetry.io/collector/confmap v0.107.0

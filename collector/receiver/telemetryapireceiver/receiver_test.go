@@ -16,17 +16,16 @@ package telemetryapireceiver // import "github.com/open-telemetry/opentelemetry-
 
 import (
 	"context"
-	"go.opentelemetry.io/collector/pdata/pmetric"
 	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
 
-	telemetryapi "github.com/open-telemetry/opentelemetry-lambda/collector/internal/telemetryapi"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
+	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.opentelemetry.io/collector/pdata/ptrace"
 	"go.opentelemetry.io/collector/receiver/receivertest"
 	semconv "go.opentelemetry.io/collector/semconv/v1.25.0"
@@ -111,10 +110,11 @@ func TestHandler(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			consumer := mockConsumer{}
-			r := newTelemetryAPIReceiver(
+			r, err := newTelemetryAPIReceiver(
 				&Config{},
 				receivertest.NewNopSettings(),
 			)
+			require.NoError(t, err)
 			r.registerTracesConsumer(&consumer)
 			req := httptest.NewRequest("POST",
 				"http://localhost:53612/someevent", strings.NewReader(tc.body))
@@ -157,10 +157,11 @@ func TestCreatePlatformInitSpan(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			r := newTelemetryAPIReceiver(
+			r, err := newTelemetryAPIReceiver(
 				&Config{},
 				receivertest.NewNopSettings(),
 			)
+			require.NoError(t, err)
 			td, err := r.createPlatformInitSpan(tc.start, tc.end)
 			if tc.expectError {
 				require.Error(t, err)
@@ -176,7 +177,7 @@ func TestCreateMetrics(t *testing.T) {
 
 	testCases := []struct {
 		desc            string
-		slice           []telemetryapi.Event
+		slice           []event
 		expectedType    string
 		expectedMetrics []map[string]any
 		expectError     bool
@@ -187,7 +188,7 @@ func TestCreateMetrics(t *testing.T) {
 		},
 		{
 			desc: "platform.initReport",
-			slice: []telemetryapi.Event{
+			slice: []event{
 				{
 					Time: "2022-10-12T00:01:15.000Z",
 					Type: "platform.initReport",
@@ -219,7 +220,7 @@ func TestCreateMetrics(t *testing.T) {
 		},
 		{
 			desc: "platform.Report success",
-			slice: []telemetryapi.Event{
+			slice: []event{
 				{
 					Time: "2022-10-12T00:01:15.000Z",
 					Type: "platform.report",
@@ -254,7 +255,7 @@ func TestCreateMetrics(t *testing.T) {
 		},
 		{
 			desc: "platform.Report error",
-			slice: []telemetryapi.Event{
+			slice: []event{
 				{
 					Time: "2022-10-12T00:01:15.000Z",
 					Type: "platform.report",
@@ -288,7 +289,7 @@ func TestCreateMetrics(t *testing.T) {
 		},
 		{
 			desc: "platform.Report failure",
-			slice: []telemetryapi.Event{
+			slice: []event{
 				{
 					Time: "2022-10-12T00:01:15.000Z",
 					Type: "platform.report",
@@ -322,7 +323,7 @@ func TestCreateMetrics(t *testing.T) {
 		},
 		{
 			desc: "platform.Report timeout",
-			slice: []telemetryapi.Event{
+			slice: []event{
 				{
 					Time: "2022-10-12T00:01:15.000Z",
 					Type: "platform.report",
@@ -360,10 +361,11 @@ func TestCreateMetrics(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			r := newTelemetryAPIReceiver(
+			r, err := newTelemetryAPIReceiver(
 				&Config{},
 				receivertest.NewNopSettings(),
 			)
+			require.NoError(t, err)
 			metrics, err := r.createMetrics(tc.slice)
 			if tc.expectError {
 				require.Error(t, err)
@@ -395,7 +397,7 @@ func TestCreateLogs(t *testing.T) {
 
 	testCases := []struct {
 		desc                      string
-		slice                     []telemetryapi.Event
+		slice                     []event
 		expectedLogRecords        int
 		expectedType              string
 		expectedTimestamp         string
@@ -413,7 +415,7 @@ func TestCreateLogs(t *testing.T) {
 		},
 		{
 			desc: "Invalid Timestamp",
-			slice: []telemetryapi.Event{
+			slice: []event{
 				{
 					Time:   "invalid",
 					Type:   "function",
@@ -424,7 +426,7 @@ func TestCreateLogs(t *testing.T) {
 		},
 		{
 			desc: "function text",
-			slice: []telemetryapi.Event{
+			slice: []event{
 				{
 					Time:   "2022-10-12T00:03:50.000Z",
 					Type:   "function",
@@ -442,7 +444,7 @@ func TestCreateLogs(t *testing.T) {
 		},
 		{
 			desc: "function json",
-			slice: []telemetryapi.Event{
+			slice: []event{
 				{
 					Time: "2022-10-12T00:03:50.000Z",
 					Type: "function",
@@ -466,7 +468,7 @@ func TestCreateLogs(t *testing.T) {
 		},
 		{
 			desc: "extension text",
-			slice: []telemetryapi.Event{
+			slice: []event{
 				{
 					Time:   "2022-10-12T00:03:50.000Z",
 					Type:   "extension",
@@ -484,7 +486,7 @@ func TestCreateLogs(t *testing.T) {
 		},
 		{
 			desc: "extension json",
-			slice: []telemetryapi.Event{
+			slice: []event{
 				{
 					Time: "2022-10-12T00:03:50.000Z",
 					Type: "extension",
@@ -508,7 +510,7 @@ func TestCreateLogs(t *testing.T) {
 		},
 		{
 			desc: "extension json anything",
-			slice: []telemetryapi.Event{
+			slice: []event{
 				{
 					Time: "2022-10-12T00:03:50.000Z",
 					Type: "extension",
@@ -533,10 +535,11 @@ func TestCreateLogs(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			r := newTelemetryAPIReceiver(
+			r, err := newTelemetryAPIReceiver(
 				&Config{},
 				receivertest.NewNopSettings(),
 			)
+			require.NoError(t, err)
 			log, err := r.createLogs(tc.slice)
 			if tc.expectError {
 				require.Error(t, err)
@@ -572,145 +575,42 @@ func TestCreateLogs(t *testing.T) {
 func TestSeverityTextToNumber(t *testing.T) {
 	t.Parallel()
 
-	testCases := []struct {
-		level  string
-		number plog.SeverityNumber
-	}{
-		{
-			level:  "TRACE",
-			number: plog.SeverityNumberTrace,
-		},
-		{
-			level:  "TRACE2",
-			number: plog.SeverityNumberTrace2,
-		},
-		{
-			level:  "TRACE3",
-			number: plog.SeverityNumberTrace3,
-		},
-		{
-			level:  "TRACE4",
-			number: plog.SeverityNumberTrace4,
-		},
-		{
-			level:  "DEBUG2",
-			number: plog.SeverityNumberDebug2,
-		},
-		{
-			level:  "DEBUG3",
-			number: plog.SeverityNumberDebug3,
-		},
-		{
-			level:  "DEBUG4",
-			number: plog.SeverityNumberDebug4,
-		},
-		{
-			level:  "INFO",
-			number: plog.SeverityNumberInfo,
-		},
-		{
-			level:  "INFO2",
-			number: plog.SeverityNumberInfo2,
-		},
-		{
-			level:  "INFO3",
-			number: plog.SeverityNumberInfo3,
-		},
-		{
-			level:  "INFO4",
-			number: plog.SeverityNumberInfo4,
-		},
-		{
-			level:  "WARN",
-			number: plog.SeverityNumberWarn,
-		},
-		{
-			level:  "WARN2",
-			number: plog.SeverityNumberWarn2,
-		},
-		{
-			level:  "WARN3",
-			number: plog.SeverityNumberWarn3,
-		},
-		{
-			level:  "WARN4",
-			number: plog.SeverityNumberWarn4,
-		},
-		{
-			level:  "ERROR",
-			number: plog.SeverityNumberError,
-		},
-		{
-			level:  "ERROR2",
-			number: plog.SeverityNumberError2,
-		},
-		{
-			level:  "ERROR3",
-			number: plog.SeverityNumberError3,
-		},
-		{
-			level:  "ERROR4",
-			number: plog.SeverityNumberError4,
-		},
-		{
-			level:  "FATAL",
-			number: plog.SeverityNumberFatal,
-		},
-		{
-			level:  "FATAL2",
-			number: plog.SeverityNumberFatal2,
-		},
-		{
-			level:  "FATAL3",
-			number: plog.SeverityNumberFatal3,
-		},
-		{
-			level:  "FATAL4",
-			number: plog.SeverityNumberFatal4,
-		},
-		{
-			level:  "CRITICAL",
-			number: plog.SeverityNumberFatal,
-		},
-		{
-			level:  "ALL",
-			number: plog.SeverityNumberTrace,
-		},
-		{
-			level:  "WARNING",
-			number: plog.SeverityNumberWarn,
-		},
-		{
-			level:  "UNKNOWN",
-			number: plog.SeverityNumberUnspecified,
-		},
+	goldenMapping := map[string]plog.SeverityNumber{
+		"TRACE":    plog.SeverityNumberTrace,
+		"TRACE2":   plog.SeverityNumberTrace2,
+		"TRACE3":   plog.SeverityNumberTrace3,
+		"TRACE4":   plog.SeverityNumberTrace4,
+		"DEBUG":    plog.SeverityNumberDebug,
+		"DEBUG2":   plog.SeverityNumberDebug2,
+		"DEBUG3":   plog.SeverityNumberDebug3,
+		"DEBUG4":   plog.SeverityNumberDebug4,
+		"INFO":     plog.SeverityNumberInfo,
+		"INFO2":    plog.SeverityNumberInfo2,
+		"INFO3":    plog.SeverityNumberInfo3,
+		"INFO4":    plog.SeverityNumberInfo4,
+		"WARN":     plog.SeverityNumberWarn,
+		"WARN2":    plog.SeverityNumberWarn2,
+		"WARN3":    plog.SeverityNumberWarn3,
+		"WARN4":    plog.SeverityNumberWarn4,
+		"ERROR":    plog.SeverityNumberError,
+		"ERROR2":   plog.SeverityNumberError2,
+		"ERROR3":   plog.SeverityNumberError3,
+		"ERROR4":   plog.SeverityNumberError4,
+		"FATAL":    plog.SeverityNumberFatal,
+		"FATAL2":   plog.SeverityNumberFatal2,
+		"FATAL3":   plog.SeverityNumberFatal3,
+		"FATAL4":   plog.SeverityNumberFatal4,
+		"CRITICAL": plog.SeverityNumberFatal,
+		"ALL":      plog.SeverityNumberTrace,
+		"WARNING":  plog.SeverityNumberWarn,
 	}
-	for _, tc := range testCases {
-		require.Equal(t, tc.number, severityTextToNumber(tc.level))
-
+	for level, number := range goldenMapping {
+		require.Equal(t, number, severityTextToNumber(level))
 	}
-}
 
-func TestParseTimestamp(t *testing.T) {
-	t.Parallel()
-
-	testCases := []struct {
-		timestamp string
-		expected  time.Time
-	}{
-		{
-			timestamp: "2024-07-05T21:12:37Z",
-			expected:  time.Date(2024, time.July, 5, 21, 12, 37, 0, time.UTC),
-		},
-		{
-			timestamp: "2024-07-09T10:53:34.689Z",
-			expected:  time.Date(2024, time.July, 9, 10, 53, 34, 689*1000*1000, time.UTC),
-		},
-	}
-	for _, tc := range testCases {
-		parsed, err := parseTimestamp(tc.timestamp)
-		require.NoError(t, err)
-		require.Equal(t, tc.expected, parsed)
+	others := []string{"", "UNKNOWN", "other", "anything"}
+	for _, level := range others {
+		require.Equal(t, plog.SeverityNumberUnspecified, severityTextToNumber(level))
 	}
 }
 

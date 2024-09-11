@@ -57,7 +57,8 @@ func createTracesReceiver(ctx context.Context, params receiver.Settings, rConf c
 		return nil, errConfigNotTelemetryAPI
 	}
 	r := receivers.GetOrAdd(cfg, func() component.Component {
-		return newTelemetryAPIReceiver(cfg, params)
+		t, _ := newTelemetryAPIReceiver(cfg, params)
+		return t
 	})
 	r.Unwrap().(*telemetryAPIReceiver).registerTracesConsumer(next)
 	return r, nil
@@ -69,7 +70,8 @@ func createMetricsReceiver(ctx context.Context, params receiver.Settings, rConf 
 		return nil, errConfigNotTelemetryAPI
 	}
 	r := receivers.GetOrAdd(cfg, func() component.Component {
-		return newTelemetryAPIReceiver(cfg, params)
+		t, _ := newTelemetryAPIReceiver(cfg, params)
+		return t
 	})
 	r.Unwrap().(*telemetryAPIReceiver).registerMetricsConsumer(next)
 	return r, nil
@@ -81,7 +83,8 @@ func createLogsReceiver(ctx context.Context, params receiver.Settings, rConf com
 		return nil, errConfigNotTelemetryAPI
 	}
 	r := receivers.GetOrAdd(cfg, func() component.Component {
-		return newTelemetryAPIReceiver(cfg, params)
+		t, _ := newTelemetryAPIReceiver(cfg, params)
+		return t
 	})
 	r.Unwrap().(*telemetryAPIReceiver).registerLogsConsumer(next)
 	return r, nil
