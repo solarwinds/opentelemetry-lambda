@@ -16,15 +16,15 @@ import (
 )
 
 func TestComponentFactoryType(t *testing.T) {
-	require.Equal(t, "faas", NewFactory().Type().String())
+	require.Equal(t, typeStr, NewFactory("extensionID").Type().String())
 }
 
 func TestComponentConfigStruct(t *testing.T) {
-	require.NoError(t, componenttest.CheckConfigStruct(NewFactory().CreateDefaultConfig()))
+	require.NoError(t, componenttest.CheckConfigStruct(NewFactory("extensionID").CreateDefaultConfig()))
 }
 
 func TestComponentLifecycle(t *testing.T) {
-	factory := NewFactory()
+	factory := NewFactory("extensionID")
 
 	tests := []struct {
 		name     string
@@ -66,18 +66,6 @@ func TestComponentLifecycle(t *testing.T) {
 			require.NoError(t, err)
 			err = c.Shutdown(context.Background())
 			require.NoError(t, err)
-		})
-		t.Run(test.name+"-lifecycle", func(t *testing.T) {
-			firstRcvr, err := test.createFn(context.Background(), receivertest.NewNopSettings(), cfg)
-			require.NoError(t, err)
-			host := componenttest.NewNopHost()
-			require.NoError(t, err)
-			require.NoError(t, firstRcvr.Start(context.Background(), host))
-			require.NoError(t, firstRcvr.Shutdown(context.Background()))
-			secondRcvr, err := test.createFn(context.Background(), receivertest.NewNopSettings(), cfg)
-			require.NoError(t, err)
-			require.NoError(t, secondRcvr.Start(context.Background(), host))
-			require.NoError(t, secondRcvr.Shutdown(context.Background()))
 		})
 	}
 }

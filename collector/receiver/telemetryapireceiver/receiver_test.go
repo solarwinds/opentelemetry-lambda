@@ -16,6 +16,7 @@ package telemetryapireceiver // import "github.com/open-telemetry/opentelemetry-
 
 import (
 	"context"
+	"go.opentelemetry.io/collector/pdata/pmetric"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -25,7 +26,6 @@ import (
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
-	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.opentelemetry.io/collector/pdata/ptrace"
 	"go.opentelemetry.io/collector/receiver/receivertest"
 	semconv "go.opentelemetry.io/collector/semconv/v1.25.0"
@@ -176,15 +176,16 @@ func TestCreateMetrics(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		desc            string
-		slice           []event
-		expectedType    string
-		expectedMetrics []map[string]any
-		expectError     bool
+		desc                    string
+		slice                   []event
+		expectedResourceMetrics int
+		expectedMetrics         []map[string]any
+		expectError             bool
 	}{
 		{
-			desc:        "no slice",
-			expectError: false,
+			desc:                    "no slice",
+			expectError:             false,
+			expectedResourceMetrics: 0,
 		},
 		{
 			desc: "platform.initReport",
@@ -209,14 +210,14 @@ func TestCreateMetrics(t *testing.T) {
 					},
 				},
 			},
+			expectedResourceMetrics: 1,
 			expectedMetrics: []map[string]any{
 				{
-					"Name":  semconv.AttributeFaaSColdstart,
+					"Name":  "faas.coldstarts",
 					"Value": int64(1),
 				},
 			},
-			expectedType: "platform.initReport",
-			expectError:  false,
+			expectError: false,
 		},
 		{
 			desc: "platform.Report success",
@@ -244,7 +245,7 @@ func TestCreateMetrics(t *testing.T) {
 					},
 				},
 			},
-			expectedType: "platform.report",
+			expectedResourceMetrics: 1,
 			expectedMetrics: []map[string]any{
 				{
 					"Name":  "faas.invocations",
@@ -274,14 +275,14 @@ func TestCreateMetrics(t *testing.T) {
 					},
 				},
 			},
-			expectedType: "platform.report",
+			expectedResourceMetrics: 1,
 			expectedMetrics: []map[string]any{
 				{
-					"Name":  "faas.invocations",
+					"Name":  "faas.errors",
 					"Value": int64(1),
 				},
 				{
-					"Name":  "faas.errors",
+					"Name":  "faas.invocations",
 					"Value": int64(1),
 				},
 			},
@@ -308,14 +309,14 @@ func TestCreateMetrics(t *testing.T) {
 					},
 				},
 			},
-			expectedType: "platform.report",
+			expectedResourceMetrics: 1,
 			expectedMetrics: []map[string]any{
 				{
-					"Name":  "faas.invocations",
+					"Name":  "faas.errors",
 					"Value": int64(1),
 				},
 				{
-					"Name":  "faas.errors",
+					"Name":  "faas.invocations",
 					"Value": int64(1),
 				},
 			},
@@ -341,14 +342,14 @@ func TestCreateMetrics(t *testing.T) {
 					},
 				},
 			},
-			expectedType: "platform.report",
+			expectedResourceMetrics: 1,
 			expectedMetrics: []map[string]any{
 				{
-					"Name":  "faas.invocations",
+					"Name":  "faas.errors",
 					"Value": int64(1),
 				},
 				{
-					"Name":  "faas.errors",
+					"Name":  "faas.invocations",
 					"Value": int64(1),
 				},
 				{
@@ -370,22 +371,21 @@ func TestCreateMetrics(t *testing.T) {
 			if tc.expectError {
 				require.Error(t, err)
 			} else {
-				require.Equal(t, 1, metrics.ResourceMetrics().Len())
-				resourceMetric := metrics.ResourceMetrics().At(0)
-				require.Equal(t, 1, resourceMetric.ScopeMetrics().Len())
-				scopeMetric := resourceMetric.ScopeMetrics().At(0)
-				require.Equal(t, scopeName, scopeMetric.Scope().Name())
-				require.Equal(t, len(tc.expectedMetrics), scopeMetric.Metrics().Len())
-				for idx, m := range tc.expectedMetrics {
-					metric := scopeMetric.Metrics().At(idx)
-					attr, ok := metric.Metadata().Get("type")
-					require.True(t, ok)
-					require.Equal(t, tc.expectedType, attr.Str())
-					require.Equal(t, m["Name"], metric.Name())
-					require.True(t, metric.Sum().IsMonotonic())
-					require.Equal(t, pmetric.AggregationTemporalityCumulative, metric.Sum().AggregationTemporality())
-					require.Equal(t, 1, metric.Sum().DataPoints().Len())
-					require.Equal(t, m["Value"], metric.Sum().DataPoints().At(0).IntValue())
+				require.Equal(t, tc.expectedResourceMetrics, metrics.ResourceMetrics().Len())
+				if metrics.ResourceMetrics().Len() > 0 {
+					resourceMetric := metrics.ResourceMetrics().At(0)
+					require.Equal(t, 1, resourceMetric.ScopeMetrics().Len())
+					scopeMetric := resourceMetric.ScopeMetrics().At(0)
+					require.Equal(t, scopeName, scopeMetric.Scope().Name())
+					require.Equal(t, len(tc.expectedMetrics), scopeMetric.Metrics().Len())
+					for idx, m := range tc.expectedMetrics {
+						metric := scopeMetric.Metrics().At(idx)
+						require.Equal(t, m["Name"], metric.Name())
+						require.True(t, metric.Sum().IsMonotonic())
+						require.Equal(t, pmetric.AggregationTemporalityDelta, metric.Sum().AggregationTemporality())
+						require.Equal(t, 1, metric.Sum().DataPoints().Len())
+						require.Equal(t, m["Value"], metric.Sum().DataPoints().At(0).IntValue())
+					}
 				}
 			}
 		})
@@ -611,36 +611,5 @@ func TestSeverityTextToNumber(t *testing.T) {
 	others := []string{"", "UNKNOWN", "other", "anything"}
 	for _, level := range others {
 		require.Equal(t, plog.SeverityNumberUnspecified, severityTextToNumber(level))
-	}
-}
-
-func TestSumHelper(t *testing.T) {
-	t.Parallel()
-	testCases := []struct {
-		count int64
-		time  time.Time
-	}{
-		{
-			count: 12345,
-			time:  time.Date(2024, time.July, 5, 21, 12, 37, 0, time.UTC),
-		},
-		{
-			count: 678910,
-			time:  time.Date(2024, time.July, 9, 10, 53, 34, 689*1000*1000, time.UTC),
-		},
-	}
-	for _, tc := range testCases {
-		sum := pmetric.NewSum()
-		sumHelper(sum, tc.count, tc.time)
-		require.True(t, sum.IsMonotonic())
-		require.Equal(t, pmetric.AggregationTemporalityCumulative, sum.AggregationTemporality())
-		require.Equal(t, 1, sum.DataPoints().Len())
-		dp := sum.DataPoints().At(0)
-		require.Equal(t, tc.count, dp.IntValue())
-		require.Equal(t, tc.time, dp.StartTimestamp().AsTime())
-		require.Equal(t, 1, dp.Attributes().Len())
-		trigger, ok := dp.Attributes().Get(semconv.AttributeFaaSTrigger)
-		require.True(t, ok)
-		require.Equal(t, semconv.AttributeFaaSTriggerOther, trigger.AsString())
 	}
 }
