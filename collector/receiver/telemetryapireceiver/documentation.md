@@ -12,13 +12,55 @@ metrics:
     enabled: false
 ```
 
-### faas.coldstart
+### faas.coldstarts
 
 Number of invocation cold starts
 
 | Unit | Metric Type | Value Type | Aggregation Temporality | Monotonic |
 | ---- | ----------- | ---------- | ----------------------- | --------- |
-| {coldstart} | Sum | Int | Cumulative | true |
+| {coldstart} | Sum | Int | Delta | true |
+
+#### Attributes
+
+| Name | Description | Values |
+| ---- | ----------- | ------ |
+| faas.trigger | Type of the trigger which caused this function invocation | Str: ``datasource``, ``http``, ``other``, ``pubsub``, ``timer`` |
+
+### faas.errors
+
+Number of invocation errors
+
+| Unit | Metric Type | Value Type | Aggregation Temporality | Monotonic |
+| ---- | ----------- | ---------- | ----------------------- | --------- |
+| {error} | Sum | Int | Delta | true |
+
+#### Attributes
+
+| Name | Description | Values |
+| ---- | ----------- | ------ |
+| faas.trigger | Type of the trigger which caused this function invocation | Str: ``datasource``, ``http``, ``other``, ``pubsub``, ``timer`` |
+
+### faas.invocations
+
+Number of successful invocations
+
+| Unit | Metric Type | Value Type | Aggregation Temporality | Monotonic |
+| ---- | ----------- | ---------- | ----------------------- | --------- |
+| {invocation} | Sum | Int | Delta | true |
+
+#### Attributes
+
+| Name | Description | Values |
+| ---- | ----------- | ------ |
+| faas.trigger | Type of the trigger which caused this function invocation | Str: ``datasource``, ``http``, ``other``, ``pubsub``, ``timer`` |
+
+### faas.timeouts
+
+Number of invocation timeouts
+
+| Unit | Metric Type | Value Type | Aggregation Temporality | Monotonic |
+| ---- | ----------- | ---------- | ----------------------- | --------- |
+| {timeout} | Sum | Int | Delta | true |
 
 #### Attributes
 

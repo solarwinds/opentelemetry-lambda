@@ -19,7 +19,7 @@ attributes:
       - timer
 
 metrics:
-  faas.coldstart:
+  faas.coldstarts:
     enabled: true
     description: Number of invocation cold starts
     unit: '{coldstart}'
@@ -28,4 +28,34 @@ metrics:
       value_type: int
       input_type: string
       monotonic: true
-      aggregation_temporality: cumulative
+      aggregation_temporality: delta
+  faas.errors:
+    enabled: true
+    description: Number of invocation errors
+    unit: '{error}'
+    attributes: [faas_trigger]
+    sum:
+      value_type: int
+      input_type: string
+      monotonic: true
+      aggregation_temporality: delta
+  faas.invocations:
+    enabled: true
+    description: Number of successful invocations
+    unit: '{invocation}'
+    attributes: [faas_trigger]
+    sum:
+      value_type: int
+      input_type: string
+      monotonic: true
+      aggregation_temporality: delta
+  faas.timeouts:
+    enabled: true
+    description: Number of invocation timeouts
+    unit: '{timeout}'
+    attributes: [faas_trigger]
+    sum:
+      value_type: int
+      input_type: string
+      monotonic: true
+      aggregation_temporality: delta

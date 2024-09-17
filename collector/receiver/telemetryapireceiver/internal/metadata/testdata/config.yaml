@@ -1,9 +1,21 @@
 default:
 all_set:
   metrics:
-    faas.coldstart:
+    faas.coldstarts:
+      enabled: true
+    faas.errors:
+      enabled: true
+    faas.invocations:
+      enabled: true
+    faas.timeouts:
       enabled: true
 none_set:
   metrics:
-    faas.coldstart:
+    faas.coldstarts:
+      enabled: false
+    faas.errors:
+      enabled: false
+    faas.invocations:
+      enabled: false
+    faas.timeouts:
       enabled: false

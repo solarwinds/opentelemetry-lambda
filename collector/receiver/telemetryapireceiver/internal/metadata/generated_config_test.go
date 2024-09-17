@@ -25,7 +25,10 @@ func TestMetricsBuilderConfig(t *testing.T) {
 			name: "all_set",
 			want: MetricsBuilderConfig{
 				Metrics: MetricsConfig{
-					FaasColdstart: MetricConfig{Enabled: true},
+					FaasColdstarts:  MetricConfig{Enabled: true},
+					FaasErrors:      MetricConfig{Enabled: true},
+					FaasInvocations: MetricConfig{Enabled: true},
+					FaasTimeouts:    MetricConfig{Enabled: true},
 				},
 			},
 		},
@@ -33,7 +36,10 @@ func TestMetricsBuilderConfig(t *testing.T) {
 			name: "none_set",
 			want: MetricsBuilderConfig{
 				Metrics: MetricsConfig{
-					FaasColdstart: MetricConfig{Enabled: false},
+					FaasColdstarts:  MetricConfig{Enabled: false},
+					FaasErrors:      MetricConfig{Enabled: false},
+					FaasInvocations: MetricConfig{Enabled: false},
+					FaasTimeouts:    MetricConfig{Enabled: false},
 				},
 			},
 		},

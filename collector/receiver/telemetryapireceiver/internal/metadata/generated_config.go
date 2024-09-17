@@ -27,12 +27,24 @@ func (ms *MetricConfig) Unmarshal(parser *confmap.Conf) error {
 
 // MetricsConfig provides config for faas metrics.
 type MetricsConfig struct {
-	FaasColdstart MetricConfig `mapstructure:"faas.coldstart"`
+	FaasColdstarts  MetricConfig `mapstructure:"faas.coldstarts"`
+	FaasErrors      MetricConfig `mapstructure:"faas.errors"`
+	FaasInvocations MetricConfig `mapstructure:"faas.invocations"`
+	FaasTimeouts    MetricConfig `mapstructure:"faas.timeouts"`
 }
 
 func DefaultMetricsConfig() MetricsConfig {
 	return MetricsConfig{
-		FaasColdstart: MetricConfig{
+		FaasColdstarts: MetricConfig{
+			Enabled: true,
+		},
+		FaasErrors: MetricConfig{
+			Enabled: true,
+		},
+		FaasInvocations: MetricConfig{
+			Enabled: true,
+		},
+		FaasTimeouts: MetricConfig{
 			Enabled: true,
 		},
 	}

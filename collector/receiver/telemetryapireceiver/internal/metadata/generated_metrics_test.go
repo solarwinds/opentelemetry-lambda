@@ -61,7 +61,19 @@ func TestMetricsBuilder(t *testing.T) {
 
 			defaultMetricsCount++
 			allMetricsCount++
-			mb.RecordFaasColdstartDataPoint(ts, "1", AttributeFaasTriggerDatasource)
+			mb.RecordFaasColdstartsDataPoint(ts, "1", AttributeFaasTriggerDatasource)
+
+			defaultMetricsCount++
+			allMetricsCount++
+			mb.RecordFaasErrorsDataPoint(ts, "1", AttributeFaasTriggerDatasource)
+
+			defaultMetricsCount++
+			allMetricsCount++
+			mb.RecordFaasInvocationsDataPoint(ts, "1", AttributeFaasTriggerDatasource)
+
+			defaultMetricsCount++
+			allMetricsCount++
+			mb.RecordFaasTimeoutsDataPoint(ts, "1", AttributeFaasTriggerDatasource)
 
 			res := pcommon.NewResource()
 			metrics := mb.Emit(WithResource(res))
@@ -85,15 +97,66 @@ func TestMetricsBuilder(t *testing.T) {
 			validatedMetrics := make(map[string]bool)
 			for i := 0; i < ms.Len(); i++ {
 				switch ms.At(i).Name() {
-				case "faas.coldstart":
-					assert.False(t, validatedMetrics["faas.coldstart"], "Found a duplicate in the metrics slice: faas.coldstart")
-					validatedMetrics["faas.coldstart"] = true
+				case "faas.coldstarts":
+					assert.False(t, validatedMetrics["faas.coldstarts"], "Found a duplicate in the metrics slice: faas.coldstarts")
+					validatedMetrics["faas.coldstarts"] = true
 					assert.Equal(t, pmetric.MetricTypeSum, ms.At(i).Type())
 					assert.Equal(t, 1, ms.At(i).Sum().DataPoints().Len())
 					assert.Equal(t, "Number of invocation cold starts", ms.At(i).Description())
 					assert.Equal(t, "{coldstart}", ms.At(i).Unit())
 					assert.Equal(t, true, ms.At(i).Sum().IsMonotonic())
-					assert.Equal(t, pmetric.AggregationTemporalityCumulative, ms.At(i).Sum().AggregationTemporality())
+					assert.Equal(t, pmetric.AggregationTemporalityDelta, ms.At(i).Sum().AggregationTemporality())
+					dp := ms.At(i).Sum().DataPoints().At(0)
+					assert.Equal(t, start, dp.StartTimestamp())
+					assert.Equal(t, ts, dp.Timestamp())
+					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+					assert.Equal(t, int64(1), dp.IntValue())
+					attrVal, ok := dp.Attributes().Get("faas.trigger")
+					assert.True(t, ok)
+					assert.EqualValues(t, "datasource", attrVal.Str())
+				case "faas.errors":
+					assert.False(t, validatedMetrics["faas.errors"], "Found a duplicate in the metrics slice: faas.errors")
+					validatedMetrics["faas.errors"] = true
+					assert.Equal(t, pmetric.MetricTypeSum, ms.At(i).Type())
+					assert.Equal(t, 1, ms.At(i).Sum().DataPoints().Len())
+					assert.Equal(t, "Number of invocation errors", ms.At(i).Description())
+					assert.Equal(t, "{error}", ms.At(i).Unit())
+					assert.Equal(t, true, ms.At(i).Sum().IsMonotonic())
+					assert.Equal(t, pmetric.AggregationTemporalityDelta, ms.At(i).Sum().AggregationTemporality())
+					dp := ms.At(i).Sum().DataPoints().At(0)
+					assert.Equal(t, start, dp.StartTimestamp())
+					assert.Equal(t, ts, dp.Timestamp())
+					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+					assert.Equal(t, int64(1), dp.IntValue())
+					attrVal, ok := dp.Attributes().Get("faas.trigger")
+					assert.True(t, ok)
+					assert.EqualValues(t, "datasource", attrVal.Str())
+				case "faas.invocations":
+					assert.False(t, validatedMetrics["faas.invocations"], "Found a duplicate in the metrics slice: faas.invocations")
+					validatedMetrics["faas.invocations"] = true
+					assert.Equal(t, pmetric.MetricTypeSum, ms.At(i).Type())
+					assert.Equal(t, 1, ms.At(i).Sum().DataPoints().Len())
+					assert.Equal(t, "Number of successful invocations", ms.At(i).Description())
+					assert.Equal(t, "{invocation}", ms.At(i).Unit())
+					assert.Equal(t, true, ms.At(i).Sum().IsMonotonic())
+					assert.Equal(t, pmetric.AggregationTemporalityDelta, ms.At(i).Sum().AggregationTemporality())
+					dp := ms.At(i).Sum().DataPoints().At(0)
+					assert.Equal(t, start, dp.StartTimestamp())
+					assert.Equal(t, ts, dp.Timestamp())
+					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+					assert.Equal(t, int64(1), dp.IntValue())
+					attrVal, ok := dp.Attributes().Get("faas.trigger")
+					assert.True(t, ok)
+					assert.EqualValues(t, "datasource", attrVal.Str())
+				case "faas.timeouts":
+					assert.False(t, validatedMetrics["faas.timeouts"], "Found a duplicate in the metrics slice: faas.timeouts")
+					validatedMetrics["faas.timeouts"] = true
+					assert.Equal(t, pmetric.MetricTypeSum, ms.At(i).Type())
+					assert.Equal(t, 1, ms.At(i).Sum().DataPoints().Len())
+					assert.Equal(t, "Number of invocation timeouts", ms.At(i).Description())
+					assert.Equal(t, "{timeout}", ms.At(i).Unit())
+					assert.Equal(t, true, ms.At(i).Sum().IsMonotonic())
+					assert.Equal(t, pmetric.AggregationTemporalityDelta, ms.At(i).Sum().AggregationTemporality())
 					dp := ms.At(i).Sum().DataPoints().At(0)
 					assert.Equal(t, start, dp.StartTimestamp())
 					assert.Equal(t, ts, dp.Timestamp())
