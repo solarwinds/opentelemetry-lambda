@@ -1,0 +1,31 @@
+type: faas
+
+status:
+  class: receiver
+  stability:
+    alpha: [traces, metrics, logs]
+  distributions: []
+
+attributes:
+  faas_trigger:
+    name_override: faas.trigger
+    description: Type of the trigger which caused this function invocation
+    type: string
+    enum:
+      - datasource
+      - http
+      - other
+      - pubsub
+      - timer
+
+metrics:
+  faas.coldstart:
+    enabled: true
+    description: Number of invocation cold starts
+    unit: '{coldstart}'
+    attributes: [faas_trigger]
+    sum:
+      value_type: int
+      input_type: string
+      monotonic: true
+      aggregation_temporality: cumulative

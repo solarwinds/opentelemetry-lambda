@@ -1,0 +1,9 @@
+default:
+all_set:
+  metrics:
+    faas.coldstart:
+      enabled: true
+none_set:
+  metrics:
+    faas.coldstart:
+      enabled: false
