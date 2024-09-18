@@ -21,8 +21,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/open-telemetry/opentelemetry-lambda/collector/receiver/telemetryapireceiver/internal/metadata"
-	"go.opentelemetry.io/collector/pdata/pmetric"
 	"io"
 	"math/rand"
 	"net/http"
@@ -32,10 +30,12 @@ import (
 	"time"
 
 	"github.com/golang-collections/go-datastructures/queue"
+	"github.com/open-telemetry/opentelemetry-lambda/collector/receiver/telemetryapireceiver/internal/metadata"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
+	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.opentelemetry.io/collector/pdata/ptrace"
 	"go.opentelemetry.io/collector/receiver"
 	semconv "go.opentelemetry.io/collector/semconv/v1.25.0"
@@ -60,11 +60,6 @@ type telemetryAPIReceiver struct {
 	port                  int
 	types                 []telemetryapi.EventType
 	resource              pcommon.Resource
-	metricsStartTime      time.Time
-	coldStartCounter      int64
-	errorsCounter         int64
-	invocationsCounter    int64
-	timeoutsCounter       int64
 	metricsBuilder        *metadata.MetricsBuilder
 }
 
@@ -425,17 +420,13 @@ func newTelemetryAPIReceiver(
 	}
 
 	return &telemetryAPIReceiver{
-		logger:             settings.Logger,
-		queue:              queue.New(initialQueueSize),
-		extensionID:        cfg.extensionID,
-		port:               cfg.Port,
-		types:              subscribedTypes,
-		resource:           r,
-		coldStartCounter:   0,
-		errorsCounter:      0,
-		invocationsCounter: 0,
-		timeoutsCounter:    0,
-		metricsBuilder:     metadata.NewMetricsBuilder(cfg.MetricsBuilderConfig, settings),
+		logger:         settings.Logger,
+		queue:          queue.New(initialQueueSize),
+		extensionID:    cfg.extensionID,
+		port:           cfg.Port,
+		types:          subscribedTypes,
+		resource:       r,
+		metricsBuilder: metadata.NewMetricsBuilder(cfg.MetricsBuilderConfig, settings),
 	}, nil
 }
 
