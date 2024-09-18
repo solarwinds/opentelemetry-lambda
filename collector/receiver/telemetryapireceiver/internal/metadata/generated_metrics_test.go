@@ -61,19 +61,19 @@ func TestMetricsBuilder(t *testing.T) {
 
 			defaultMetricsCount++
 			allMetricsCount++
-			mb.RecordFaasColdstartsDataPoint(ts, "1", AttributeFaasTriggerDatasource)
+			mb.RecordFaasColdstartsDataPoint(ts, 1, AttributeFaasTriggerDatasource)
 
 			defaultMetricsCount++
 			allMetricsCount++
-			mb.RecordFaasErrorsDataPoint(ts, "1", AttributeFaasTriggerDatasource)
+			mb.RecordFaasErrorsDataPoint(ts, 1, AttributeFaasTriggerDatasource)
 
 			defaultMetricsCount++
 			allMetricsCount++
-			mb.RecordFaasInvocationsDataPoint(ts, "1", AttributeFaasTriggerDatasource)
+			mb.RecordFaasInvocationsDataPoint(ts, 1, AttributeFaasTriggerDatasource)
 
 			defaultMetricsCount++
 			allMetricsCount++
-			mb.RecordFaasTimeoutsDataPoint(ts, "1", AttributeFaasTriggerDatasource)
+			mb.RecordFaasTimeoutsDataPoint(ts, 1, AttributeFaasTriggerDatasource)
 
 			res := pcommon.NewResource()
 			metrics := mb.Emit(WithResource(res))

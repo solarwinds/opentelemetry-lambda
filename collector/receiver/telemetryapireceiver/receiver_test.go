@@ -354,19 +354,19 @@ func TestCreateMetrics(t *testing.T) {
 					switch k {
 					case "faas.coldstarts":
 						for _ = range v {
-							expectedMB.RecordFaasColdstartsDataPoint(now, "1", metadata.AttributeFaasTriggerOther)
+							expectedMB.RecordFaasColdstartsDataPoint(now, 1, metadata.AttributeFaasTriggerOther)
 						}
 					case "faas.errors":
 						for _ = range v {
-							expectedMB.RecordFaasErrorsDataPoint(now, "1", metadata.AttributeFaasTriggerOther)
+							expectedMB.RecordFaasErrorsDataPoint(now, 1, metadata.AttributeFaasTriggerOther)
 						}
 					case "faas.invocations":
 						for _ = range v {
-							expectedMB.RecordFaasInvocationsDataPoint(now, "1", metadata.AttributeFaasTriggerOther)
+							expectedMB.RecordFaasInvocationsDataPoint(now, 1, metadata.AttributeFaasTriggerOther)
 						}
 					case "faas.timeouts":
 						for _ = range v {
-							expectedMB.RecordFaasTimeoutsDataPoint(now, "1", metadata.AttributeFaasTriggerOther)
+							expectedMB.RecordFaasTimeoutsDataPoint(now, 1, metadata.AttributeFaasTriggerOther)
 						}
 					default:
 

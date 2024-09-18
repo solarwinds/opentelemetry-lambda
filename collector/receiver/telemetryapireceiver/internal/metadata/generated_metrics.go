@@ -3,8 +3,6 @@
 package metadata
 
 import (
-	"fmt"
-	"strconv"
 	"time"
 
 	"go.opentelemetry.io/collector/component"
@@ -351,7 +349,7 @@ func WithStartTimeOverride(start pcommon.Timestamp) ResourceMetricsOption {
 func (mb *MetricsBuilder) EmitForResource(rmo ...ResourceMetricsOption) {
 	rm := pmetric.NewResourceMetrics()
 	ils := rm.ScopeMetrics().AppendEmpty()
-	ils.Scope().SetName("github.com/open-telemetry/opentelemetry-lambda/collector/receiver/telemetryapi")
+	ils.Scope().SetName("github.com/open-telemetry/opentelemetry-lambda/collector/receiver/telemetryapireceiver")
 	ils.Scope().SetVersion(mb.buildInfo.Version)
 	ils.Metrics().EnsureCapacity(mb.metricsCapacity)
 	mb.metricFaasColdstarts.emit(ils.Metrics())
@@ -380,43 +378,23 @@ func (mb *MetricsBuilder) Emit(rmo ...ResourceMetricsOption) pmetric.Metrics {
 }
 
 // RecordFaasColdstartsDataPoint adds a data point to faas.coldstarts metric.
-func (mb *MetricsBuilder) RecordFaasColdstartsDataPoint(ts pcommon.Timestamp, inputVal string, faasTriggerAttributeValue AttributeFaasTrigger) error {
-	val, err := strconv.ParseInt(inputVal, 10, 64)
-	if err != nil {
-		return fmt.Errorf("failed to parse int64 for FaasColdstarts, value was %s: %w", inputVal, err)
-	}
+func (mb *MetricsBuilder) RecordFaasColdstartsDataPoint(ts pcommon.Timestamp, val int64, faasTriggerAttributeValue AttributeFaasTrigger) {
 	mb.metricFaasColdstarts.recordDataPoint(mb.startTime, ts, val, faasTriggerAttributeValue.String())
-	return nil
 }
 
 // RecordFaasErrorsDataPoint adds a data point to faas.errors metric.
-func (mb *MetricsBuilder) RecordFaasErrorsDataPoint(ts pcommon.Timestamp, inputVal string, faasTriggerAttributeValue AttributeFaasTrigger) error {
-	val, err := strconv.ParseInt(inputVal, 10, 64)
-	if err != nil {
-		return fmt.Errorf("failed to parse int64 for FaasErrors, value was %s: %w", inputVal, err)
-	}
+func (mb *MetricsBuilder) RecordFaasErrorsDataPoint(ts pcommon.Timestamp, val int64, faasTriggerAttributeValue AttributeFaasTrigger) {
 	mb.metricFaasErrors.recordDataPoint(mb.startTime, ts, val, faasTriggerAttributeValue.String())
-	return nil
 }
 
 // RecordFaasInvocationsDataPoint adds a data point to faas.invocations metric.
-func (mb *MetricsBuilder) RecordFaasInvocationsDataPoint(ts pcommon.Timestamp, inputVal string, faasTriggerAttributeValue AttributeFaasTrigger) error {
-	val, err := strconv.ParseInt(inputVal, 10, 64)
-	if err != nil {
-		return fmt.Errorf("failed to parse int64 for FaasInvocations, value was %s: %w", inputVal, err)
-	}
+func (mb *MetricsBuilder) RecordFaasInvocationsDataPoint(ts pcommon.Timestamp, val int64, faasTriggerAttributeValue AttributeFaasTrigger) {
 	mb.metricFaasInvocations.recordDataPoint(mb.startTime, ts, val, faasTriggerAttributeValue.String())
-	return nil
 }
 
 // RecordFaasTimeoutsDataPoint adds a data point to faas.timeouts metric.
-func (mb *MetricsBuilder) RecordFaasTimeoutsDataPoint(ts pcommon.Timestamp, inputVal string, faasTriggerAttributeValue AttributeFaasTrigger) error {
-	val, err := strconv.ParseInt(inputVal, 10, 64)
-	if err != nil {
-		return fmt.Errorf("failed to parse int64 for FaasTimeouts, value was %s: %w", inputVal, err)
-	}
+func (mb *MetricsBuilder) RecordFaasTimeoutsDataPoint(ts pcommon.Timestamp, val int64, faasTriggerAttributeValue AttributeFaasTrigger) {
 	mb.metricFaasTimeouts.recordDataPoint(mb.startTime, ts, val, faasTriggerAttributeValue.String())
-	return nil
 }
 
 // Reset resets metrics builder to its initial state. It should be used when external metrics source is restarted,
