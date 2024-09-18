@@ -16,7 +16,8 @@ package telemetryapireceiver // import "github.com/open-telemetry/opentelemetry-
 
 import (
 	"context"
-	"go.opentelemetry.io/collector/pdata/pmetric"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest/pmetrictest"
+	"github.com/open-telemetry/opentelemetry-lambda/collector/receiver/telemetryapireceiver/internal/metadata"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -179,7 +180,7 @@ func TestCreateMetrics(t *testing.T) {
 		desc                    string
 		slice                   []event
 		expectedResourceMetrics int
-		expectedMetrics         []map[string]any
+		expectedMetrics         map[string]int
 		expectError             bool
 	}{
 		{
@@ -211,11 +212,8 @@ func TestCreateMetrics(t *testing.T) {
 				},
 			},
 			expectedResourceMetrics: 1,
-			expectedMetrics: []map[string]any{
-				{
-					"Name":  "faas.coldstarts",
-					"Value": int64(1),
-				},
+			expectedMetrics: map[string]int{
+				"faas.coldstarts": 1,
 			},
 			expectError: false,
 		},
@@ -246,11 +244,8 @@ func TestCreateMetrics(t *testing.T) {
 				},
 			},
 			expectedResourceMetrics: 1,
-			expectedMetrics: []map[string]any{
-				{
-					"Name":  "faas.invocations",
-					"Value": int64(1),
-				},
+			expectedMetrics: map[string]int{
+				"faas.invocations": 1,
 			},
 			expectError: false,
 		},
@@ -276,15 +271,9 @@ func TestCreateMetrics(t *testing.T) {
 				},
 			},
 			expectedResourceMetrics: 1,
-			expectedMetrics: []map[string]any{
-				{
-					"Name":  "faas.errors",
-					"Value": int64(1),
-				},
-				{
-					"Name":  "faas.invocations",
-					"Value": int64(1),
-				},
+			expectedMetrics: map[string]int{
+				"faas.errors":      1,
+				"faas.invocations": 1,
 			},
 			expectError: false,
 		},
@@ -310,15 +299,9 @@ func TestCreateMetrics(t *testing.T) {
 				},
 			},
 			expectedResourceMetrics: 1,
-			expectedMetrics: []map[string]any{
-				{
-					"Name":  "faas.errors",
-					"Value": int64(1),
-				},
-				{
-					"Name":  "faas.invocations",
-					"Value": int64(1),
-				},
+			expectedMetrics: map[string]int{
+				"faas.errors":      1,
+				"faas.invocations": 1,
 			},
 			expectError: false,
 		},
@@ -343,27 +326,21 @@ func TestCreateMetrics(t *testing.T) {
 				},
 			},
 			expectedResourceMetrics: 1,
-			expectedMetrics: []map[string]any{
-				{
-					"Name":  "faas.errors",
-					"Value": int64(1),
-				},
-				{
-					"Name":  "faas.invocations",
-					"Value": int64(1),
-				},
-				{
-					"Name":  "faas.timeouts",
-					"Value": int64(1),
-				},
+			expectedMetrics: map[string]int{
+				"faas.errors":      1,
+				"faas.invocations": 1,
+				"faas.timeouts":    1,
 			},
 			expectError: false,
 		},
 	}
+
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			r, err := newTelemetryAPIReceiver(
-				&Config{},
+				&Config{
+					MetricsBuilderConfig: metadata.DefaultMetricsBuilderConfig(),
+				},
 				receivertest.NewNopSettings(),
 			)
 			require.NoError(t, err)
@@ -371,22 +348,50 @@ func TestCreateMetrics(t *testing.T) {
 			if tc.expectError {
 				require.Error(t, err)
 			} else {
-				require.Equal(t, tc.expectedResourceMetrics, metrics.ResourceMetrics().Len())
-				if metrics.ResourceMetrics().Len() > 0 {
-					resourceMetric := metrics.ResourceMetrics().At(0)
-					require.Equal(t, 1, resourceMetric.ScopeMetrics().Len())
-					scopeMetric := resourceMetric.ScopeMetrics().At(0)
-					require.Equal(t, scopeName, scopeMetric.Scope().Name())
-					require.Equal(t, len(tc.expectedMetrics), scopeMetric.Metrics().Len())
-					for idx, m := range tc.expectedMetrics {
-						metric := scopeMetric.Metrics().At(idx)
-						require.Equal(t, m["Name"], metric.Name())
-						require.True(t, metric.Sum().IsMonotonic())
-						require.Equal(t, pmetric.AggregationTemporalityDelta, metric.Sum().AggregationTemporality())
-						require.Equal(t, 1, metric.Sum().DataPoints().Len())
-						require.Equal(t, m["Value"], metric.Sum().DataPoints().At(0).IntValue())
+				now := pcommon.NewTimestampFromTime(time.Now().UTC())
+				expectedMB := metadata.NewMetricsBuilder(metadata.DefaultMetricsBuilderConfig(), receivertest.NewNopSettings())
+				for k, v := range tc.expectedMetrics {
+					switch k {
+					case "faas.coldstarts":
+						for _ = range v {
+							expectedMB.RecordFaasColdstartsDataPoint(now, "1", metadata.AttributeFaasTriggerOther)
+						}
+					case "faas.errors":
+						for _ = range v {
+							expectedMB.RecordFaasErrorsDataPoint(now, "1", metadata.AttributeFaasTriggerOther)
+						}
+					case "faas.invocations":
+						for _ = range v {
+							expectedMB.RecordFaasInvocationsDataPoint(now, "1", metadata.AttributeFaasTriggerOther)
+						}
+					case "faas.timeouts":
+						for _ = range v {
+							expectedMB.RecordFaasTimeoutsDataPoint(now, "1", metadata.AttributeFaasTriggerOther)
+						}
+					default:
+
 					}
 				}
+				expectedMB.EmitForResource(metadata.WithResource(r.resource))
+				expectedMetrics := expectedMB.Emit()
+				require.NoError(t, pmetrictest.CompareMetrics(expectedMetrics, metrics, pmetrictest.IgnoreResourceMetricsOrder(), pmetrictest.IgnoreMetricDataPointsOrder(), pmetrictest.IgnoreStartTimestamp(), pmetrictest.IgnoreTimestamp()))
+				//
+				//require.Equal(t, tc.expectedResourceMetrics, metrics.ResourceMetrics().Len())
+				//if metrics.ResourceMetrics().Len() > 0 {
+				//	resourceMetric := metrics.ResourceMetrics().At(0)
+				//	require.Equal(t, 1, resourceMetric.ScopeMetrics().Len())
+				//	scopeMetric := resourceMetric.ScopeMetrics().At(0)
+				//	require.Equal(t, scopeName, scopeMetric.Scope().Name())
+				//	require.Equal(t, len(tc.expectedMetrics), scopeMetric.Metrics().Len())
+				//	for idx, m := range tc.expectedMetrics {
+				//		metric := scopeMetric.Metrics().At(idx)
+				//		require.Equal(t, m["Name"], metric.Name())
+				//		require.True(t, metric.Sum().IsMonotonic())
+				//		require.Equal(t, pmetric.AggregationTemporalityDelta, metric.Sum().AggregationTemporality())
+				//		require.Equal(t, 1, metric.Sum().DataPoints().Len())
+				//		require.Equal(t, m["Value"], metric.Sum().DataPoints().At(0).IntValue())
+				//	}
+				//}
 			}
 		})
 	}

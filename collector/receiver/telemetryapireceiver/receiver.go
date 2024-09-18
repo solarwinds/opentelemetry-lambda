@@ -438,7 +438,7 @@ func newTelemetryAPIReceiver(
 		errorsCounter:      0,
 		invocationsCounter: 0,
 		timeoutsCounter:    0,
-		metricsBuilder:     metadata.NewMetricsBuilder(metadata.DefaultMetricsBuilderConfig(), settings),
+		metricsBuilder:     metadata.NewMetricsBuilder(cfg.MetricsBuilderConfig, settings),
 	}, nil
 }
 
