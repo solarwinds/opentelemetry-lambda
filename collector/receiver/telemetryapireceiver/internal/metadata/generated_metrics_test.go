@@ -61,19 +61,19 @@ func TestMetricsBuilder(t *testing.T) {
 
 			defaultMetricsCount++
 			allMetricsCount++
-			mb.RecordFaasColdstartsDataPoint(ts, 1, AttributeFaasTriggerDatasource)
+			mb.RecordFaasColdstartsDataPoint(ts, 1)
 
 			defaultMetricsCount++
 			allMetricsCount++
-			mb.RecordFaasErrorsDataPoint(ts, 1, AttributeFaasTriggerDatasource)
+			mb.RecordFaasErrorsDataPoint(ts, 1)
 
 			defaultMetricsCount++
 			allMetricsCount++
-			mb.RecordFaasInvocationsDataPoint(ts, 1, AttributeFaasTriggerDatasource)
+			mb.RecordFaasInvocationsDataPoint(ts, 1)
 
 			defaultMetricsCount++
 			allMetricsCount++
-			mb.RecordFaasTimeoutsDataPoint(ts, 1, AttributeFaasTriggerDatasource)
+			mb.RecordFaasTimeoutsDataPoint(ts, 1)
 
 			res := pcommon.NewResource()
 			metrics := mb.Emit(WithResource(res))
@@ -111,9 +111,6 @@ func TestMetricsBuilder(t *testing.T) {
 					assert.Equal(t, ts, dp.Timestamp())
 					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
 					assert.Equal(t, int64(1), dp.IntValue())
-					attrVal, ok := dp.Attributes().Get("faas.trigger")
-					assert.True(t, ok)
-					assert.EqualValues(t, "datasource", attrVal.Str())
 				case "faas.errors":
 					assert.False(t, validatedMetrics["faas.errors"], "Found a duplicate in the metrics slice: faas.errors")
 					validatedMetrics["faas.errors"] = true
@@ -128,9 +125,6 @@ func TestMetricsBuilder(t *testing.T) {
 					assert.Equal(t, ts, dp.Timestamp())
 					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
 					assert.Equal(t, int64(1), dp.IntValue())
-					attrVal, ok := dp.Attributes().Get("faas.trigger")
-					assert.True(t, ok)
-					assert.EqualValues(t, "datasource", attrVal.Str())
 				case "faas.invocations":
 					assert.False(t, validatedMetrics["faas.invocations"], "Found a duplicate in the metrics slice: faas.invocations")
 					validatedMetrics["faas.invocations"] = true
@@ -145,9 +139,6 @@ func TestMetricsBuilder(t *testing.T) {
 					assert.Equal(t, ts, dp.Timestamp())
 					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
 					assert.Equal(t, int64(1), dp.IntValue())
-					attrVal, ok := dp.Attributes().Get("faas.trigger")
-					assert.True(t, ok)
-					assert.EqualValues(t, "datasource", attrVal.Str())
 				case "faas.timeouts":
 					assert.False(t, validatedMetrics["faas.timeouts"], "Found a duplicate in the metrics slice: faas.timeouts")
 					validatedMetrics["faas.timeouts"] = true
@@ -162,9 +153,6 @@ func TestMetricsBuilder(t *testing.T) {
 					assert.Equal(t, ts, dp.Timestamp())
 					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
 					assert.Equal(t, int64(1), dp.IntValue())
-					attrVal, ok := dp.Attributes().Get("faas.trigger")
-					assert.True(t, ok)
-					assert.EqualValues(t, "datasource", attrVal.Str())
 				}
 			}
 		})

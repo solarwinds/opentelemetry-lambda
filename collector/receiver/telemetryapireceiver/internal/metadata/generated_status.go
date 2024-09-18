@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	Type      = component.MustNewType("faas")
+	Type      = component.MustNewType("telemetryapi")
 	ScopeName = "github.com/open-telemetry/opentelemetry-lambda/collector/receiver/telemetryapireceiver"
 )
 

@@ -1,4 +1,4 @@
-type: faas
+type: telemetryapi
 
 status:
   class: receiver
@@ -6,24 +6,11 @@ status:
     alpha: [traces, metrics, logs]
   distributions: []
 
-attributes:
-  faas_trigger:
-    name_override: faas.trigger
-    description: Type of the trigger which caused this function invocation
-    type: string
-    enum:
-      - datasource
-      - http
-      - other
-      - pubsub
-      - timer
-
 metrics:
   faas.coldstarts:
     enabled: true
     description: Number of invocation cold starts
     unit: '{coldstart}'
-    attributes: [faas_trigger]
     sum:
       value_type: int
       monotonic: true
@@ -32,7 +19,6 @@ metrics:
     enabled: true
     description: Number of invocation errors
     unit: '{error}'
-    attributes: [faas_trigger]
     sum:
       value_type: int
       monotonic: true
@@ -41,7 +27,6 @@ metrics:
     enabled: true
     description: Number of successful invocations
     unit: '{invocation}'
-    attributes: [faas_trigger]
     sum:
       value_type: int
       monotonic: true
@@ -50,7 +35,6 @@ metrics:
     enabled: true
     description: Number of invocation timeouts
     unit: '{timeout}'
-    attributes: [faas_trigger]
     sum:
       value_type: int
       monotonic: true

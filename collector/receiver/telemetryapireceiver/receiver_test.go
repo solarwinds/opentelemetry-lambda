@@ -354,19 +354,19 @@ func TestCreateMetrics(t *testing.T) {
 					switch k {
 					case "faas.coldstarts":
 						for _ = range v {
-							expectedMB.RecordFaasColdstartsDataPoint(now, 1, metadata.AttributeFaasTriggerOther)
+							expectedMB.RecordFaasColdstartsDataPoint(now, 1)
 						}
 					case "faas.errors":
 						for _ = range v {
-							expectedMB.RecordFaasErrorsDataPoint(now, 1, metadata.AttributeFaasTriggerOther)
+							expectedMB.RecordFaasErrorsDataPoint(now, 1)
 						}
 					case "faas.invocations":
 						for _ = range v {
-							expectedMB.RecordFaasInvocationsDataPoint(now, 1, metadata.AttributeFaasTriggerOther)
+							expectedMB.RecordFaasInvocationsDataPoint(now, 1)
 						}
 					case "faas.timeouts":
 						for _ = range v {
-							expectedMB.RecordFaasTimeoutsDataPoint(now, 1, metadata.AttributeFaasTriggerOther)
+							expectedMB.RecordFaasTimeoutsDataPoint(now, 1)
 						}
 					default:
 
@@ -375,23 +375,6 @@ func TestCreateMetrics(t *testing.T) {
 				expectedMB.EmitForResource(metadata.WithResource(r.resource))
 				expectedMetrics := expectedMB.Emit()
 				require.NoError(t, pmetrictest.CompareMetrics(expectedMetrics, metrics, pmetrictest.IgnoreResourceMetricsOrder(), pmetrictest.IgnoreMetricDataPointsOrder(), pmetrictest.IgnoreStartTimestamp(), pmetrictest.IgnoreTimestamp()))
-				//
-				//require.Equal(t, tc.expectedResourceMetrics, metrics.ResourceMetrics().Len())
-				//if metrics.ResourceMetrics().Len() > 0 {
-				//	resourceMetric := metrics.ResourceMetrics().At(0)
-				//	require.Equal(t, 1, resourceMetric.ScopeMetrics().Len())
-				//	scopeMetric := resourceMetric.ScopeMetrics().At(0)
-				//	require.Equal(t, scopeName, scopeMetric.Scope().Name())
-				//	require.Equal(t, len(tc.expectedMetrics), scopeMetric.Metrics().Len())
-				//	for idx, m := range tc.expectedMetrics {
-				//		metric := scopeMetric.Metrics().At(idx)
-				//		require.Equal(t, m["Name"], metric.Name())
-				//		require.True(t, metric.Sum().IsMonotonic())
-				//		require.Equal(t, pmetric.AggregationTemporalityDelta, metric.Sum().AggregationTemporality())
-				//		require.Equal(t, 1, metric.Sum().DataPoints().Len())
-				//		require.Equal(t, m["Value"], metric.Sum().DataPoints().At(0).IntValue())
-				//	}
-				//}
 			}
 		})
 	}

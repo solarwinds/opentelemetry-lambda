@@ -11,44 +11,6 @@ import (
 	"go.opentelemetry.io/collector/receiver"
 )
 
-// AttributeFaasTrigger specifies the a value faas_trigger attribute.
-type AttributeFaasTrigger int
-
-const (
-	_ AttributeFaasTrigger = iota
-	AttributeFaasTriggerDatasource
-	AttributeFaasTriggerHttp
-	AttributeFaasTriggerOther
-	AttributeFaasTriggerPubsub
-	AttributeFaasTriggerTimer
-)
-
-// String returns the string representation of the AttributeFaasTrigger.
-func (av AttributeFaasTrigger) String() string {
-	switch av {
-	case AttributeFaasTriggerDatasource:
-		return "datasource"
-	case AttributeFaasTriggerHttp:
-		return "http"
-	case AttributeFaasTriggerOther:
-		return "other"
-	case AttributeFaasTriggerPubsub:
-		return "pubsub"
-	case AttributeFaasTriggerTimer:
-		return "timer"
-	}
-	return ""
-}
-
-// MapAttributeFaasTrigger is a helper map of string to AttributeFaasTrigger attribute value.
-var MapAttributeFaasTrigger = map[string]AttributeFaasTrigger{
-	"datasource": AttributeFaasTriggerDatasource,
-	"http":       AttributeFaasTriggerHttp,
-	"other":      AttributeFaasTriggerOther,
-	"pubsub":     AttributeFaasTriggerPubsub,
-	"timer":      AttributeFaasTriggerTimer,
-}
-
 type metricFaasColdstarts struct {
 	data     pmetric.Metric // data buffer for generated metric.
 	config   MetricConfig   // metric config provided by user.
@@ -63,10 +25,9 @@ func (m *metricFaasColdstarts) init() {
 	m.data.SetEmptySum()
 	m.data.Sum().SetIsMonotonic(true)
 	m.data.Sum().SetAggregationTemporality(pmetric.AggregationTemporalityDelta)
-	m.data.Sum().DataPoints().EnsureCapacity(m.capacity)
 }
 
-func (m *metricFaasColdstarts) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, faasTriggerAttributeValue string) {
+func (m *metricFaasColdstarts) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64) {
 	if !m.config.Enabled {
 		return
 	}
@@ -74,7 +35,6 @@ func (m *metricFaasColdstarts) recordDataPoint(start pcommon.Timestamp, ts pcomm
 	dp.SetStartTimestamp(start)
 	dp.SetTimestamp(ts)
 	dp.SetIntValue(val)
-	dp.Attributes().PutStr("faas.trigger", faasTriggerAttributeValue)
 }
 
 // updateCapacity saves max length of data point slices that will be used for the slice capacity.
@@ -116,10 +76,9 @@ func (m *metricFaasErrors) init() {
 	m.data.SetEmptySum()
 	m.data.Sum().SetIsMonotonic(true)
 	m.data.Sum().SetAggregationTemporality(pmetric.AggregationTemporalityDelta)
-	m.data.Sum().DataPoints().EnsureCapacity(m.capacity)
 }
 
-func (m *metricFaasErrors) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, faasTriggerAttributeValue string) {
+func (m *metricFaasErrors) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64) {
 	if !m.config.Enabled {
 		return
 	}
@@ -127,7 +86,6 @@ func (m *metricFaasErrors) recordDataPoint(start pcommon.Timestamp, ts pcommon.T
 	dp.SetStartTimestamp(start)
 	dp.SetTimestamp(ts)
 	dp.SetIntValue(val)
-	dp.Attributes().PutStr("faas.trigger", faasTriggerAttributeValue)
 }
 
 // updateCapacity saves max length of data point slices that will be used for the slice capacity.
@@ -169,10 +127,9 @@ func (m *metricFaasInvocations) init() {
 	m.data.SetEmptySum()
 	m.data.Sum().SetIsMonotonic(true)
 	m.data.Sum().SetAggregationTemporality(pmetric.AggregationTemporalityDelta)
-	m.data.Sum().DataPoints().EnsureCapacity(m.capacity)
 }
 
-func (m *metricFaasInvocations) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, faasTriggerAttributeValue string) {
+func (m *metricFaasInvocations) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64) {
 	if !m.config.Enabled {
 		return
 	}
@@ -180,7 +137,6 @@ func (m *metricFaasInvocations) recordDataPoint(start pcommon.Timestamp, ts pcom
 	dp.SetStartTimestamp(start)
 	dp.SetTimestamp(ts)
 	dp.SetIntValue(val)
-	dp.Attributes().PutStr("faas.trigger", faasTriggerAttributeValue)
 }
 
 // updateCapacity saves max length of data point slices that will be used for the slice capacity.
@@ -222,10 +178,9 @@ func (m *metricFaasTimeouts) init() {
 	m.data.SetEmptySum()
 	m.data.Sum().SetIsMonotonic(true)
 	m.data.Sum().SetAggregationTemporality(pmetric.AggregationTemporalityDelta)
-	m.data.Sum().DataPoints().EnsureCapacity(m.capacity)
 }
 
-func (m *metricFaasTimeouts) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, faasTriggerAttributeValue string) {
+func (m *metricFaasTimeouts) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64) {
 	if !m.config.Enabled {
 		return
 	}
@@ -233,7 +188,6 @@ func (m *metricFaasTimeouts) recordDataPoint(start pcommon.Timestamp, ts pcommon
 	dp.SetStartTimestamp(start)
 	dp.SetTimestamp(ts)
 	dp.SetIntValue(val)
-	dp.Attributes().PutStr("faas.trigger", faasTriggerAttributeValue)
 }
 
 // updateCapacity saves max length of data point slices that will be used for the slice capacity.
@@ -378,23 +332,23 @@ func (mb *MetricsBuilder) Emit(rmo ...ResourceMetricsOption) pmetric.Metrics {
 }
 
 // RecordFaasColdstartsDataPoint adds a data point to faas.coldstarts metric.
-func (mb *MetricsBuilder) RecordFaasColdstartsDataPoint(ts pcommon.Timestamp, val int64, faasTriggerAttributeValue AttributeFaasTrigger) {
-	mb.metricFaasColdstarts.recordDataPoint(mb.startTime, ts, val, faasTriggerAttributeValue.String())
+func (mb *MetricsBuilder) RecordFaasColdstartsDataPoint(ts pcommon.Timestamp, val int64) {
+	mb.metricFaasColdstarts.recordDataPoint(mb.startTime, ts, val)
 }
 
 // RecordFaasErrorsDataPoint adds a data point to faas.errors metric.
-func (mb *MetricsBuilder) RecordFaasErrorsDataPoint(ts pcommon.Timestamp, val int64, faasTriggerAttributeValue AttributeFaasTrigger) {
-	mb.metricFaasErrors.recordDataPoint(mb.startTime, ts, val, faasTriggerAttributeValue.String())
+func (mb *MetricsBuilder) RecordFaasErrorsDataPoint(ts pcommon.Timestamp, val int64) {
+	mb.metricFaasErrors.recordDataPoint(mb.startTime, ts, val)
 }
 
 // RecordFaasInvocationsDataPoint adds a data point to faas.invocations metric.
-func (mb *MetricsBuilder) RecordFaasInvocationsDataPoint(ts pcommon.Timestamp, val int64, faasTriggerAttributeValue AttributeFaasTrigger) {
-	mb.metricFaasInvocations.recordDataPoint(mb.startTime, ts, val, faasTriggerAttributeValue.String())
+func (mb *MetricsBuilder) RecordFaasInvocationsDataPoint(ts pcommon.Timestamp, val int64) {
+	mb.metricFaasInvocations.recordDataPoint(mb.startTime, ts, val)
 }
 
 // RecordFaasTimeoutsDataPoint adds a data point to faas.timeouts metric.
-func (mb *MetricsBuilder) RecordFaasTimeoutsDataPoint(ts pcommon.Timestamp, val int64, faasTriggerAttributeValue AttributeFaasTrigger) {
-	mb.metricFaasTimeouts.recordDataPoint(mb.startTime, ts, val, faasTriggerAttributeValue.String())
+func (mb *MetricsBuilder) RecordFaasTimeoutsDataPoint(ts pcommon.Timestamp, val int64) {
+	mb.metricFaasTimeouts.recordDataPoint(mb.startTime, ts, val)
 }
 
 // Reset resets metrics builder to its initial state. It should be used when external metrics source is restarted,

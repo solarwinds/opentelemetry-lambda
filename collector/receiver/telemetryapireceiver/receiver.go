@@ -230,11 +230,11 @@ func (r *telemetryAPIReceiver) createMetrics(slice []event) (pmetric.Metrics, er
 				return pmetric.Metrics{}, err
 			} else {
 				if report.Phase == initPhaseInit {
-					r.metricsBuilder.RecordFaasColdstartsDataPoint(pcommon.NewTimestampFromTime(time.Now()), 1, metadata.AttributeFaasTriggerOther)
+					r.metricsBuilder.RecordFaasColdstartsDataPoint(pcommon.NewTimestampFromTime(time.Now()), 1)
 				}
 			}
 		case string(telemetryapi.PlatformReport):
-			r.metricsBuilder.RecordFaasInvocationsDataPoint(pcommon.NewTimestampFromTime(time.Now()), 1, metadata.AttributeFaasTriggerOther)
+			r.metricsBuilder.RecordFaasInvocationsDataPoint(pcommon.NewTimestampFromTime(time.Now()), 1)
 			jsonStr, err := json.Marshal(el.Record)
 			if err != nil {
 				return pmetric.Metrics{}, err
@@ -244,10 +244,10 @@ func (r *telemetryAPIReceiver) createMetrics(slice []event) (pmetric.Metrics, er
 				return pmetric.Metrics{}, err
 			} else {
 				if report.Status != statusSuccess {
-					r.metricsBuilder.RecordFaasErrorsDataPoint(pcommon.NewTimestampFromTime(time.Now()), 1, metadata.AttributeFaasTriggerOther)
+					r.metricsBuilder.RecordFaasErrorsDataPoint(pcommon.NewTimestampFromTime(time.Now()), 1)
 				}
 				if report.Status == statusTimeout {
-					r.metricsBuilder.RecordFaasTimeoutsDataPoint(pcommon.NewTimestampFromTime(time.Now()), 1, metadata.AttributeFaasTriggerOther)
+					r.metricsBuilder.RecordFaasTimeoutsDataPoint(pcommon.NewTimestampFromTime(time.Now()), 1)
 				}
 			}
 		}

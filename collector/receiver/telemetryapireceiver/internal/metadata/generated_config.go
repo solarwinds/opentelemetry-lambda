@@ -25,7 +25,7 @@ func (ms *MetricConfig) Unmarshal(parser *confmap.Conf) error {
 	return nil
 }
 
-// MetricsConfig provides config for faas metrics.
+// MetricsConfig provides config for telemetryapi metrics.
 type MetricsConfig struct {
 	FaasColdstarts  MetricConfig `mapstructure:"faas.coldstarts"`
 	FaasErrors      MetricConfig `mapstructure:"faas.errors"`
@@ -50,7 +50,7 @@ func DefaultMetricsConfig() MetricsConfig {
 	}
 }
 
-// MetricsBuilderConfig is a configuration for faas metrics builder.
+// MetricsBuilderConfig is a configuration for telemetryapi metrics builder.
 type MetricsBuilderConfig struct {
 	Metrics MetricsConfig `mapstructure:"metrics"`
 }

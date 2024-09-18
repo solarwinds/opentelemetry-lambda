@@ -16,7 +16,7 @@ import (
 )
 
 func TestComponentFactoryType(t *testing.T) {
-	require.Equal(t, typeStr, NewFactory("extensionID").Type().String())
+	require.Equal(t, "telemetryapi", NewFactory("extensionID").Type().String())
 }
 
 func TestComponentConfigStruct(t *testing.T) {
@@ -67,7 +67,6 @@ func TestComponentLifecycle(t *testing.T) {
 			err = c.Shutdown(context.Background())
 			require.NoError(t, err)
 		})
-		// Need lambda environment to start telemetry api
 		//t.Run(test.name+"-lifecycle", func(t *testing.T) {
 		//	firstRcvr, err := test.createFn(context.Background(), receivertest.NewNopSettings(), cfg)
 		//	require.NoError(t, err)

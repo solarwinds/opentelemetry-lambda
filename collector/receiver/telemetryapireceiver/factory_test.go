@@ -16,6 +16,7 @@ package telemetryapireceiver // import "github.com/open-telemetry/opentelemetry-
 
 import (
 	"context"
+	"github.com/open-telemetry/opentelemetry-lambda/collector/receiver/telemetryapireceiver/internal/metadata"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -41,7 +42,7 @@ func TestNewFactory(t *testing.T) {
 			testFunc: func(t *testing.T) {
 				factory := NewFactory("test")
 
-				var expectedCfg component.Config = &Config{extensionID: "test", Port: defaultPort, Types: []string{platform, function, extension}}
+				var expectedCfg component.Config = &Config{extensionID: "test", Port: defaultPort, Types: []string{platform, function, extension}, MetricsBuilderConfig: metadata.DefaultMetricsBuilderConfig()}
 
 				require.Equal(t, expectedCfg, factory.CreateDefaultConfig())
 			},
