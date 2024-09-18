@@ -32,7 +32,6 @@ import (
 	"time"
 
 	"github.com/golang-collections/go-datastructures/queue"
-	"github.com/google/uuid"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/pdata/pcommon"
@@ -406,8 +405,6 @@ func newTelemetryAPIReceiver(
 			r.Attributes().PutInt(semconv.AttributeFaaSMaxMemory, int64(mb)*1024*1024)
 		}
 	}
-	// https://opentelemetry.io/docs/specs/otel/metrics/data-model/#single-writer
-	r.Attributes().PutStr(semconv.AttributeServiceInstanceID, uuid.New().String())
 
 	for env, resourceAttribute := range envResourceMap {
 		if val, ok := os.LookupEnv(env); ok {
