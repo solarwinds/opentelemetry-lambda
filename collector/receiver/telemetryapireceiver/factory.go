@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/open-telemetry/opentelemetry-lambda/collector/receiver/telemetryapireceiver/internal/metadata"
 	"github.com/open-telemetry/opentelemetry-lambda/collector/receiver/telemetryapireceiver/internal/sharedcomponent"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer"
@@ -41,9 +42,10 @@ func NewFactory(extensionID string) receiver.Factory {
 		component.MustNewType(typeStr),
 		func() component.Config {
 			return &Config{
-				extensionID: extensionID,
-				Port:        defaultPort,
-				Types:       []string{platform, function, extension},
+				extensionID:          extensionID,
+				Port:                 defaultPort,
+				Types:                []string{platform, function, extension},
+				MetricsBuilderConfig: metadata.DefaultMetricsBuilderConfig(),
 			}
 		},
 		receiver.WithTraces(createTracesReceiver, stability),
