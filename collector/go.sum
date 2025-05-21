@@ -658,6 +658,8 @@ github.com/open-telemetry/opentelemetry-collector-contrib/exporter/prometheusrem
 github.com/open-telemetry/opentelemetry-collector-contrib/exporter/prometheusremotewriteexporter v0.107.0/go.mod h1:GJoWZ9tTTev7+HjiXW0uV61tYDGTorNmy1Wdg7UmaQU=
 github.com/open-telemetry/opentelemetry-collector-contrib/extension/sigv4authextension v0.107.0 h1:Xt9yRUYN3vyzjgc3rRwQ10OZ+WTnrIsergAdrEF7usQ=
 github.com/open-telemetry/opentelemetry-collector-contrib/extension/sigv4authextension v0.107.0/go.mod h1:4lvNyTlzKIPYU+72ijqsgti3b3U+iG+K6DfbyfWj94E=
+github.com/open-telemetry/opentelemetry-collector-contrib/extension/solarwindsapmsettingsextension v0.107.0 h1:ELWi3D+hipa3KQbfeBuCi4lCSiaz61es9k2M+pRD3YA=
+github.com/open-telemetry/opentelemetry-collector-contrib/extension/solarwindsapmsettingsextension v0.107.0/go.mod h1:yHSe//eyZ0knSTSaVEJ13OxxrzUiis1UOj8CQOK6D/Y=
 github.com/open-telemetry/opentelemetry-collector-contrib/internal/aws/ecsutil v0.107.0 h1:GREBJzOdgSvj3Q6t25MmM/bJ/zBFZXRHx8KBFBUbJkE=
 github.com/open-telemetry/opentelemetry-collector-contrib/internal/aws/ecsutil v0.107.0/go.mod h1:najb8Uga4rB/sJkZ2bqaFc+c0730PWMQgvdHlH89EPo=
 github.com/open-telemetry/opentelemetry-collector-contrib/internal/common v0.107.0 h1:NKH1JyZbqUSDGbIVqTyGJclmdnp6v4TQYfLhNI4tZno=
