@@ -14,8 +14,6 @@ replace github.com/open-telemetry/opentelemetry-lambda/collector/processor/decou
 
 replace github.com/open-telemetry/opentelemetry-lambda/collector/receiver/telemetryapireceiver => ./receiver/telemetryapireceiver
 
-replace github.com/open-telemetry/opentelemetry-lambda/collector/extension/solarwindsapmsettingsextension => ./extension/solarwindsapmsettingsextension
-
 // fixes ambiguous import error: found package cloud.google.com/go/compute/metadata in multiple modules:
 //        cloud.google.com/go
 //        cloud.google.com/go/compute
@@ -79,11 +77,11 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.1-0.20231216201459-8508981c8b6c // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect
+	github.com/open-telemetry/opentelemetry-collector-contrib/extension/solarwindsapmsettingsextension v0.107.0 // indirect
 	github.com/open-telemetry/opentelemetry-collector-contrib/internal/aws/ecsutil v0.107.0 // indirect
 	github.com/open-telemetry/opentelemetry-collector-contrib/internal/common v0.107.0 // indirect
 	github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig v0.107.0 // indirect
 	github.com/open-telemetry/opentelemetry-collector-contrib/internal/metadataproviders v0.107.0 // indirect
-	github.com/open-telemetry/opentelemetry-lambda/collector/extension/solarwindsapmsettingsextension v0.0.0-00010101000000-000000000000 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.0 // indirect
 	github.com/openshift/api v3.9.0+incompatible // indirect
