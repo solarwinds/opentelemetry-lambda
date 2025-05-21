@@ -6,7 +6,6 @@ import (
 	"crypto/x509"
 	"encoding/binary"
 	"encoding/json"
-	"go.opentelemetry.io/collector/config/configgrpc"
 	"math"
 	"os"
 	"path"
@@ -14,6 +13,7 @@ import (
 
 	"github.com/solarwindscloud/apm-proto/go/collectorpb"
 	"go.opentelemetry.io/collector/component"
+	"go.opentelemetry.io/collector/config/configgrpc"
 	"go.opentelemetry.io/collector/extension"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
