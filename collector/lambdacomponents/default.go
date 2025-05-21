@@ -1,5 +1,3 @@
-//go:build !lambdacomponents.custom
-
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,8 +21,10 @@ import (
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/attributesprocessor"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/probabilisticsamplerprocessor"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourcedetectionprocessor"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourceprocessor"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/spanprocessor"
+	"github.com/open-telemetry/opentelemetry-lambda/collector/extension/solarwindsapmsettingsextension"
 	"github.com/open-telemetry/opentelemetry-lambda/collector/processor/decoupleprocessor"
 	"go.opentelemetry.io/collector/exporter/debugexporter"
 	"go.opentelemetry.io/collector/exporter/otlpexporter"
@@ -71,6 +71,7 @@ func Components(extensionID string) (otelcol.Factories, error) {
 		coldstartprocessor.NewFactory(),
 		decoupleprocessor.NewFactory(),
 		batchprocessor.NewFactory(),
+		resourcedetectionprocessor.NewFactory(),
 	)
 	if err != nil {
 		errs = append(errs, err)
@@ -79,6 +80,7 @@ func Components(extensionID string) (otelcol.Factories, error) {
 	extensions, err := otelcol.MakeFactoryMap(
 		sigv4authextension.NewFactory(),
 		basicauthextension.NewFactory(),
+		solarwindsapmsettingsextension.NewFactory(),
 	)
 	if err != nil {
 		errs = append(errs, err)
