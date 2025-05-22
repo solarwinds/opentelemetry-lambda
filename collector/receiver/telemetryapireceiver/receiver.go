@@ -35,6 +35,7 @@ import (
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
+	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.opentelemetry.io/collector/pdata/ptrace"
 	"go.opentelemetry.io/collector/receiver"
 	semconv "go.opentelemetry.io/collector/semconv/v1.25.0"
@@ -336,6 +337,65 @@ func (r *telemetryAPIReceiver) createLogs(slice []event) (plog.Logs, error) {
 	return logs, nil
 }
 
+func sumHelper(sum pmetric.Sum, count int64, metricsStartTime time.Time) {
+	sum.SetIsMonotonic(true)
+	sum.SetAggregationTemporality(pmetric.AggregationTemporalityCumulative)
+	dp := sum.DataPoints().AppendEmpty()
+	dp.SetIntValue(count)
+	dp.SetStartTimestamp(pcommon.NewTimestampFromTime(metricsStartTime))
+	dp.SetTimestamp(pcommon.NewTimestampFromTime(time.Now()))
+	dp.Attributes().PutStr(semconv.AttributeFaaSTrigger, semconv.AttributeFaaSTriggerOther)
+}
+
+func severityTextToNumber(severityText string) plog.SeverityNumber {
+	mapping := map[string]plog.SeverityNumber{
+		"TRACE":    plog.SeverityNumberTrace,
+		"TRACE2":   plog.SeverityNumberTrace2,
+		"TRACE3":   plog.SeverityNumberTrace3,
+		"TRACE4":   plog.SeverityNumberTrace4,
+		"DEBUG":    plog.SeverityNumberDebug,
+		"DEBUG2":   plog.SeverityNumberDebug2,
+		"DEBUG3":   plog.SeverityNumberDebug3,
+		"DEBUG4":   plog.SeverityNumberDebug4,
+		"INFO":     plog.SeverityNumberInfo,
+		"INFO2":    plog.SeverityNumberInfo2,
+		"INFO3":    plog.SeverityNumberInfo3,
+		"INFO4":    plog.SeverityNumberInfo4,
+		"WARN":     plog.SeverityNumberWarn,
+		"WARN2":    plog.SeverityNumberWarn2,
+		"WARN3":    plog.SeverityNumberWarn3,
+		"WARN4":    plog.SeverityNumberWarn4,
+		"ERROR":    plog.SeverityNumberError,
+		"ERROR2":   plog.SeverityNumberError2,
+		"ERROR3":   plog.SeverityNumberError3,
+		"ERROR4":   plog.SeverityNumberError4,
+		"FATAL":    plog.SeverityNumberFatal,
+		"FATAL2":   plog.SeverityNumberFatal2,
+		"FATAL3":   plog.SeverityNumberFatal3,
+		"FATAL4":   plog.SeverityNumberFatal4,
+		"CRITICAL": plog.SeverityNumberFatal,
+		"ALL":      plog.SeverityNumberTrace,
+		"WARNING":  plog.SeverityNumberWarn,
+	}
+	if ans, ok := mapping[strings.ToUpper(severityText)]; ok {
+		return ans
+	} else {
+		return plog.SeverityNumberUnspecified
+	}
+}
+
+func (r *telemetryAPIReceiver) registerTracesConsumer(next consumer.Traces) {
+	r.nextTraces = next
+}
+
+func (r *telemetryAPIReceiver) registerMetricsConsumer(next consumer.Metrics) {
+	r.nextMetrics = next
+}
+
+func (r *telemetryAPIReceiver) registerLogsConsumer(next consumer.Logs) {
+	r.nextLogs = next
+}
+
 func (r *telemetryAPIReceiver) createPlatformInitSpan(start, end string) (ptrace.Traces, error) {
 	traceData := ptrace.NewTraces()
 	rs := traceData.ResourceSpans().AppendEmpty()
@@ -367,8 +427,8 @@ func newTelemetryAPIReceiver(
 	set receiver.Settings,
 ) (*telemetryAPIReceiver, error) {
 	envResourceMap := map[string]string{
-		"AWS_LAMBDA_FUNCTION_VERSION":     semconv.AttributeFaaSVersion,
-		"AWS_REGION":                      semconv.AttributeFaaSInvokedRegion,
+		"AWS_LAMBDA_FUNCTION_VERSION": semconv.AttributeFaaSVersion,
+		"AWS_REGION":                  semconv.AttributeFaaSInvokedRegion,
 	}
 	r := pcommon.NewResource()
 	r.Attributes().PutStr(semconv.AttributeFaaSInvokedProvider, semconv.AttributeFaaSInvokedProviderAWS)
@@ -409,12 +469,12 @@ func newTelemetryAPIReceiver(
 	}
 
 	return &telemetryAPIReceiver{
-		logger:      set.Logger,
-		queue:       queue.New(initialQueueSize),
-		extensionID: cfg.extensionID,
-		port:        cfg.Port,
-		types:       subscribedTypes,
-		resource:    r,
+		logger:             set.Logger,
+		queue:              queue.New(initialQueueSize),
+		extensionID:        cfg.extensionID,
+		port:               cfg.Port,
+		types:              subscribedTypes,
+		resource:           r,
 		coldStartCounter:   0,
 		errorsCounter:      0,
 		invocationsCounter: 0,
