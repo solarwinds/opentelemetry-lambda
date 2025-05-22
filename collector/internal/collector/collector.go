@@ -96,7 +96,7 @@ func (c *Collector) Start(ctx context.Context) error {
 	params := otelcol.CollectorSettings{
 		BuildInfo: component.BuildInfo{
 			Command:     "otelcol-lambda",
-			Description: "Lambda Collector",
+			Description: "SolarWinds Observability (SWO) distribution of Lambda Collector",
 			Version:     c.version,
 		},
 		ConfigProviderSettings: c.cfgProSet,

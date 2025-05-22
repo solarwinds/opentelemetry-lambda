@@ -8,33 +8,23 @@
 
 ## OpenTelemetry Lambda Layers
 
-The OpenTelemetry Lambda Layers provide the OpenTelemetry (OTel) code to export telemetry asynchronously from AWS Lambda functions. It does this by embedding a stripped-down version of [OpenTelemetry Collector Contrib](https://github.com/open-telemetry/opentelemetry-collector-contrib) inside an [AWS Lambda Extension Layer](https://aws.amazon.com/blogs/compute/introducing-aws-lambda-extensions-in-preview/). This allows Lambda functions to use OpenTelemetry to send traces and metrics to any configured backend.
+The OpenTelemetry Lambda Layers provide the OpenTelemetry (OTel) code to export telemetry asynchronously from AWS Lambda functions. It does this by embedding a stripped-down version of [OpenTelemetry Collector Contrib](https://github.com/open-telemetry/opentelemetry-collector-contrib) inside an [AWS Lambda Extension Layer](https://aws.amazon.com/blogs/compute/introducing-aws-lambda-extensions-in-preview/).
 
-There are 2 types of lambda layers
-1. Collector Layer - Embeds a stripped down version of the OpenTelemetry Collector
-2. Language Specific Layer - Includes language specific nuances to allow lambda functions to automatically consume context from upstream callers, create spans, and automatically instrument the AWS SDK
-
-These 2 layers are meant to be used in conjunction to instrument your lambda functions. The reason that the collector is not embedded in specific language layers is to give users flexibility
-
-## Collector Layer
-* ### [Collector Lambda Layer](collector/README.md)
+Some layers include the corresponding OTel language SDK for the Lambda. This allows Lambda functions to use OpenTelemetry to send traces and metrics to any configured backend.
 
 ## Extension Layer Language Support
-* ### [Python Lambda Layer](python/README.md)
-* ### [Java Lambda Layer](java/README.md)
-* ### [NodeJS Lambda Layer](nodejs/README.md)
-* ### [Ruby Lambda Layer](ruby/README.md)
 
-## Additional language tooling not currently supported
-* ### [Go Lambda Library](go/README.md)
-* ### [.NET Lambda Layer](dotnet/README.md)
+* ### [Python + Collector Lambda Layer](python/README.md)
+* ### [Java + Collector Lambda Layer](java/README.md)
+* ### [NodeJS + Collector Lambda Layer](nodejs/README.md)
+* ### [.NET + Collector Lambda Layer](dotnet/README.md)
+* ### [Ruby + Collector Lambda Layer](ruby/README.md)
+* ### [Collector Lambda Layer](collector/README.md)
 
 ## FAQ
 
 * **What exporters/receivers/processors are included from the OpenTelemetry Collector?**
     > You can check out [the stripped-down collector's imports](https://github.com/open-telemetry/opentelemetry-lambda/blob/main/collector/lambdacomponents/default.go#L18) in this repository for a full list of currently included components.
-
-    > Self-built binaries of the collector have **experimental** support for a custom set of connectors/exporters/receivers/processors. For more information, see [(Experimental) Customized collector build](./collector/README.md#experimental-customized-collector-build)
 * **Is the Lambda layer provided or do I need to build it and distribute it myself?**
     > This repository provides pre-built Lambda layers, their ARNs are available in the [Releases](https://github.com/open-telemetry/opentelemetry-lambda/releases). You can also build the layers manually and publish them in your AWS account. This repo has files to facilitate doing that. More information is provided in [the Collector folder's README](collector/README.md).
 
@@ -102,7 +92,7 @@ The table below captures the state of various features and their levels of suppo
 
 The following are runtimes which are no longer or not yet supported by this repository:
 
-* Node.js 12, Node.js 16 - not [officially supported](https://github.com/open-telemetry/opentelemetry-js#supported-runtimes) by OpenTelemetry JS
+* Node.js 12 - not [officially supported](https://github.com/open-telemetry/opentelemetry-js#supported-runtimes) by OpenTelemetry JS
 
 [1]: https://github.com/open-telemetry/semantic-conventions/blob/main/docs/faas/faas-spans.md#general-attributes
 [2]: https://github.com/open-telemetry/semantic-conventions/blob/main/docs/faas/faas-spans.md#incoming-invocations
@@ -117,8 +107,8 @@ Here is a list of community roles with current and previous members:
 
 - Approvers ([@open-telemetry/lambda-extension-approvers](https://github.com/orgs/open-telemetry/teams/lambda-extension-approvers)):
 
-  - [Ivan Santos](https://github.com/pragmaticivan)
-  - [Warre Pessers](https://github.com/wpessers)
+  - [Nathan Slaughter](https://github.com/nslaughter), Lightstep
+  - [Serkan Özal](https://github.com/serkan-ozal), Catchpoint
 
 - Emeritus Approvers:
 
@@ -128,13 +118,12 @@ Here is a list of community roles with current and previous members:
 
 - Maintainers ([@open-telemetry/lambda-extension-maintainers](https://github.com/orgs/open-telemetry/teams/lambda-extension-maintainers)):
 
-  - [Serkan Özal](https://github.com/serkan-ozal), Catchpoint
+  - [Raphael Philipe Mendes da Silva](https://github.com/rapphil), AWS
   - [Tyler Benson](https://github.com/tylerbenson), Lightstep
 
 - Emeritus Maintainers:
 
   - [Alex Boten](https://github.com/codeboten)
   - [Anthony Mirabella](https://github.com/Aneurysm9)
-  - [Raphael Philipe Mendes da Silva](https://github.com/rapphil)
 
 Learn more about roles in the [community repository](https://github.com/open-telemetry/community/blob/main/community-membership.md).
