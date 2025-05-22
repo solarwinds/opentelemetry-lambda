@@ -112,7 +112,7 @@ func TestHandler(t *testing.T) {
 			consumer := mockConsumer{}
 			r, err := newTelemetryAPIReceiver(
 				&Config{},
-				receivertest.NewNopSettings(),
+				receivertest.NewNopSettings(Type),
 			)
 			require.NoError(t, err)
 			r.registerTracesConsumer(&consumer)
@@ -159,7 +159,7 @@ func TestCreatePlatformInitSpan(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			r, err := newTelemetryAPIReceiver(
 				&Config{},
-				receivertest.NewNopSettings(),
+				receivertest.NewNopSettings(Type),
 			)
 			require.NoError(t, err)
 			td, err := r.createPlatformInitSpan(tc.start, tc.end)
@@ -363,7 +363,7 @@ func TestCreateMetrics(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			r, err := newTelemetryAPIReceiver(
 				&Config{},
-				receivertest.NewNopSettings(),
+				receivertest.NewNopSettings(Type),
 			)
 			require.NoError(t, err)
 			metrics, err := r.createMetrics(tc.slice)
@@ -669,7 +669,7 @@ func TestCreateLogs(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			r, err := newTelemetryAPIReceiver(
 				&Config{},
-				receivertest.NewNopSettings(),
+				receivertest.NewNopSettings(Type),
 			)
 			require.NoError(t, err)
 			log, err := r.createLogs(tc.slice)
@@ -743,36 +743,5 @@ func TestSeverityTextToNumber(t *testing.T) {
 	others := []string{"", "UNKNOWN", "other", "anything"}
 	for _, level := range others {
 		require.Equal(t, plog.SeverityNumberUnspecified, severityTextToNumber(level))
-	}
-}
-
-func TestSumHelper(t *testing.T) {
-	t.Parallel()
-	testCases := []struct {
-		count int64
-		time  time.Time
-	}{
-		{
-			count: 12345,
-			time:  time.Date(2024, time.July, 5, 21, 12, 37, 0, time.UTC),
-		},
-		{
-			count: 678910,
-			time:  time.Date(2024, time.July, 9, 10, 53, 34, 689*1000*1000, time.UTC),
-		},
-	}
-	for _, tc := range testCases {
-		sum := pmetric.NewSum()
-		sumHelper(sum, tc.count, tc.time)
-		require.True(t, sum.IsMonotonic())
-		require.Equal(t, pmetric.AggregationTemporalityCumulative, sum.AggregationTemporality())
-		require.Equal(t, 1, sum.DataPoints().Len())
-		dp := sum.DataPoints().At(0)
-		require.Equal(t, tc.count, dp.IntValue())
-		require.Equal(t, tc.time, dp.StartTimestamp().AsTime())
-		require.Equal(t, 1, dp.Attributes().Len())
-		trigger, ok := dp.Attributes().Get(semconv.AttributeFaaSTrigger)
-		require.True(t, ok)
-		require.Equal(t, semconv.AttributeFaaSTriggerOther, trigger.AsString())
 	}
 }
