@@ -30,7 +30,7 @@ import (
 	"time"
 
 	"github.com/golang-collections/go-datastructures/queue"
-	"github.com/google/uuid"
+	"github.com/open-telemetry/opentelemetry-lambda/collector/receiver/telemetryapireceiver/internal/metadata"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/pdata/pcommon"
@@ -60,11 +60,7 @@ type telemetryAPIReceiver struct {
 	port                  int
 	types                 []telemetryapi.EventType
 	resource              pcommon.Resource
-	metricsStartTime      time.Time
-	coldStartCounter      int64
-	errorsCounter         int64
-	invocationsCounter    int64
-	timeoutsCounter       int64
+	metricsBuilder        *metadata.MetricsBuilder
 }
 
 func (r *telemetryAPIReceiver) Start(ctx context.Context, host component.Host) error {
@@ -145,7 +141,7 @@ func (r *telemetryAPIReceiver) httpHandler(w http.ResponseWriter, req *http.Requ
 	// metrics
 	if r.nextMetrics != nil {
 		if metrics, err := r.createMetrics(slice); err == nil {
-			if metrics.DataPointCount() > 0 {
+			if metrics.ResourceMetrics().Len() > 0 {
 				err := r.nextMetrics.ConsumeMetrics(context.Background(), metrics)
 				if err != nil {
 					r.logger.Error("error receiving metrics", zap.Error(err))
@@ -216,21 +212,8 @@ func (r *telemetryAPIReceiver) createTraces(slice []event) (ptrace.Traces, error
 }
 
 func (r *telemetryAPIReceiver) createMetrics(slice []event) (pmetric.Metrics, error) {
-	metrics := pmetric.NewMetrics()
-	resourceMetric := metrics.ResourceMetrics().AppendEmpty()
-	r.resource.CopyTo(resourceMetric.Resource())
-	scopeMetric := resourceMetric.ScopeMetrics().AppendEmpty()
-	scopeMetric.Scope().SetName(scopeName)
 	for _, el := range slice {
 		r.logger.Debug(fmt.Sprintf("Event: %s", el.Type), zap.Any("event", el))
-		if r.metricsStartTime.IsZero() {
-			if t, err := time.Parse(time.RFC3339, el.Time); err == nil {
-				r.metricsStartTime = t
-			} else {
-				return pmetric.Metrics{}, err
-			}
-
-		}
 		switch el.Type {
 		case string(telemetryapi.PlatformInitReport):
 			jsonStr, err := json.Marshal(el.Record)
@@ -242,21 +225,11 @@ func (r *telemetryAPIReceiver) createMetrics(slice []event) (pmetric.Metrics, er
 				return pmetric.Metrics{}, err
 			} else {
 				if report.Phase == initPhaseInit {
-					r.coldStartCounter++
-					metrics := scopeMetric.Metrics().AppendEmpty()
-					metrics.Metadata().PutStr("type", el.Type)
-					metrics.SetName(semconv.AttributeFaaSColdstart)
-					sum := metrics.SetEmptySum()
-					sumHelper(sum, r.coldStartCounter, r.metricsStartTime)
+					r.metricsBuilder.RecordFaasColdstartsDataPoint(pcommon.NewTimestampFromTime(time.Now()), 1)
 				}
 			}
 		case string(telemetryapi.PlatformReport):
-			r.invocationsCounter++
-			metrics := scopeMetric.Metrics().AppendEmpty()
-			metrics.Metadata().PutStr("type", el.Type)
-			metrics.SetName("faas.invocations")
-			sum := metrics.SetEmptySum()
-			sumHelper(sum, r.invocationsCounter, r.metricsStartTime)
+			r.metricsBuilder.RecordFaasInvocationsDataPoint(pcommon.NewTimestampFromTime(time.Now()), 1)
 			jsonStr, err := json.Marshal(el.Record)
 			if err != nil {
 				return pmetric.Metrics{}, err
@@ -266,25 +239,15 @@ func (r *telemetryAPIReceiver) createMetrics(slice []event) (pmetric.Metrics, er
 				return pmetric.Metrics{}, err
 			} else {
 				if report.Status != statusSuccess {
-					r.errorsCounter++
-					metrics := scopeMetric.Metrics().AppendEmpty()
-					metrics.Metadata().PutStr("type", el.Type)
-					metrics.SetName("faas.errors")
-					sum := metrics.SetEmptySum()
-					sumHelper(sum, r.errorsCounter, r.metricsStartTime)
+					r.metricsBuilder.RecordFaasErrorsDataPoint(pcommon.NewTimestampFromTime(time.Now()), 1)
 				}
 				if report.Status == statusTimeout {
-					r.timeoutsCounter++
-					metrics := scopeMetric.Metrics().AppendEmpty()
-					metrics.Metadata().PutStr("type", el.Type)
-					metrics.SetName("faas.timeouts")
-					sum := metrics.SetEmptySum()
-					sumHelper(sum, r.timeoutsCounter, r.metricsStartTime)
+					r.metricsBuilder.RecordFaasTimeoutsDataPoint(pcommon.NewTimestampFromTime(time.Now()), 1)
 				}
 			}
 		}
 	}
-
+	metrics := r.metricsBuilder.Emit(metadata.WithResource(r.resource))
 	return metrics, nil
 }
 
@@ -335,16 +298,6 @@ func (r *telemetryAPIReceiver) createLogs(slice []event) (plog.Logs, error) {
 		}
 	}
 	return logs, nil
-}
-
-func sumHelper(sum pmetric.Sum, count int64, metricsStartTime time.Time) {
-	sum.SetIsMonotonic(true)
-	sum.SetAggregationTemporality(pmetric.AggregationTemporalityCumulative)
-	dp := sum.DataPoints().AppendEmpty()
-	dp.SetIntValue(count)
-	dp.SetStartTimestamp(pcommon.NewTimestampFromTime(metricsStartTime))
-	dp.SetTimestamp(pcommon.NewTimestampFromTime(time.Now()))
-	dp.Attributes().PutStr(semconv.AttributeFaaSTrigger, semconv.AttributeFaaSTriggerOther)
 }
 
 func severityTextToNumber(severityText string) plog.SeverityNumber {
@@ -424,7 +377,7 @@ func (r *telemetryAPIReceiver) createPlatformInitSpan(start, end string) (ptrace
 
 func newTelemetryAPIReceiver(
 	cfg *Config,
-	set receiver.Settings,
+	settings receiver.Settings,
 ) (*telemetryAPIReceiver, error) {
 	envResourceMap := map[string]string{
 		"AWS_LAMBDA_FUNCTION_VERSION": semconv.AttributeFaaSVersion,
@@ -447,8 +400,6 @@ func newTelemetryAPIReceiver(
 			r.Attributes().PutInt(semconv.AttributeFaaSMaxMemory, int64(mb)*1024*1024)
 		}
 	}
-	// https://opentelemetry.io/docs/specs/otel/metrics/data-model/#single-writer
-	r.Attributes().PutStr(semconv.AttributeServiceInstanceID, uuid.New().String())
 
 	for env, resourceAttribute := range envResourceMap {
 		if val, ok := os.LookupEnv(env); ok {
@@ -469,16 +420,13 @@ func newTelemetryAPIReceiver(
 	}
 
 	return &telemetryAPIReceiver{
-		logger:             set.Logger,
-		queue:              queue.New(initialQueueSize),
-		extensionID:        cfg.extensionID,
-		port:               cfg.Port,
-		types:              subscribedTypes,
-		resource:           r,
-		coldStartCounter:   0,
-		errorsCounter:      0,
-		invocationsCounter: 0,
-		timeoutsCounter:    0,
+		logger:         settings.Logger,
+		queue:          queue.New(initialQueueSize),
+		extensionID:    cfg.extensionID,
+		port:           cfg.Port,
+		types:          subscribedTypes,
+		resource:       r,
+		metricsBuilder: metadata.NewMetricsBuilder(cfg.MetricsBuilderConfig, settings),
 	}, nil
 }
 

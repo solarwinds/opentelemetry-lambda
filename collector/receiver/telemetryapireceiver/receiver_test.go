@@ -21,11 +21,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest/pmetrictest"
+	"github.com/open-telemetry/opentelemetry-lambda/collector/receiver/telemetryapireceiver/internal/metadata"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
-	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.opentelemetry.io/collector/pdata/ptrace"
 	"go.opentelemetry.io/collector/receiver/receivertest"
 	semconv "go.opentelemetry.io/collector/semconv/v1.25.0"
@@ -176,15 +177,16 @@ func TestCreateMetrics(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		desc            string
-		slice           []event
-		expectedType    string
-		expectedMetrics []map[string]any
-		expectError     bool
+		desc                    string
+		slice                   []event
+		expectedResourceMetrics int
+		expectedMetrics         map[string]int
+		expectError             bool
 	}{
 		{
-			desc:        "no slice",
-			expectError: false,
+			desc:                    "no slice",
+			expectError:             false,
+			expectedResourceMetrics: 0,
 		},
 		{
 			desc: "platform.initReport",
@@ -209,14 +211,11 @@ func TestCreateMetrics(t *testing.T) {
 					},
 				},
 			},
-			expectedMetrics: []map[string]any{
-				{
-					"Name":  semconv.AttributeFaaSColdstart,
-					"Value": int64(1),
-				},
+			expectedResourceMetrics: 1,
+			expectedMetrics: map[string]int{
+				"faas.coldstarts": 1,
 			},
-			expectedType: "platform.initReport",
-			expectError:  false,
+			expectError: false,
 		},
 		{
 			desc: "platform.Report success",
@@ -244,12 +243,9 @@ func TestCreateMetrics(t *testing.T) {
 					},
 				},
 			},
-			expectedType: "platform.report",
-			expectedMetrics: []map[string]any{
-				{
-					"Name":  "faas.invocations",
-					"Value": int64(1),
-				},
+			expectedResourceMetrics: 1,
+			expectedMetrics: map[string]int{
+				"faas.invocations": 1,
 			},
 			expectError: false,
 		},
@@ -274,16 +270,10 @@ func TestCreateMetrics(t *testing.T) {
 					},
 				},
 			},
-			expectedType: "platform.report",
-			expectedMetrics: []map[string]any{
-				{
-					"Name":  "faas.invocations",
-					"Value": int64(1),
-				},
-				{
-					"Name":  "faas.errors",
-					"Value": int64(1),
-				},
+			expectedResourceMetrics: 1,
+			expectedMetrics: map[string]int{
+				"faas.errors":      1,
+				"faas.invocations": 1,
 			},
 			expectError: false,
 		},
@@ -308,16 +298,10 @@ func TestCreateMetrics(t *testing.T) {
 					},
 				},
 			},
-			expectedType: "platform.report",
-			expectedMetrics: []map[string]any{
-				{
-					"Name":  "faas.invocations",
-					"Value": int64(1),
-				},
-				{
-					"Name":  "faas.errors",
-					"Value": int64(1),
-				},
+			expectedResourceMetrics: 1,
+			expectedMetrics: map[string]int{
+				"faas.errors":      1,
+				"faas.invocations": 1,
 			},
 			expectError: false,
 		},
@@ -341,28 +325,22 @@ func TestCreateMetrics(t *testing.T) {
 					},
 				},
 			},
-			expectedType: "platform.report",
-			expectedMetrics: []map[string]any{
-				{
-					"Name":  "faas.invocations",
-					"Value": int64(1),
-				},
-				{
-					"Name":  "faas.errors",
-					"Value": int64(1),
-				},
-				{
-					"Name":  "faas.timeouts",
-					"Value": int64(1),
-				},
+			expectedResourceMetrics: 1,
+			expectedMetrics: map[string]int{
+				"faas.errors":      1,
+				"faas.invocations": 1,
+				"faas.timeouts":    1,
 			},
 			expectError: false,
 		},
 	}
+
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			r, err := newTelemetryAPIReceiver(
-				&Config{},
+				&Config{
+					MetricsBuilderConfig: metadata.DefaultMetricsBuilderConfig(),
+				},
 				receivertest.NewNopSettings(Type),
 			)
 			require.NoError(t, err)
@@ -370,23 +348,33 @@ func TestCreateMetrics(t *testing.T) {
 			if tc.expectError {
 				require.Error(t, err)
 			} else {
-				require.Equal(t, 1, metrics.ResourceMetrics().Len())
-				resourceMetric := metrics.ResourceMetrics().At(0)
-				require.Equal(t, 1, resourceMetric.ScopeMetrics().Len())
-				scopeMetric := resourceMetric.ScopeMetrics().At(0)
-				require.Equal(t, scopeName, scopeMetric.Scope().Name())
-				require.Equal(t, len(tc.expectedMetrics), scopeMetric.Metrics().Len())
-				for idx, m := range tc.expectedMetrics {
-					metric := scopeMetric.Metrics().At(idx)
-					attr, ok := metric.Metadata().Get("type")
-					require.True(t, ok)
-					require.Equal(t, tc.expectedType, attr.Str())
-					require.Equal(t, m["Name"], metric.Name())
-					require.True(t, metric.Sum().IsMonotonic())
-					require.Equal(t, pmetric.AggregationTemporalityCumulative, metric.Sum().AggregationTemporality())
-					require.Equal(t, 1, metric.Sum().DataPoints().Len())
-					require.Equal(t, m["Value"], metric.Sum().DataPoints().At(0).IntValue())
+				now := pcommon.NewTimestampFromTime(time.Now().UTC())
+				expectedMB := metadata.NewMetricsBuilder(metadata.DefaultMetricsBuilderConfig(), receivertest.NewNopSettings(Type))
+				for k, v := range tc.expectedMetrics {
+					switch k {
+					case "faas.coldstarts":
+						for _ = range v {
+							expectedMB.RecordFaasColdstartsDataPoint(now, 1)
+						}
+					case "faas.errors":
+						for _ = range v {
+							expectedMB.RecordFaasErrorsDataPoint(now, 1)
+						}
+					case "faas.invocations":
+						for _ = range v {
+							expectedMB.RecordFaasInvocationsDataPoint(now, 1)
+						}
+					case "faas.timeouts":
+						for _ = range v {
+							expectedMB.RecordFaasTimeoutsDataPoint(now, 1)
+						}
+					default:
+
+					}
 				}
+				expectedMB.EmitForResource(metadata.WithResource(r.resource))
+				expectedMetrics := expectedMB.Emit()
+				require.NoError(t, pmetrictest.CompareMetrics(expectedMetrics, metrics, pmetrictest.IgnoreResourceMetricsOrder(), pmetrictest.IgnoreMetricDataPointsOrder(), pmetrictest.IgnoreStartTimestamp(), pmetrictest.IgnoreTimestamp()))
 			}
 		})
 	}
