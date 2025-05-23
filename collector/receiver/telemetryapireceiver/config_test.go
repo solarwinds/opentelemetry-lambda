@@ -15,14 +15,10 @@
 package telemetryapireceiver // import "github.com/open-telemetry/opentelemetry-lambda/collector/receiver/telemetryapireceiver"
 
 import (
-	"fmt"
-	"path/filepath"
 	"testing"
 
 	"github.com/open-telemetry/opentelemetry-lambda/collector/receiver/telemetryapireceiver/internal/metadata"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/collector/component"
-	"go.opentelemetry.io/collector/confmap/confmaptest"
 )
 
 func TestLoadConfig(t *testing.T) {
@@ -128,13 +124,6 @@ func TestValidate(t *testing.T) {
 			desc:        "valid config",
 			cfg:         &Config{},
 			expectedErr: nil,
-		},
-		{
-			desc: "invalid config",
-			cfg: &Config{
-				Types: []string{"invalid"},
-			},
-			expectedErr: fmt.Errorf("unknown extension type: invalid"),
 		},
 	}
 

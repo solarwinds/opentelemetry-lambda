@@ -18,8 +18,9 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/open-telemetry/opentelemetry-lambda/collector/lambdalifecycle"
 	"os"
+
+	"github.com/open-telemetry/opentelemetry-lambda/collector/lambdalifecycle"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -57,10 +58,10 @@ func main() {
 
 func initLogger() *zap.Logger {
 	lvl := zap.NewAtomicLevelAt(zapcore.WarnLevel)
-
+	envLvl := os.Getenv("OPENTELEMETRY_EXTENSION_LOG_LEVEL")
+	// When not set, Getenv returns empty string
 	var err error
-	envLvl, ok := os.LookupEnv("OPENTELEMETRY_EXTENSION_LOG_LEVEL")
-	if ok {
+	if envLvl != "" {
 		var userLvl zap.AtomicLevel
 		userLvl, err = zap.ParseAtomicLevel(envLvl)
 		if err == nil {

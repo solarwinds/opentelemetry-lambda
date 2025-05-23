@@ -1,7 +1,7 @@
 extensions:
   solarwindsapmsettings:
-    endpoint: "apm.collector.${SW_APM_DATA_CENTER}.cloud.solarwinds.com:443"
-    key: "${SW_APM_API_TOKEN}:${OTEL_SERVICE_NAME}"
+    endpoint: "apm.collector.${env:SW_APM_DATA_CENTER}.cloud.solarwinds.com:443"
+    key: "${env:SW_APM_API_TOKEN}:${env:OTEL_SERVICE_NAME}"
 
 receivers:
   otlp:
@@ -11,7 +11,7 @@ receivers:
       http:
         endpoint: "localhost:4318"
   telemetryapi:
-    types: ${SW_APM_TELEMETRY_API_SUBSCRIPTION}
+    types: ${env:SW_APM_TELEMETRY_API_SUBSCRIPTION}
 
 processors:
   batch:
@@ -34,12 +34,12 @@ processors:
         action: upsert
 
 exporters:
-  logging:
+  debug:
     verbosity: detailed
   otlp:
-    endpoint: "https://otel.collector.${SW_APM_DATA_CENTER}.cloud.solarwinds.com:443"
+    endpoint: "https://otel.collector.${env:SW_APM_DATA_CENTER}.cloud.solarwinds.com:443"
     headers:
-      Authorization: "Bearer ${SW_APM_API_TOKEN}"
+      Authorization: "Bearer ${env:SW_APM_API_TOKEN}"
 
 service:
   extensions: [solarwindsapmsettings]
@@ -47,15 +47,15 @@ service:
     traces:
       receivers: [otlp]
       processors: [resource,resourcedetection,batch]
-      exporters: [otlp,logging]
+      exporters: [otlp,debug]
     metrics:
       receivers: [otlp,telemetryapi]
       processors: [resource,resourcedetection,batch]
-      exporters: [otlp,logging]
+      exporters: [otlp,debug]
     logs:
       receivers: [otlp,telemetryapi]
       processors: [resource,resourcedetection,batch]
-      exporters: [otlp,logging]
+      exporters: [otlp,debug]
   telemetry:
     metrics:
       address: localhost:8888

@@ -52,9 +52,9 @@ func TestNewFactory(t *testing.T) {
 			testFunc: func(t *testing.T) {
 				factory := NewFactory("test")
 				cfg := factory.CreateDefaultConfig()
-				_, err := factory.CreateTracesReceiver(
+				_, err := factory.CreateTraces(
 					context.Background(),
-					receivertest.NewNopSettings(),
+					receivertest.NewNopSettings(Type),
 					cfg,
 					consumertest.NewNop(),
 				)
@@ -65,9 +65,9 @@ func TestNewFactory(t *testing.T) {
 			desc: "creates a new factory and CreateTracesReceiver returns error with incorrect config",
 			testFunc: func(t *testing.T) {
 				factory := NewFactory("test")
-				_, err := factory.CreateTracesReceiver(
+				_, err := factory.CreateTraces(
 					context.Background(),
-					receivertest.NewNopSettings(),
+					receivertest.NewNopSettings(Type),
 					nil,
 					consumertest.NewNop(),
 				)
@@ -79,9 +79,9 @@ func TestNewFactory(t *testing.T) {
 			testFunc: func(t *testing.T) {
 				factory := NewFactory("test")
 				cfg := factory.CreateDefaultConfig()
-				_, err := factory.CreateMetricsReceiver(
+				_, err := factory.CreateMetrics(
 					context.Background(),
-					receivertest.NewNopSettings(),
+					receivertest.NewNopSettings(Type),
 					cfg,
 					consumertest.NewNop(),
 				)
@@ -92,9 +92,9 @@ func TestNewFactory(t *testing.T) {
 			desc: "creates a new factory and CreateMetricsReceiver returns error with incorrect config",
 			testFunc: func(t *testing.T) {
 				factory := NewFactory("test")
-				_, err := factory.CreateMetricsReceiver(
+				_, err := factory.CreateMetrics(
 					context.Background(),
-					receivertest.NewNopSettings(),
+					receivertest.NewNopSettings(Type),
 					nil,
 					consumertest.NewNop(),
 				)
@@ -106,9 +106,9 @@ func TestNewFactory(t *testing.T) {
 			testFunc: func(t *testing.T) {
 				factory := NewFactory("test")
 				cfg := factory.CreateDefaultConfig()
-				_, err := factory.CreateLogsReceiver(
+				_, err := factory.CreateLogs(
 					context.Background(),
-					receivertest.NewNopSettings(),
+					receivertest.NewNopSettings(Type),
 					cfg,
 					consumertest.NewNop(),
 				)
@@ -119,9 +119,9 @@ func TestNewFactory(t *testing.T) {
 			desc: "creates a new factory and CreateLogsReceiver returns error with incorrect config",
 			testFunc: func(t *testing.T) {
 				factory := NewFactory("test")
-				_, err := factory.CreateLogsReceiver(
+				_, err := factory.CreateLogs(
 					context.Background(),
-					receivertest.NewNopSettings(),
+					receivertest.NewNopSettings(Type),
 					nil,
 					consumertest.NewNop(),
 				)
