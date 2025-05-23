@@ -349,7 +349,7 @@ func TestCreateMetrics(t *testing.T) {
 				require.Error(t, err)
 			} else {
 				now := pcommon.NewTimestampFromTime(time.Now().UTC())
-				expectedMB := metadata.NewMetricsBuilder(metadata.DefaultMetricsBuilderConfig(), receivertest.NewNopSettings())
+				expectedMB := metadata.NewMetricsBuilder(metadata.DefaultMetricsBuilderConfig(), receivertest.NewNopSettings(Type))
 				for k, v := range tc.expectedMetrics {
 					switch k {
 					case "faas.coldstarts":

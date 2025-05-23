@@ -6,17 +6,35 @@ replace github.com/open-telemetry/opentelemetry-lambda/collector => ../../
 
 require (
 	github.com/golang-collections/go-datastructures v0.0.0-20150211160725-59788d5eb259
+	github.com/google/go-cmp v0.7.0
+	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest v0.126.0
 	github.com/open-telemetry/opentelemetry-lambda/collector v0.98.0
 	github.com/stretchr/testify v1.10.0
 	go.opentelemetry.io/collector/component v1.32.0
 	go.opentelemetry.io/collector/component/componenttest v0.126.0
+	go.opentelemetry.io/collector/confmap v1.32.0
+	go.opentelemetry.io/collector/confmap/xconfmap v0.126.0
 	go.opentelemetry.io/collector/consumer v1.32.0
 	go.opentelemetry.io/collector/consumer/consumertest v0.126.0
 	go.opentelemetry.io/collector/pdata v1.32.0
 	go.opentelemetry.io/collector/receiver v1.32.0
 	go.opentelemetry.io/collector/receiver/receivertest v0.126.0
 	go.opentelemetry.io/collector/semconv v0.126.0
+	go.uber.org/goleak v1.3.0
 	go.uber.org/zap v1.27.0
+)
+
+require (
+	github.com/cespare/xxhash/v2 v2.3.0 // indirect
+	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
+	github.com/gobwas/glob v0.2.3 // indirect
+	github.com/knadh/koanf/maps v0.1.2 // indirect
+	github.com/knadh/koanf/providers/confmap v1.0.0 // indirect
+	github.com/knadh/koanf/v2 v2.2.0 // indirect
+	github.com/mitchellh/copystructure v1.2.0 // indirect
+	github.com/mitchellh/reflectwalk v1.0.2 // indirect
+	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatautil v0.126.0 // indirect
+	sigs.k8s.io/yaml v1.4.0 // indirect
 )
 
 require (
@@ -24,7 +42,7 @@ require (
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/google/uuid v1.6.0
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/go-version v1.7.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
