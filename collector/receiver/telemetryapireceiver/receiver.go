@@ -45,7 +45,6 @@ import (
 )
 
 const initialQueueSize = 5
-const scopeName = "github.com/open-telemetry/opentelemetry-lambda/collector/receiver/telemetryapi"
 
 type telemetryAPIReceiver struct {
 	httpServer            *http.Server
@@ -61,6 +60,7 @@ type telemetryAPIReceiver struct {
 	types                 []telemetryapi.EventType
 	resource              pcommon.Resource
 	metricsBuilder        *metadata.MetricsBuilder
+	logsBuilder           *metadata.LogsBuilder
 }
 
 func (r *telemetryAPIReceiver) Start(ctx context.Context, host component.Host) error {
@@ -252,15 +252,10 @@ func (r *telemetryAPIReceiver) createMetrics(slice []event) (pmetric.Metrics, er
 }
 
 func (r *telemetryAPIReceiver) createLogs(slice []event) (plog.Logs, error) {
-	logs := plog.NewLogs()
-	resourceLog := logs.ResourceLogs().AppendEmpty()
-	r.resource.CopyTo(resourceLog.Resource())
-	scopeLog := resourceLog.ScopeLogs().AppendEmpty()
-	scopeLog.Scope().SetName(scopeName)
 	for _, el := range slice {
 		r.logger.Debug(fmt.Sprintf("Event: %s", el.Type), zap.Any("event", el))
 		if el.Type == string(telemetryapi.Function) || el.Type == string(telemetryapi.Extension) {
-			logRecord := scopeLog.LogRecords().AppendEmpty()
+			logRecord := plog.NewLogRecord()
 			logRecord.Attributes().PutStr("type", el.Type)
 			if t, err := time.Parse(time.RFC3339, el.Time); err == nil {
 				logRecord.SetTimestamp(pcommon.NewTimestampFromTime(t))
@@ -295,9 +290,10 @@ func (r *telemetryAPIReceiver) createLogs(slice []event) (plog.Logs, error) {
 					logRecord.Body().SetStr(line)
 				}
 			}
+			r.logsBuilder.AppendLogRecord(logRecord)
 		}
 	}
-	return logs, nil
+	return r.logsBuilder.Emit(metadata.WithLogsResource(r.resource)), nil
 }
 
 func severityTextToNumber(severityText string) plog.SeverityNumber {
@@ -355,7 +351,7 @@ func (r *telemetryAPIReceiver) createPlatformInitSpan(start, end string) (ptrace
 	r.resource.CopyTo(rs.Resource())
 
 	ss := rs.ScopeSpans().AppendEmpty()
-	ss.Scope().SetName(scopeName)
+	ss.Scope().SetName(metadata.ScopeName)
 	span := ss.Spans().AppendEmpty()
 	span.SetTraceID(newTraceID())
 	span.SetSpanID(newSpanID())
@@ -427,6 +423,7 @@ func newTelemetryAPIReceiver(
 		types:          subscribedTypes,
 		resource:       r,
 		metricsBuilder: metadata.NewMetricsBuilder(cfg.MetricsBuilderConfig, settings),
+		logsBuilder:    metadata.NewLogsBuilder(settings),
 	}, nil
 }
 
