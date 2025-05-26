@@ -386,8 +386,7 @@ func TestCreateLogs(t *testing.T) {
 	testCases := []struct {
 		desc                      string
 		slice                     []event
-		expectedLogResource       int
-		expectedLogRecords        int
+		expectedResourceLogs      int
 		expectedType              string
 		expectedTimestamp         string
 		expectedBody              string
@@ -398,10 +397,9 @@ func TestCreateLogs(t *testing.T) {
 		expectError               bool
 	}{
 		{
-			desc:                "no slice",
-			expectedLogResource: 0,
-			expectedLogRecords:  0,
-			expectError:         false,
+			desc:                 "no slice",
+			expectedResourceLogs: 0,
+			expectError:          false,
 		},
 		{
 			desc: "Invalid Timestamp",
@@ -423,8 +421,7 @@ func TestCreateLogs(t *testing.T) {
 					Record: "[INFO] Hello world, I am an extension!",
 				},
 			},
-			expectedLogResource:       1,
-			expectedLogRecords:        1,
+			expectedResourceLogs:      1,
 			expectedType:              "function",
 			expectedTimestamp:         "2022-10-12T00:03:50.000Z",
 			expectedBody:              "[INFO] Hello world, I am an extension!",
@@ -447,8 +444,7 @@ func TestCreateLogs(t *testing.T) {
 					},
 				},
 			},
-			expectedLogResource:       1,
-			expectedLogRecords:        1,
+			expectedResourceLogs:      1,
 			expectedType:              "function",
 			expectedTimestamp:         "2022-10-12T00:03:50.000Z",
 			expectedBody:              "Hello world, I am a function!",
@@ -467,8 +463,7 @@ func TestCreateLogs(t *testing.T) {
 					Record: "[INFO] Hello world, I am an extension!",
 				},
 			},
-			expectedLogResource:       1,
-			expectedLogRecords:        1,
+			expectedResourceLogs:      1,
 			expectedType:              "extension",
 			expectedTimestamp:         "2022-10-12T00:03:50.000Z",
 			expectedBody:              "[INFO] Hello world, I am an extension!",
@@ -491,8 +486,7 @@ func TestCreateLogs(t *testing.T) {
 					},
 				},
 			},
-			expectedLogResource:       1,
-			expectedLogRecords:        1,
+			expectedResourceLogs:      1,
 			expectedType:              "extension",
 			expectedTimestamp:         "2022-10-12T00:03:50.000Z",
 			expectedBody:              "Hello world, I am an extension!",
@@ -516,8 +510,7 @@ func TestCreateLogs(t *testing.T) {
 					},
 				},
 			},
-			expectedLogResource:       1,
-			expectedLogRecords:        1,
+			expectedResourceLogs:      1,
 			expectedType:              "extension",
 			expectedTimestamp:         "2022-10-12T00:03:50.000Z",
 			expectedBody:              "Hello world, I am an extension!",
@@ -536,9 +529,8 @@ func TestCreateLogs(t *testing.T) {
 					Record: map[string]any{},
 				},
 			},
-			expectedLogResource: 0,
-			expectedLogRecords:  0,
-			expectError:         false,
+			expectedResourceLogs: 0,
+			expectError:          false,
 		},
 		{
 			desc: "platform.initRuntimeDone anything",
@@ -549,9 +541,8 @@ func TestCreateLogs(t *testing.T) {
 					Record: map[string]any{},
 				},
 			},
-			expectedLogResource: 0,
-			expectedLogRecords:  0,
-			expectError:         false,
+			expectedResourceLogs: 0,
+			expectError:          false,
 		},
 		{
 			desc: "platform.initReport anything",
@@ -562,9 +553,8 @@ func TestCreateLogs(t *testing.T) {
 					Record: map[string]any{},
 				},
 			},
-			expectedLogResource: 0,
-			expectedLogRecords:  0,
-			expectError:         false,
+			expectedResourceLogs: 0,
+			expectError:          false,
 		},
 		{
 			desc: "platform.start anything",
@@ -575,9 +565,8 @@ func TestCreateLogs(t *testing.T) {
 					Record: map[string]any{},
 				},
 			},
-			expectedLogResource: 0,
-			expectedLogRecords:  0,
-			expectError:         false,
+			expectedResourceLogs: 0,
+			expectError:          false,
 		},
 		{
 			desc: "platform.runtimeDone anything",
@@ -588,9 +577,8 @@ func TestCreateLogs(t *testing.T) {
 					Record: map[string]any{},
 				},
 			},
-			expectedLogResource: 0,
-			expectedLogRecords:  0,
-			expectError:         false,
+			expectedResourceLogs: 0,
+			expectError:          false,
 		},
 		{
 			desc: "platform.report anything",
@@ -601,9 +589,8 @@ func TestCreateLogs(t *testing.T) {
 					Record: map[string]any{},
 				},
 			},
-			expectedLogResource: 0,
-			expectedLogRecords:  0,
-			expectError:         false,
+			expectedResourceLogs: 0,
+			expectError:          false,
 		},
 		{
 			desc: "platform.restoreStart anything",
@@ -614,9 +601,8 @@ func TestCreateLogs(t *testing.T) {
 					Record: map[string]any{},
 				},
 			},
-			expectedLogResource: 0,
-			expectedLogRecords:  0,
-			expectError:         false,
+			expectedResourceLogs: 0,
+			expectError:          false,
 		},
 		{
 			desc: "platform.restoreRuntimeDone anything",
@@ -627,9 +613,8 @@ func TestCreateLogs(t *testing.T) {
 					Record: map[string]any{},
 				},
 			},
-			expectedLogResource: 0,
-			expectedLogRecords:  0,
-			expectError:         false,
+			expectedResourceLogs: 0,
+			expectError:          false,
 		},
 		{
 			desc: "platform.restoreReport anything",
@@ -640,9 +625,8 @@ func TestCreateLogs(t *testing.T) {
 					Record: map[string]any{},
 				},
 			},
-			expectedLogResource: 0,
-			expectedLogRecords:  0,
-			expectError:         false,
+			expectedResourceLogs: 0,
+			expectError:          false,
 		},
 		{
 			desc: "platform.telemetrySubscription anything",
@@ -653,9 +637,8 @@ func TestCreateLogs(t *testing.T) {
 					Record: map[string]any{},
 				},
 			},
-			expectedLogResource: 0,
-			expectedLogRecords:  0,
-			expectError:         false,
+			expectedResourceLogs: 0,
+			expectError:          false,
 		},
 		{
 			desc: "platform.logsDropped anything",
@@ -666,9 +649,8 @@ func TestCreateLogs(t *testing.T) {
 					Record: map[string]any{},
 				},
 			},
-			expectedLogResource: 0,
-			expectedLogRecords:  0,
-			expectError:         false,
+			expectedResourceLogs: 0,
+			expectError:          false,
 		},
 	}
 	for _, tc := range testCases {
@@ -682,30 +664,28 @@ func TestCreateLogs(t *testing.T) {
 			if tc.expectError {
 				require.Error(t, err)
 			} else {
-				require.Equal(t, tc.expectedLogResource, log.ResourceLogs().Len())
+				require.Equal(t, tc.expectedResourceLogs, log.ResourceLogs().Len())
 				if log.ResourceLogs().Len() > 0 {
 					resourceLog := log.ResourceLogs().At(0)
 					require.Equal(t, 1, resourceLog.ScopeLogs().Len())
 					scopeLog := resourceLog.ScopeLogs().At(0)
 					require.Equal(t, metadata.ScopeName, scopeLog.Scope().Name())
-					require.Equal(t, tc.expectedLogRecords, scopeLog.LogRecords().Len())
-					if scopeLog.LogRecords().Len() > 0 {
-						logRecord := scopeLog.LogRecords().At(0)
-						attr, ok := logRecord.Attributes().Get("type")
-						require.True(t, ok)
-						require.Equal(t, tc.expectedType, attr.Str())
-						expectedTime, err := time.Parse(time.RFC3339, tc.expectedTimestamp)
-						require.NoError(t, err)
-						require.Equal(t, pcommon.NewTimestampFromTime(expectedTime), logRecord.Timestamp())
-						requestId, ok := logRecord.Attributes().Get(semconv.AttributeFaaSInvocationID)
-						require.Equal(t, tc.expectedContainsRequestId, ok)
-						if ok {
-							require.Equal(t, tc.expectedRequestId, requestId.Str())
-						}
-						require.Equal(t, tc.expectedSeverityText, logRecord.SeverityText())
-						require.Equal(t, tc.expectedSeverityNumber, logRecord.SeverityNumber())
-						require.Equal(t, tc.expectedBody, logRecord.Body().Str())
+					require.Equal(t, 1, scopeLog.LogRecords().Len())
+					logRecord := scopeLog.LogRecords().At(0)
+					attr, ok := logRecord.Attributes().Get("type")
+					require.True(t, ok)
+					require.Equal(t, tc.expectedType, attr.Str())
+					expectedTime, err := time.Parse(time.RFC3339, tc.expectedTimestamp)
+					require.NoError(t, err)
+					require.Equal(t, pcommon.NewTimestampFromTime(expectedTime), logRecord.Timestamp())
+					requestId, ok := logRecord.Attributes().Get(semconv.AttributeFaaSInvocationID)
+					require.Equal(t, tc.expectedContainsRequestId, ok)
+					if ok {
+						require.Equal(t, tc.expectedRequestId, requestId.Str())
 					}
+					require.Equal(t, tc.expectedSeverityText, logRecord.SeverityText())
+					require.Equal(t, tc.expectedSeverityNumber, logRecord.SeverityNumber())
+					require.Equal(t, tc.expectedBody, logRecord.Body().Str())
 				}
 			}
 		})
