@@ -1,6 +1,4 @@
 //go:build !lambdacomponents.custom
-//go:build !lambdacomponents.custom
-//go:build !lambdacomponents.custom
 
 // Copyright The OpenTelemetry Authors
 //
