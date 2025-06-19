@@ -5,6 +5,7 @@
 ![GitHub NodeJS Workflow Status](https://img.shields.io/github/actions/workflow/status/open-telemetry/opentelemetry-lambda/ci-nodejs.yml?branch%3Amain&label=CI%20%28NodeJS%29&style=for-the-badge)
 ![GitHub Terraform Lint Workflow Status](https://img.shields.io/github/actions/workflow/status/open-telemetry/opentelemetry-lambda/ci-terraform.yml?branch%3Amain&label=CI%20%28Terraform%20Lint%29&style=for-the-badge)
 ![GitHub Python Pull Request Workflow Status](https://img.shields.io/github/actions/workflow/status/open-telemetry/opentelemetry-lambda/ci-python.yml?branch%3Amain&label=Pull%20Request%20%28Python%29&style=for-the-badge)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/open-telemetry/opentelemetry-lambda/badge?style=for-the-badge)](https://scorecard.dev/viewer/?uri=github.com/open-telemetry/opentelemetry-lambda)
 
 ## OpenTelemetry Lambda Layers
 
@@ -28,6 +29,16 @@ These 2 layers are meant to be used in conjunction to instrument your lambda fun
 ## Additional language tooling not currently supported
 * ### [Go Lambda Library](go/README.md)
 * ### [.NET Lambda Layer](dotnet/README.md)
+
+## Latest Layer Versions
+| Name         | ARN                                                                                                                    | Version |
+|--------------|:-----------------------------------------------------------------------------------------------------------------------|:--------|
+| collector    | `arn:aws:lambda:<region>:184161586896:layer:opentelemetry-collector-<amd64\|arm64>-<version>:1` | ![Collector](https://api.globadge.com/v1/badgen/http/jq/e3309d56-dfd6-4dae-ac00-4498070d84f0) |
+| nodejs       | `arn:aws:lambda:<region>:184161586896:layer:opentelemetry-nodejs-<version>:1` | ![NodeJS](https://api.globadge.com/v1/badgen/http/jq/91b0f102-25fc-425f-8de9-f05491b9f757) |
+| python       | `arn:aws:lambda:<region>:184161586896:layer:opentelemetry-python-<version>:1` | ![Python](https://api.globadge.com/v1/badgen/http/jq/ab030ce1-ee7d-4c14-b643-eb20ec050e0b) |
+| java-agent   | `arn:aws:lambda:<region>:184161586896:layer:opentelemetry-javaagent-<version>:1` | ![Java Agent](https://api.globadge.com/v1/badgen/http/jq/301ad852-ccb4-4bb4-997e-60282ad11f71) |
+| java-wrapper | `arn:aws:lambda:<region>:184161586896:layer:opentelemetry-javawrapper-<version>:1` | ![Java Wrapper](https://api.globadge.com/v1/badgen/http/jq/e10281c6-3d0e-42e4-990b-7a725301bef4) |
+| ruby         | `arn:aws:lambda:<region>:184161586896:layer:opentelemetry-ruby-dev-<version>:1` | ![Ruby](https://api.globadge.com/v1/badgen/http/jq/4d9b9e93-7d6b-4dcf-836e-1878de566fdb) |
 
 ## FAQ
 
