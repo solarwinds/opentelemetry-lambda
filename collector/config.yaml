@@ -11,7 +11,7 @@ receivers:
       http:
         endpoint: "localhost:4318"
   telemetryapi:
-    types: ${env:SW_APM_TELEMETRY_API_SUBSCRIPTION:-function}
+    types: ${env:SW_APM_TELEMETRY_API_SUBSCRIPTION:-}
 
 processors:
   batch:
@@ -58,3 +58,9 @@ service:
       exporters: [otlp,debug]
   telemetry:
     metrics:
+      readers:
+        - pull:
+            exporter:
+              prometheus:
+                host: "localhost"
+                port: 8888
