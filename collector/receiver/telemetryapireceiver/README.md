@@ -1,10 +1,10 @@
 # Telemetry API Receiver
 
-| Status                   |              |
-| ------------------------ |--------------|
-| Stability                | [alpha]      |
-| Supported pipeline types | traces, logs |
-| Distributions            | [extension]  |
+| Status                   |                       |
+| ------------------------ |-----------------------|
+| Stability                | [alpha]               |
+| Supported pipeline types | traces, metrics, logs |
+| Distributions            | [extension]           |
 
 This receiver generates telemetry in response to events from the [Telemetry API](https://docs.aws.amazon.com/lambda/latest/dg/telemetry-api.html). It does this by setting up an endpoint and registering itself with the Telemetry API on startup.
 
@@ -37,4 +37,4 @@ receivers:
 ```
 
 [alpha]: https://github.com/open-telemetry/opentelemetry-collector#alpha
-[extension]: https://github.com/open-telemetry/opentelemetry-lambda/collector
+[extension]: https://github.com/open-telemetry/opentelemetry-lambda/tree/main/collector

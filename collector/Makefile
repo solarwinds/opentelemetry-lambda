@@ -43,16 +43,16 @@ package: build
 	@echo Package zip file for collector extension layer
 	mkdir -p $(BUILD_SPACE)/collector-config
 	cp config* $(BUILD_SPACE)/collector-config
-	cd $(BUILD_SPACE) && zip -r opentelemetry-collector-layer-$(GOARCH).zip collector-config extensions
+	cd $(BUILD_SPACE) && zip -r opentelemetry-collector-layer-$(ARCH).zip collector-config extensions
 
 .PHONY: publish
 publish:
-	aws lambda publish-layer-version --layer-name $(LAYER_NAME) --zip-file fileb://$(BUILD_SPACE)/opentelemetry-collector-layer-$(GOARCH).zip --compatible-runtimes nodejs16.x nodejs18.x nodejs20.x nodejs22.x java11 java17 java21 python3.8 python3.9 python3.10 python3.11 python3.12 python3.13 --query 'LayerVersionArn' --output text
+	aws lambda publish-layer-version --layer-name $(LAYER_NAME) --zip-file fileb://$(BUILD_SPACE)/opentelemetry-collector-layer-$(ARCH).zip --compatible-runtimes nodejs16.x nodejs18.x nodejs20.x nodejs22.x java11 java17 java21 python3.8 python3.9 python3.10 python3.11 python3.12 python3.13 --compatible-architectures $(ARCH) --query 'LayerVersionArn' --output text
 
 .PHONY: publish-layer
 publish-layer: package
 	@echo Publishing collector extension layer...
-	aws lambda publish-layer-version --layer-name $(LAYER_NAME) --zip-file fileb://$(BUILD_SPACE)/opentelemetry-collector-layer-$(GOARCH).zip --compatible-runtimes nodejs16.x nodejs18.x nodejs20.x nodejs22.x java11 java17 java21 python3.8 python3.9 python3.10 python3.11 python3.12 python3.13 --query 'LayerVersionArn' --output text
+	aws lambda publish-layer-version --layer-name $(LAYER_NAME) --zip-file fileb://$(BUILD_SPACE)/opentelemetry-collector-layer-$(ARCH).zip --compatible-runtimes nodejs16.x nodejs18.x nodejs20.x nodejs22.x java11 java17 java21 python3.8 python3.9 python3.10 python3.11 python3.12 python3.13 --compatible-architectures $(ARCH) --query 'LayerVersionArn' --output text
 	@echo OpenTelemetry Collector layer published.
 
 .PHONY: set-otelcol-version

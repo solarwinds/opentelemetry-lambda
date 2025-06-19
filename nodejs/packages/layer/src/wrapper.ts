@@ -610,9 +610,7 @@ export async function init() {
   initialized = true;
 }
 
-export function logDebug(message: string, ...args: unknown[]) {
-  diag.debug(message, ...args);
-}
+console.log('Registering OpenTelemetry');
 
 let initialized = false;
 let instrumentations: Instrumentation[];

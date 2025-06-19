@@ -19,6 +19,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/open-telemetry/opentelemetry-lambda/collector/receiver/telemetryapireceiver/internal/metadata"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/confmap/confmaptest"
@@ -31,9 +32,10 @@ func TestLoadConfig(t *testing.T) {
 	// Helper function to create expected Config
 	createExpectedConfig := func(types []string) *Config {
 		return &Config{
-			extensionID: "extensionID",
-			Port:        12345,
-			Types:       types,
+			extensionID:          "extensionID",
+			Port:                 12345,
+			Types:                types,
+			MetricsBuilderConfig: metadata.DefaultMetricsBuilderConfig(),
 		}
 	}
 

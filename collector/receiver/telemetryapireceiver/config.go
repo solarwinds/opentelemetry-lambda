@@ -16,13 +16,16 @@ package telemetryapireceiver // import "github.com/open-telemetry/opentelemetry-
 
 import (
 	"fmt"
+
+	"github.com/open-telemetry/opentelemetry-lambda/collector/receiver/telemetryapireceiver/internal/metadata"
 )
 
 // Config defines the configuration for the various elements of the receiver agent.
 type Config struct {
-	extensionID string
-	Port        int      `mapstructure:"port"`
-	Types       []string `mapstructure:"types"`
+	extensionID          string
+	Port                 int                           `mapstructure:"port"`
+	Types                []string                      `mapstructure:"types"`
+	MetricsBuilderConfig metadata.MetricsBuilderConfig `mapstructure:",squash"`
 }
 
 // Validate validates the configuration by checking for missing or invalid fields
