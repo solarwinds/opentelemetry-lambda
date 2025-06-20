@@ -47,7 +47,7 @@ func NewFactory(extensionID string) receiver.Factory {
 			return &Config{
 				extensionID:          extensionID,
 				Port:                 defaultPort,
-				Types:                []string{platform, function, extension},
+				Types:                []string{},
 				MetricsBuilderConfig: metadata.DefaultMetricsBuilderConfig(),
 			}
 		},
