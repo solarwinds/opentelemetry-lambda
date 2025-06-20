@@ -58,4 +58,9 @@ service:
       exporters: [otlp,debug]
   telemetry:
     metrics:
-      address: localhost:8888
+      readers:
+        - pull:
+            exporter:
+              prometheus:
+                host: "localhost"
+                port: 8888
