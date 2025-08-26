@@ -4,10 +4,16 @@ variable "name" {
   default     = "hello-nodejs-awssdk"
 }
 
-variable "account_id" {
+variable "collector_layer_arn" {
   type        = string
-  description = "AWS account ID where the Lambda layers are published"
-  default     = "184161586896"
+  description = "ARN for the Lambda layer containing the OpenTelemetry collector extension"
+  // TODO(anuraaga): Add default when a public layer is published.
+}
+
+variable "sdk_layer_arn" {
+  type        = string
+  description = "ARN for the Lambda layer containing the OpenTelemetry NodeJS Wrapper"
+  // TODO(anuraaga): Add default when a public layer is published.
 }
 
 variable "tracing_mode" {
@@ -19,23 +25,12 @@ variable "tracing_mode" {
 variable "architecture" {
   type        = string
   description = "Lambda function architecture, valid values are arm64 or x86_64"
-  default     = "arm64"
+  default     = "x86_64"
 }
 
 variable "runtime" {
   type        = string
   description = "NodeJS runtime version used for sample Lambda Function"
-  default     = "nodejs22.x"
+  default     = "nodejs18.x"
 }
 
-variable "collector_layer_version" {
-  type        = string
-  description = "Collector layer version, see latest releases here: https://github.com/open-telemetry/opentelemetry-lambda/releases"
-  default     = "0_15_0"
-}
-
-variable "nodejs_layer_version" {
-  type        = string
-  description = "Node.js layer version, see latest releases here: https://github.com/open-telemetry/opentelemetry-lambda/releases"
-  default     = "0_14_0"
-}

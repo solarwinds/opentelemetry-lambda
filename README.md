@@ -124,32 +124,28 @@ The following are runtimes which are no longer or not yet supported by this repo
 
 See the [Contributing Guide](CONTRIBUTING.md) for details.
 
-### Maintainers
+Here is a list of community roles with current and previous members:
 
-- [Serkan Özal](https://github.com/serkan-ozal), Catchpoint
-- [Tyler Benson](https://github.com/tylerbenson), ServiceNow
+- Approvers ([@open-telemetry/lambda-extension-approvers](https://github.com/orgs/open-telemetry/teams/lambda-extension-approvers)):
 
-For more information about the maintainer role, see the [community repository](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#maintainer).
+  - [Ivan Santos](https://github.com/pragmaticivan)
+  - [Warre Pessers](https://github.com/wpessers)
 
-### Approvers
+- Emeritus Approvers:
 
-- [Ivan Santos](https://github.com/pragmaticivan)
-- [Warre Pessers](https://github.com/wpessers)
+  - [Lei Wang](https://github.com/wangzlei)
+  - [Nathaniel Ruiz Nowell](https://github.com/NathanielRN)
+  - [Tristan Sloughter](https://github.com/tsloughter)
 
-For more information about the approver role, see the [community repository](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#approver).
+- Maintainers ([@open-telemetry/lambda-extension-maintainers](https://github.com/orgs/open-telemetry/teams/lambda-extension-maintainers)):
 
-### Emeritus Maintainers
+  - [Serkan Özal](https://github.com/serkan-ozal), Catchpoint
+  - [Tyler Benson](https://github.com/tylerbenson), Lightstep
 
-- [Alex Boten](https://github.com/codeboten)
-- [Anthony Mirabella](https://github.com/Aneurysm9)
-- [Raphael Philipe Mendes da Silva](https://github.com/rapphil)
+- Emeritus Maintainers:
 
-For more information about the emeritus role, see the [community repository](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#emeritus-maintainerapprovertriager).
+  - [Alex Boten](https://github.com/codeboten)
+  - [Anthony Mirabella](https://github.com/Aneurysm9)
+  - [Raphael Philipe Mendes da Silva](https://github.com/rapphil)
 
-### Emeritus Approvers
-
-- [Lei Wang](https://github.com/wangzlei)
-- [Nathaniel Ruiz Nowell](https://github.com/NathanielRN)
-- [Tristan Sloughter](https://github.com/tsloughter)
-
-For more information about the emeritus role, see the [community repository](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#emeritus-maintainerapprovertriager).
+Learn more about roles in the [community repository](https://github.com/open-telemetry/community/blob/main/community-membership.md).

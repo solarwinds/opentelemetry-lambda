@@ -1,3 +1,8 @@
+extensions:
+  solarwindsapmsettings:
+    endpoint: "apm.collector.${env:SW_APM_DATA_CENTER:-na-01}.cloud.solarwinds.com:443"
+    key: "${env:SW_APM_API_TOKEN}:${env:OTEL_SERVICE_NAME}"
+
 receivers:
   otlp:
     protocols:
@@ -5,19 +10,57 @@ receivers:
         endpoint: "localhost:4317"
       http:
         endpoint: "localhost:4318"
+  telemetryapi:
+    types: ${env:SW_APM_TELEMETRY_API_SUBSCRIPTION:-}
+
+processors:
+  batch:
+    send_batch_size: 50
+    timeout: 25ms
+  resourcedetection:
+    detectors: [env, system, lambda]
+    timeout: 0.2s
+    override: false
+  resource:
+    attributes:
+      - key: sw.cloud.aws.resource.type
+        value: "Lambda"
+        action: upsert
+      - key: sw.apm.otelcol.version
+        value: "0.0.0-dev"
+        action: upsert
+      - key: sw.data.module
+        value: "apm"
+        action: upsert
 
 exporters:
   debug:
     verbosity: detailed
+  otlp:
+    endpoint: "https://otel.collector.${env:SW_APM_DATA_CENTER:-na-01}.cloud.solarwinds.com:443"
+    headers:
+      Authorization: "Bearer ${env:SW_APM_API_TOKEN}"
 
 service:
+  extensions: [solarwindsapmsettings]
   pipelines:
     traces:
       receivers: [otlp]
-      exporters: [debug]
+      processors: [resource,resourcedetection,batch]
+      exporters: [otlp,debug]
     metrics:
-      receivers: [otlp]
-      exporters: [debug]
+      receivers: [otlp,telemetryapi]
+      processors: [resource,resourcedetection,batch]
+      exporters: [otlp,debug]
+    logs:
+      receivers: [otlp,telemetryapi]
+      processors: [resource,resourcedetection,batch]
+      exporters: [otlp,debug]
   telemetry:
     metrics:
-      address: localhost:8888
+      readers:
+        - pull:
+            exporter:
+              prometheus:
+                host: "localhost"
+                port: 8888

@@ -87,19 +87,10 @@ declare global {
   // No explicit metric type here, but "unknown" type.
   // Because metric packages are important dynamically.
   function configureMeter(defaultConfig: unknown): unknown;
-  /**
-   * @deprecated please use {@link configureMeter} instead.
-   */
   function configureMeterProvider(meterProvider: unknown): void;
 
-  // No explicit logger type here, but "unknown" type.
-  // Because logger packages are important dynamically.
-  function configureLogger(defaultConfig: unknown): unknown;
   // No explicit log type here, but "unknown" type.
   // Because log packages are important dynamically.
-  /**
-   * @deprecated please use {@link configureLogger} instead.
-   */
   function configureLoggerProvider(loggerProvider: unknown): void;
 }
 
@@ -412,7 +403,7 @@ async function initializeTracerProvider(
   }
 
   if (exporters.length) {
-    config.spanProcessors = config.spanProcessors || [];
+    config.spanProcessors = [];
     exporters.map(exporter => {
       if (exporter instanceof ConsoleSpanExporter) {
         config.spanProcessors?.push(new SimpleSpanProcessor(exporter));
@@ -512,31 +503,24 @@ async function initializeLoggerProvider(
   );
 
   const logExporter = new OTLPLogExporter();
-  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
-  let loggerConfig: any = {
+  const loggerConfig = {
     resource,
-    processors: [],
   };
-  if (typeof configureLogger === 'function') {
-    loggerConfig = configureLogger(loggerConfig);
-  }
-
-  loggerConfig.processors = loggerConfig.processors || [];
-  if (loggerConfig.processors.length === 0) {
-    loggerConfig.processors.push(new BatchLogRecordProcessor(logExporter));
-  }
-  // Logging for debug
-  if (logLevel === DiagLogLevel.DEBUG) {
-    loggerConfig.processors.push(
-      new SimpleLogRecordProcessor(new ConsoleLogRecordExporter()),
-    );
-  }
-
-  const loggerProvider = new LoggerProvider(loggerConfig as object);
+  const loggerProvider = new LoggerProvider(loggerConfig);
   if (typeof configureLoggerProvider === 'function') {
     configureLoggerProvider(loggerProvider);
   } else {
+    loggerProvider.addLogRecordProcessor(
+      new BatchLogRecordProcessor(logExporter),
+    );
     logs.setGlobalLoggerProvider(loggerProvider);
+  }
+
+  // Logging for debug
+  if (logLevel === DiagLogLevel.DEBUG) {
+    loggerProvider.addLogRecordProcessor(
+      new SimpleLogRecordProcessor(new ConsoleLogRecordExporter()),
+    );
   }
 
   logsDisableFunction = () => {
@@ -626,9 +610,7 @@ export async function init() {
   initialized = true;
 }
 
-export function logDebug(message: string, ...args: unknown[]) {
-  diag.debug(message, ...args);
-}
+console.log('Registering OpenTelemetry');
 
 let initialized = false;
 let instrumentations: Instrumentation[];

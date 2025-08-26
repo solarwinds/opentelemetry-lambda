@@ -176,8 +176,10 @@ func (s *Listener) Wait(ctx context.Context, reqID string) error {
 					continue
 				}
 
-				if i.Record["requestId"] == reqID {
-					return nil
+				if record, ok := i.Record.(map[string]any); ok {
+					if record["requestId"] == reqID {
+						return nil
+					}
 				}
 			}
 		}

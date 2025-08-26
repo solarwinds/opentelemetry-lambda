@@ -12,5 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//go:generate mdatagen metadata.yaml
+
 // Package telemetryapireceiver generates telemetry in response to events from the Telemetry API.
 package telemetryapireceiver // import "github.com/open-telemetry/opentelemetry-lambda/collector/receiver/telemetryapireceiver"
