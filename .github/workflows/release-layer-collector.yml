@@ -64,6 +64,8 @@ jobs:
           echo "COLLECTOR_VERSION=$COLLECTOR_VERSION" >> $GITHUB_OUTPUT
 
   scan:
+    permissions:
+      id-token: write
     uses: ./.github/workflows/reversinglabs.yml
     needs: build-layer
     strategy:
