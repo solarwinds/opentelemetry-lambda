@@ -7,6 +7,7 @@ LAYER_NAME:=otel-collector
 OTELCOL_VERSION=$(shell cat VERSION)
 GIT_SHA=$(shell git rev-parse HEAD)
 GOARCH ?= amd64
+GOBUILD=GO111MODULE=on CGO_ENABLED=0 installsuffix=cgo go build -trimpath$(if ${BUILDTAGS}, -tags "${BUILDTAGS}",)
 
 ifeq ($(GOARCH), amd64)
 ARCH=x86_64
