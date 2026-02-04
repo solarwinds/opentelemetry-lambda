@@ -47,7 +47,21 @@ import {
 import { AWSXRayPropagator } from '@opentelemetry/propagator-aws-xray';
 import { AWSXRayLambdaPropagator } from '@opentelemetry/propagator-aws-xray-lambda';
 
-const defaultInstrumentationList = ['dns', 'http', 'net'];
+const defaultInstrumentationList = [
+  'dns',
+  'express',
+  'graphql',
+  'grpc',
+  'hapi',
+  'http',
+  'ioredis',
+  'koa',
+  'mongodb',
+  'mysql',
+  'net',
+  'pg',
+  'redis',
+];
 
 const propagatorMap = new Map<string, () => TextMapPropagator>([
   ['tracecontext', () => new W3CTraceContextPropagator()],
@@ -73,23 +87,14 @@ declare global {
   // No explicit metric type here, but "unknown" type.
   // Because metric packages are important dynamically.
   function configureMeter(defaultConfig: unknown): unknown;
-  /**
-   * @deprecated please use {@link configureMeter} instead.
-   */
   function configureMeterProvider(meterProvider: unknown): void;
 
-  // No explicit logger type here, but "unknown" type.
-  // Because logger packages are important dynamically.
-  function configureLogger(defaultConfig: unknown): unknown;
   // No explicit log type here, but "unknown" type.
   // Because log packages are important dynamically.
-  /**
-   * @deprecated please use {@link configureLogger} instead.
-   */
   function configureLoggerProvider(loggerProvider: unknown): void;
 }
 
-function getActiveInstrumentations(): Set<string> {
+function getActiveInstumentations(): Set<string> {
   let enabledInstrumentations: string[] = defaultInstrumentationList;
   if (process.env.OTEL_NODE_ENABLED_INSTRUMENTATIONS) {
     enabledInstrumentations =
@@ -110,7 +115,7 @@ function getActiveInstrumentations(): Set<string> {
 
 async function defaultConfigureInstrumentations() {
   const instrumentations = [];
-  const activeInstrumentations = getActiveInstrumentations();
+  const activeInstrumentations = getActiveInstumentations();
   if (activeInstrumentations.has('amqplib')) {
     const { AmqplibInstrumentation } = await import(
       '@opentelemetry/instrumentation-amqplib'
@@ -398,7 +403,7 @@ async function initializeTracerProvider(
   }
 
   if (exporters.length) {
-    config.spanProcessors = config.spanProcessors || [];
+    config.spanProcessors = [];
     exporters.map(exporter => {
       if (exporter instanceof ConsoleSpanExporter) {
         config.spanProcessors?.push(new SimpleSpanProcessor(exporter));
@@ -498,31 +503,24 @@ async function initializeLoggerProvider(
   );
 
   const logExporter = new OTLPLogExporter();
-  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
-  let loggerConfig: any = {
+  const loggerConfig = {
     resource,
-    processors: [],
   };
-  if (typeof configureLogger === 'function') {
-    loggerConfig = configureLogger(loggerConfig);
-  }
-
-  loggerConfig.processors = loggerConfig.processors || [];
-  if (loggerConfig.processors.length === 0) {
-    loggerConfig.processors.push(new BatchLogRecordProcessor(logExporter));
-  }
-  // Logging for debug
-  if (logLevel === DiagLogLevel.DEBUG) {
-    loggerConfig.processors.push(
-      new SimpleLogRecordProcessor(new ConsoleLogRecordExporter()),
-    );
-  }
-
-  const loggerProvider = new LoggerProvider(loggerConfig as object);
+  const loggerProvider = new LoggerProvider(loggerConfig);
   if (typeof configureLoggerProvider === 'function') {
     configureLoggerProvider(loggerProvider);
   } else {
+    loggerProvider.addLogRecordProcessor(
+      new BatchLogRecordProcessor(logExporter),
+    );
     logs.setGlobalLoggerProvider(loggerProvider);
+  }
+
+  // Logging for debug
+  if (logLevel === DiagLogLevel.DEBUG) {
+    loggerProvider.addLogRecordProcessor(
+      new SimpleLogRecordProcessor(new ConsoleLogRecordExporter()),
+    );
   }
 
   logsDisableFunction = () => {
@@ -612,9 +610,7 @@ export async function init() {
   initialized = true;
 }
 
-export function logDebug(message: string, ...args: unknown[]) {
-  diag.debug(message, ...args);
-}
+console.log('Registering OpenTelemetry');
 
 let initialized = false;
 let instrumentations: Instrumentation[];

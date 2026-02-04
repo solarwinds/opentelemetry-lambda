@@ -8,6 +8,13 @@ OTELCOL_VERSION=$(shell cat VERSION)
 GIT_SHA=$(shell git rev-parse HEAD)
 GOARCH ?= amd64
 GOBUILD=GO111MODULE=on CGO_ENABLED=0 installsuffix=cgo go build -trimpath$(if ${BUILDTAGS}, -tags "${BUILDTAGS}",)
+
+ifeq ($(GOARCH), amd64)
+ARCH=x86_64
+else
+ARCH=$(GOARCH)
+endif
+
 BUILD_INFO_IMPORT_PATH=main
 
 LDFLAGS=-ldflags "-s -w -X $(BUILD_INFO_IMPORT_PATH).GitHash=$(GIT_SHA) -X $(BUILD_INFO_IMPORT_PATH).Version=$(OTELCOL_VERSION) \
@@ -43,16 +50,16 @@ package: build
 	@echo Package zip file for collector extension layer
 	mkdir -p $(BUILD_SPACE)/collector-config
 	cp config* $(BUILD_SPACE)/collector-config
-	cd $(BUILD_SPACE) && zip -r opentelemetry-collector-layer-$(GOARCH).zip collector-config extensions
+	cd $(BUILD_SPACE) && zip -r opentelemetry-collector-layer-$(ARCH).zip collector-config extensions
 
 .PHONY: publish
 publish:
-	aws lambda publish-layer-version --layer-name $(LAYER_NAME) --zip-file fileb://$(BUILD_SPACE)/opentelemetry-collector-layer-$(GOARCH).zip --compatible-runtimes nodejs20.x nodejs22.x nodejs24.x java11 java17 java21 java25 python3.9 python3.10 python3.11 python3.12 python3.13 python3.14 --query 'LayerVersionArn' --output text
+	aws lambda publish-layer-version --layer-name $(LAYER_NAME) --zip-file fileb://$(BUILD_SPACE)/opentelemetry-collector-layer-$(ARCH).zip --compatible-runtimes nodejs20.x nodejs22.x nodejs24.x java11 java17 java21 java25 python3.9 python3.10 python3.11 python3.12 python3.13 python3.14 --compatible-architectures $(ARCH) --query 'LayerVersionArn' --output text
 
 .PHONY: publish-layer
 publish-layer: package
 	@echo Publishing collector extension layer...
-	aws lambda publish-layer-version --layer-name $(LAYER_NAME) --zip-file fileb://$(BUILD_SPACE)/opentelemetry-collector-layer-$(GOARCH).zip --compatible-runtimes nodejs20.x nodejs22.x nodejs24.x java11 java17 java21 java25 python3.9 python3.10 python3.11 python3.12 python3.13 python3.14 --query 'LayerVersionArn' --output text
+	aws lambda publish-layer-version --layer-name $(LAYER_NAME) --zip-file fileb://$(BUILD_SPACE)/opentelemetry-collector-layer-$(ARCH).zip --compatible-runtimes nodejs20.x nodejs22.x nodejs24.x java11 java17 java21 java25 python3.9 python3.10 python3.11 python3.12 python3.13 python3.14 --compatible-architectures $(ARCH) --query 'LayerVersionArn' --output text
 	@echo OpenTelemetry Collector layer published.
 
 .PHONY: set-otelcol-version

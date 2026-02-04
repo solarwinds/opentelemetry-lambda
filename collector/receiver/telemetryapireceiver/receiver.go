@@ -28,6 +28,7 @@ import (
 	"time"
 
 	"github.com/golang-collections/go-datastructures/queue"
+	"github.com/open-telemetry/opentelemetry-lambda/collector/receiver/telemetryapireceiver/internal/metadata"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/pdata/pcommon"
@@ -81,6 +82,8 @@ type telemetryAPIReceiver struct {
 	faaSMetricBuilders      *FaaSMetricBuilders
 	currentFaasInvocationID string
 	logReport               bool
+	metricsBuilder          *metadata.MetricsBuilder
+	logsBuilder             *metadata.LogsBuilder
 }
 
 func (r *telemetryAPIReceiver) Start(ctx context.Context, host component.Host) error {
@@ -98,7 +101,7 @@ func (r *telemetryAPIReceiver) Start(ctx context.Context, host component.Host) e
 	if len(r.types) > 0 {
 		_, err := telemetryClient.Subscribe(ctx, r.types, r.extensionID, fmt.Sprintf("http://%s/", address))
 		if err != nil {
-			r.logger.Info("Listening for requests", zap.String("address", address), zap.String("extensionID", r.extensionID))
+			r.logger.Error("Cannot register Telemetry API client", zap.Error(err))
 			return err
 		}
 	}
@@ -143,6 +146,47 @@ func (r *telemetryAPIReceiver) httpHandler(w http.ResponseWriter, req *http.Requ
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
+	// traces
+	if r.nextTraces != nil {
+		if traces, err := r.createTraces(slice); err == nil {
+			if traces.SpanCount() > 0 {
+				err := r.nextTraces.ConsumeTraces(context.Background(), traces)
+				if err != nil {
+					r.logger.Error("error receiving traces", zap.Error(err))
+				}
+			}
+		}
+	}
+
+	// metrics
+	if r.nextMetrics != nil {
+		if metrics, err := r.createMetrics(slice); err == nil {
+			if metrics.ResourceMetrics().Len() > 0 {
+				err := r.nextMetrics.ConsumeMetrics(context.Background(), metrics)
+				if err != nil {
+					r.logger.Error("error receiving metrics", zap.Error(err))
+				}
+			}
+		}
+	}
+
+	// logs
+	if r.nextLogs != nil {
+		if logs, err := r.createLogs(slice); err == nil {
+			if logs.LogRecordCount() > 0 {
+				err := r.nextLogs.ConsumeLogs(context.Background(), logs)
+				if err != nil {
+					r.logger.Error("error receiving logs", zap.Error(err))
+				}
+			}
+		}
+	}
+
+	r.logger.Debug("logEvents received", zap.Int("count", len(slice)), zap.Int64("queue_length", r.queue.Len()))
+	slice = nil
+}
+
+func (r *telemetryAPIReceiver) createTraces(slice []event) (ptrace.Traces, error) {
 	for _, el := range slice {
 		r.logger.Debug(fmt.Sprintf("Event: %s", el.Type), zap.Any("event", el))
 		switch el.Type {
@@ -196,32 +240,8 @@ func (r *telemetryAPIReceiver) httpHandler(w http.ResponseWriter, req *http.Requ
 		// Lambda dropped log entries.
 		// case "platform.logsDropped":
 	}
-	// Metrics
-	if r.nextMetrics != nil {
-		if metrics, err := r.createMetrics(slice); err == nil {
-			if metrics.MetricCount() > 0 {
-				err := r.nextMetrics.ConsumeMetrics(context.Background(), metrics)
-				if err != nil {
-					r.logger.Error("error receiving metrics", zap.Error(err))
-				}
-			}
-		}
-	}
 
-	// Logs
-	if r.nextLogs != nil {
-		if logs, err := r.createLogs(slice); err == nil {
-			if logs.LogRecordCount() > 0 {
-				err := r.nextLogs.ConsumeLogs(context.Background(), logs)
-				if err != nil {
-					r.logger.Error("error receiving logs", zap.Error(err))
-				}
-			}
-		}
-	}
-
-	r.logger.Debug("logEvents received", zap.Int("count", len(slice)), zap.Int64("queue_length", r.queue.Len()))
-	slice = nil
+	return ptrace.Traces{}, nil
 }
 
 func (r *telemetryAPIReceiver) getRecordRequestId(record map[string]interface{}) string {
@@ -675,6 +695,8 @@ func newTelemetryAPIReceiver(
 		resource:           r,
 		faaSMetricBuilders: NewFaaSMetricBuilders(pcommon.NewTimestampFromTime(time.Now()), getMetricsTemporality(cfg)),
 		logReport:          cfg.LogReport,
+		metricsBuilder:     metadata.NewMetricsBuilder(cfg.MetricsBuilderConfig, set),
+		logsBuilder:        metadata.NewLogsBuilder(set),
 	}, nil
 }
 

@@ -8,7 +8,6 @@ module.exports = {
   externals: [
     'import-in-the-middle',
     '@aws-sdk',
-    'require-in-the-middle'
   ],
   output: {
     path: path.resolve('./build/src'),
