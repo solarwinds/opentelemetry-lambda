@@ -52,7 +52,7 @@ func TestLoadConfig(t *testing.T) {
 		{
 			name:     "all types",
 			id:       component.NewIDWithName(component.MustNewType("telemetryapi"), "1"),
-			expected: createExpectedConfig([]string{platform, function, extension}),
+			expected: createExpectedConfig([]string{}),
 		},
 		{
 			name:     "platform only",

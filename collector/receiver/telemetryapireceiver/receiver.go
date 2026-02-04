@@ -18,6 +18,7 @@ import (
 	"context"
 	crand "crypto/rand"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -241,7 +242,7 @@ func (r *telemetryAPIReceiver) createTraces(slice []event) (ptrace.Traces, error
 		// case "platform.logsDropped":
 	}
 
-	return ptrace.Traces{}, nil
+	return ptrace.Traces{}, errors.New("no traces created")
 }
 
 func (r *telemetryAPIReceiver) getRecordRequestId(record map[string]interface{}) string {

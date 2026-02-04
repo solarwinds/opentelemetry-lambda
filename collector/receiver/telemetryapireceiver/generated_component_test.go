@@ -18,15 +18,15 @@ import (
 var typ = component.MustNewType("telemetryapi")
 
 func TestComponentFactoryType(t *testing.T) {
-	require.Equal(t, typ, NewFactory().Type())
+	require.Equal(t, typ, NewFactory("extensionID").Type())
 }
 
 func TestComponentConfigStruct(t *testing.T) {
-	require.NoError(t, componenttest.CheckConfigStruct(NewFactory().CreateDefaultConfig()))
+	require.NoError(t, componenttest.CheckConfigStruct(NewFactory("extensionID").CreateDefaultConfig()))
 }
 
 func TestComponentLifecycle(t *testing.T) {
-	factory := NewFactory()
+	factory := NewFactory("extensionID")
 
 	tests := []struct {
 		createFn func(ctx context.Context, set receiver.Settings, cfg component.Config) (component.Component, error)
