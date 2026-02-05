@@ -46,10 +46,6 @@ github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd/go.mod h1:6dJ
 github.com/modern-go/reflect2 v1.0.2/go.mod h1:yWuevngMOJpCy52FWWMvUC8ws7m/LJsjYzDa0/r8luk=
 github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee h1:W5t00kpgFdJifH4BDsTlE89Zl93FEloxaWZfGcifgq8=
 github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee/go.mod h1:yWuevngMOJpCy52FWWMvUC8ws7m/LJsjYzDa0/r8luk=
-github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden v0.145.0 h1:lbxy2bYh3v0YIyqd/JVttEwYlC7yU5o3JU2N/m5Qnq8=
-github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden v0.145.0/go.mod h1:kGlLjX8CJSE+9SfLARgaXTFBuAvNadjLvPsHO7fcVeE=
-github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest v0.145.0 h1:0ithmsGyVtjzODmAPp9pkxA4IlnYpyeXmDWrryTkHNo=
-github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest v0.145.0/go.mod h1:r+K/aCWpUCDDM5Gisznf9ZQjpZcyFr84CuATA9486JQ=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatautil v0.145.0 h1:sB4yuYx45zig1ceQ+kmrEYy0xMZ+mGagwYIFtJkkU1w=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatautil v0.145.0/go.mod h1:uLhceuH7ZtiVxk+B0MHI0vhJG2Y4aOzT/hrV6c5KjVU=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=

@@ -270,7 +270,7 @@ require (
 	go.opentelemetry.io/collector/internal/telemetry v0.143.0 // indirect
 	go.opentelemetry.io/collector/pdata v1.51.0 // indirect
 	go.opentelemetry.io/collector/pdata/pprofile v0.145.0 // indirect
-	go.opentelemetry.io/collector/pdata/testdata v0.143.0 // indirect
+	go.opentelemetry.io/collector/pdata/testdata v0.145.0 // indirect
 	go.opentelemetry.io/collector/pdata/xpdata v0.143.0 // indirect
 	go.opentelemetry.io/collector/pipeline v1.49.0 // indirect
 	go.opentelemetry.io/collector/pipeline/xpipeline v0.143.0 // indirect

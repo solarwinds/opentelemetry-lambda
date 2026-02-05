@@ -7,7 +7,6 @@ replace github.com/open-telemetry/opentelemetry-lambda/collector => ../../
 require (
 	github.com/golang-collections/go-datastructures v0.0.0-20150211160725-59788d5eb259
 	github.com/google/go-cmp v0.7.0
-	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest v0.145.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatautil v0.145.0
 	github.com/open-telemetry/opentelemetry-lambda/collector v0.98.0
 	github.com/stretchr/testify v1.11.1
@@ -26,6 +25,7 @@ require (
 require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
+	go.opentelemetry.io/collector/pdata/testdata v0.145.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 )
 
