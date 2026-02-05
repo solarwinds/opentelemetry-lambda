@@ -17,8 +17,6 @@ package telemetryapireceiver // import "github.com/open-telemetry/opentelemetry-
 import (
 	"fmt"
 	"strings"
-
-	"github.com/open-telemetry/opentelemetry-lambda/collector/receiver/telemetryapireceiver/internal/metadata"
 )
 
 // Config defines the configuration for the various elements of the receiver agent.
@@ -28,7 +26,6 @@ type Config struct {
 	Types              []string `mapstructure:"types"`
 	LogReport          bool     `mapstructure:"log_report"`
 	MetricsTemporality string   `mapstructure:"metrics_temporality"`
-	MetricsBuilderConfig metadata.MetricsBuilderConfig `mapstructure:",squash"`
 }
 
 // Validate validates the configuration by checking for missing or invalid fields

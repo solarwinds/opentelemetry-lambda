@@ -29,7 +29,6 @@ import (
 	"time"
 
 	"github.com/golang-collections/go-datastructures/queue"
-	"github.com/open-telemetry/opentelemetry-lambda/collector/receiver/telemetryapireceiver/internal/metadata"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/pdata/pcommon"
@@ -83,8 +82,6 @@ type telemetryAPIReceiver struct {
 	faaSMetricBuilders      *FaaSMetricBuilders
 	currentFaasInvocationID string
 	logReport               bool
-	metricsBuilder          *metadata.MetricsBuilder
-	logsBuilder             *metadata.LogsBuilder
 }
 
 func (r *telemetryAPIReceiver) Start(ctx context.Context, host component.Host) error {
@@ -693,8 +690,6 @@ func newTelemetryAPIReceiver(
 		resource:           r,
 		faaSMetricBuilders: NewFaaSMetricBuilders(pcommon.NewTimestampFromTime(time.Now()), getMetricsTemporality(cfg)),
 		logReport:          cfg.LogReport,
-		metricsBuilder:     metadata.NewMetricsBuilder(cfg.MetricsBuilderConfig, set),
-		logsBuilder:        metadata.NewLogsBuilder(set),
 	}, nil
 }
 

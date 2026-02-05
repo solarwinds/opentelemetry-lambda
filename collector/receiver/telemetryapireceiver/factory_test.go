@@ -18,7 +18,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/open-telemetry/opentelemetry-lambda/collector/receiver/telemetryapireceiver/internal/metadata"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer/consumertest"
@@ -42,7 +41,7 @@ func TestNewFactory(t *testing.T) {
 			testFunc: func(t *testing.T) {
 				factory := NewFactory("test")
 
-				var expectedCfg component.Config = &Config{extensionID: "test", Port: defaultPort, Types: []string{}, MetricsBuilderConfig: metadata.DefaultMetricsBuilderConfig()}
+				var expectedCfg component.Config = &Config{extensionID: "test", Port: defaultPort, Types: []string{}}
 
 				require.Equal(t, expectedCfg, factory.CreateDefaultConfig())
 			},
