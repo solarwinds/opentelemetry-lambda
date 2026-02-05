@@ -209,15 +209,12 @@ func (r *telemetryAPIReceiver) createTraces(slice []event) (ptrace.Traces, error
 
 			if len(r.lastPlatformStartTime) > 0 && len(r.lastPlatformEndTime) > 0 {
 				if record, ok := el.Record.(map[string]any); ok {
-					if td, err := r.createPlatformInitSpan(record, r.lastPlatformStartTime, r.lastPlatformEndTime); err == nil {
-						err := r.nextTraces.ConsumeTraces(context.Background(), td)
-						if err == nil {
-							r.lastPlatformEndTime = ""
-							r.lastPlatformStartTime = ""
-						} else {
-							r.logger.Error("error receiving traces", zap.Error(err))
-						}
+					td, err := r.createPlatformInitSpan(record, r.lastPlatformStartTime, r.lastPlatformEndTime)
+					if err == nil {
+						r.lastPlatformEndTime = ""
+						r.lastPlatformStartTime = ""
 					}
+					return td, err
 				}
 			}
 		}
