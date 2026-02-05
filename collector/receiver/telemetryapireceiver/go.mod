@@ -25,7 +25,6 @@ require (
 require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
-	go.opentelemetry.io/collector/pdata/testdata v0.145.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 )
 
