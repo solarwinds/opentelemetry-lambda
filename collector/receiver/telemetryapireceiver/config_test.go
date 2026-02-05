@@ -50,7 +50,7 @@ func TestLoadConfig(t *testing.T) {
 			expected: NewFactory("extensionID").CreateDefaultConfig(),
 		},
 		{
-			name:     "all types",
+			name:     "default types",
 			id:       component.NewIDWithName(component.MustNewType("telemetryapi"), "1"),
 			expected: createExpectedConfig([]string{}),
 		},
