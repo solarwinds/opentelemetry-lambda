@@ -1,5 +1,3 @@
-//go:build !lambdacomponents.custom
-
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,6 +34,7 @@ import (
 	"go.opentelemetry.io/collector/processor/batchprocessor"
 	"go.opentelemetry.io/collector/processor/memorylimiterprocessor"
 	"go.opentelemetry.io/collector/receiver/otlpreceiver"
+	"go.opentelemetry.io/collector/service/telemetry/otelconftelemetry"
 	"go.uber.org/multierr"
 
 	"github.com/open-telemetry/opentelemetry-lambda/collector/processor/coldstartprocessor"
@@ -93,6 +92,7 @@ func Components(extensionID string) (otelcol.Factories, error) {
 		Exporters:  exporters,
 		Processors: processors,
 		Extensions: extensions,
+		Telemetry:  otelconftelemetry.NewFactory(),
 	}
 
 	return factories, multierr.Combine(errs...)
