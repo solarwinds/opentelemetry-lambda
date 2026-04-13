@@ -8,6 +8,7 @@ replace github.com/open-telemetry/opentelemetry-lambda/collector/lambdalifecycle
 
 require (
 	github.com/golang-collections/go-datastructures v0.0.0-20150211160725-59788d5eb259
+	github.com/google/go-cmp v0.7.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatautil v0.149.0
 	github.com/open-telemetry/opentelemetry-lambda/collector v0.98.0
 	github.com/open-telemetry/opentelemetry-lambda/collector/lambdalifecycle v0.0.0-00010101000000-000000000000
@@ -20,6 +21,7 @@ require (
 	go.opentelemetry.io/collector/pdata v1.55.0
 	go.opentelemetry.io/collector/receiver v1.55.0
 	go.opentelemetry.io/collector/receiver/receivertest v0.149.0
+	go.uber.org/goleak v1.3.0
 	go.uber.org/zap v1.27.1
 )
 
