@@ -7,9 +7,11 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/exporter/prometheusremotewriteexporter v0.149.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/basicauthextension v0.149.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/sigv4authextension v0.149.0
+	github.com/open-telemetry/opentelemetry-collector-contrib/extension/solarwindsapmsettingsextension v0.149.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/attributesprocessor v0.149.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor v0.149.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/probabilisticsamplerprocessor v0.149.0
+	github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourcedetectionprocessor v0.149.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourceprocessor v0.149.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/spanprocessor v0.149.0
 	github.com/open-telemetry/opentelemetry-lambda/collector/processor/coldstartprocessor v0.98.0

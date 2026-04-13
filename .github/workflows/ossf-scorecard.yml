@@ -3,7 +3,7 @@ name: OSSF Scorecard
 on:
   push:
     branches:
-      - main
+      - swo
   schedule:
     - cron: "59 7 * * 6" # once a week
   workflow_dispatch:

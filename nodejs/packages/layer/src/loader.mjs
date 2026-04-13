@@ -6,10 +6,10 @@ function _hasFolderPackageJsonTypeModule(folder) {
   if (folder.endsWith('/node_modules')) {
     return false;
   }
-  const pj = path.join(folder, '/package.json');
+  let pj = path.join(folder, '/package.json');
   if (fs.existsSync(pj)) {
     try {
-      const pkg = JSON.parse(fs.readFileSync(pj).toString());
+      let pkg = JSON.parse(fs.readFileSync(pj).toString());
       if (pkg) {
         if (pkg.type === 'module') {
           return true;
@@ -18,10 +18,7 @@ function _hasFolderPackageJsonTypeModule(folder) {
         }
       }
     } catch (e) {
-      console.warn(
-        `${pj} cannot be read, it will be ignored for ES module detection purposes.`,
-        e,
-      );
+      console.warn(`${pj} cannot be read, it will be ignored for ES module detection purposes.`, e);
       return false;
     }
   }
@@ -32,7 +29,7 @@ function _hasFolderPackageJsonTypeModule(folder) {
 }
 
 function _hasPackageJsonTypeModule(file) {
-  const jsPath = file + '.js';
+  let jsPath = file + '.js';
   if (fs.existsSync(jsPath)) {
     return _hasFolderPackageJsonTypeModule(path.resolve(path.dirname(jsPath)));
   }
@@ -65,10 +62,7 @@ function _isHandlerAnESModule() {
       return _hasPackageJsonTypeModule(handlerFileName);
     }
   } catch (e) {
-    console.error(
-      'Unknown error occurred while checking whether handler is an ES module',
-      e,
-    );
+    console.error('Unknown error occurred while checking whether handler is an ES module', e);
     return false;
   }
 }
@@ -82,16 +76,7 @@ export function registerLoader() {
   }
 }
 
-function _getNodeRuntimeVersion() {
-  const executionEnv = process.env.AWS_EXECUTION_ENV || '';
-  const match = executionEnv.match(/nodejs(\d+)\.x/);
-  if (!match) {
-    return undefined;
-  }
-  return Number(match[1]);
-}
-
-if (_isHandlerAnESModule() || _getNodeRuntimeVersion() >= 24) {
+if (_isHandlerAnESModule()) {
   /*
   We could activate ESM loader hook of the "import-in-the-middle" library,
   - by "--loader=import-in-the-middle/hook.mjs" Node CLI option, but "--loader" option has been deprecated

@@ -27,7 +27,7 @@ public class OkHttpRequestHandler
 
     OkHttpClient baseClient = new OkHttpClient();
     Call.Factory callFactory =
-        OkHttpTelemetry.create(GlobalOpenTelemetry.get()).createCallFactory(baseClient);
+        OkHttpTelemetry.create(GlobalOpenTelemetry.get()).newCallFactory(baseClient);
 
     APIGatewayProxyResponseEvent response = new APIGatewayProxyResponseEvent();
 

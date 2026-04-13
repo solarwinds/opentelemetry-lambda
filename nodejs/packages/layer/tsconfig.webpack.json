@@ -2,10 +2,10 @@
   "extends": "../../tsconfig.esm",
   "compilerOptions": {
     "rootDir": ".",
-    "outDir": "build",
-    "types": ["node"]
+    "outDir": "build"
   },
   "include": [
-    "src/**/*.ts"
+    "src/**/*.ts",
+    "test/**/*.ts"
   ]
 }
