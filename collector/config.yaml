@@ -38,7 +38,7 @@ processors:
 exporters:
   debug:
     verbosity: detailed
-  otlp_http:
+  otlp:
     endpoint: "https://otel.collector.${env:SW_APM_DATA_CENTER:-na-01}.cloud.solarwinds.com:443"
     headers:
       Authorization: "Bearer ${env:SW_APM_API_TOKEN}"
@@ -49,15 +49,15 @@ service:
     traces:
       receivers: [otlp]
       processors: [resource,resourcedetection,batch]
-      exporters: [otlp_http,debug]
+      exporters: [otlp,debug]
     metrics:
       receivers: [otlp,telemetryapi]
       processors: [resource,resourcedetection,batch]
-      exporters: [otlp_http,debug]
+      exporters: [otlp,debug]
     logs:
       receivers: [otlp,telemetryapi]
       processors: [resource,resourcedetection,batch]
-      exporters: [otlp_http,debug]
+      exporters: [otlp,debug]
   telemetry:
     metrics:
       readers:
