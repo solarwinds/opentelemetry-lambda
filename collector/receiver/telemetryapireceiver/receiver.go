@@ -100,10 +100,6 @@ func (r *telemetryAPIReceiver) bindListener() (net.Listener, string, error) {
 }
 
 func (r *telemetryAPIReceiver) Start(ctx context.Context, host component.Host) error {
-	//if len(r.types) == 0 {
-	//	return fmt.Errorf("no telemetry event types provided")
-	//}
-
 	listener, address, err := r.bindListener()
 	if err != nil {
 		return fmt.Errorf("failed to find available port: %w", err)
@@ -128,12 +124,14 @@ func (r *telemetryAPIReceiver) Start(ctx context.Context, host component.Host) e
 	}
 
 	telemetryClient := telemetryapi.NewClient(r.logger)
-	if _, err := telemetryClient.Subscribe(ctx, r.types, r.extensionID, fmt.Sprintf("http://%s/", address)); err != nil {
-		r.logger.Error("Failed to subscribe to telemetry", zap.Error(err))
-		_ = r.Shutdown(ctx)
-		return err
+	if len(r.types) > 0 {
+		if _, err := telemetryClient.Subscribe(ctx, r.types, r.extensionID, fmt.Sprintf("http://%s/", address)); err != nil {
+			r.logger.Error("Failed to subscribe to telemetry", zap.Error(err))
+			_ = r.Shutdown(ctx)
+			return err
+		}
+		r.logger.Info("Successfully subscribed to telemetry", zap.String("address", address))
 	}
-	r.logger.Info("Successfully subscribed to telemetry", zap.String("address", address))
 	return nil
 }
 
