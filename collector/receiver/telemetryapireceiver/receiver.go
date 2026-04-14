@@ -100,10 +100,6 @@ func (r *telemetryAPIReceiver) bindListener() (net.Listener, string, error) {
 }
 
 func (r *telemetryAPIReceiver) Start(ctx context.Context, host component.Host) error {
-	if len(r.types) == 0 {
-		return fmt.Errorf("no telemetry event types provided")
-	}
-
 	listener, address, err := r.bindListener()
 	if err != nil {
 		return fmt.Errorf("failed to find available port: %w", err)
@@ -305,7 +301,7 @@ func (r *telemetryAPIReceiver) createTraces(slice []event) (ptrace.Traces, error
 			if len(r.lastPlatformStartTime) > 0 && len(r.lastPlatformEndTime) > 0 {
 				if record, ok := el.Record.(map[string]any); ok {
 					if td, err := r.createPlatformInitSpan(record, r.lastPlatformStartTime, r.lastPlatformEndTime); err == nil {
-    					r.lastPlatformEndTime = ""
+						r.lastPlatformEndTime = ""
 						r.lastPlatformStartTime = ""
 						return td, err
 					}
@@ -340,8 +336,6 @@ func (r *telemetryAPIReceiver) createTraces(slice []event) (ptrace.Traces, error
 
 	return ptrace.Traces{}, errors.New("no traces created")
 }
-
-
 
 func (r *telemetryAPIReceiver) getRecordRequestId(record map[string]interface{}) string {
 	if record != nil {
