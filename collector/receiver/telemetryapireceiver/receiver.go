@@ -100,6 +100,10 @@ func (r *telemetryAPIReceiver) bindListener() (net.Listener, string, error) {
 }
 
 func (r *telemetryAPIReceiver) Start(ctx context.Context, host component.Host) error {
+	//if len(r.types) == 0 {
+	//	return fmt.Errorf("no telemetry event types provided")
+	//}
+
 	listener, address, err := r.bindListener()
 	if err != nil {
 		return fmt.Errorf("failed to find available port: %w", err)
@@ -236,45 +240,6 @@ func (r *telemetryAPIReceiver) httpHandler(w http.ResponseWriter, req *http.Requ
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	// traces
-	if r.nextTraces != nil {
-		if traces, err := r.createTraces(slice); err == nil {
-			if traces.SpanCount() > 0 {
-				err := r.nextTraces.ConsumeTraces(context.Background(), traces)
-				if err != nil {
-					r.logger.Error("error receiving traces", zap.Error(err))
-				}
-			}
-		}
-	}
-
-	// metrics
-	if r.nextMetrics != nil {
-		r.recordMetrics(slice)
-		if r.exportInterval == 0 {
-			if err := r.flushMetricsLocked(context.Background()); err != nil {
-				r.logger.Error("error flushing metrics", zap.Error(err))
-			}
-		}
-	}
-
-	// logs
-	if r.nextLogs != nil {
-		if logs, err := r.createLogs(slice); err == nil {
-			if logs.LogRecordCount() > 0 {
-				err := r.nextLogs.ConsumeLogs(context.Background(), logs)
-				if err != nil {
-					r.logger.Error("error receiving logs", zap.Error(err))
-				}
-			}
-		}
-	}
-
-	r.logger.Debug("logEvents received", zap.Int("count", len(slice)), zap.Int64("queue_length", r.queue.Len()))
-	slice = nil
-}
-
-func (r *telemetryAPIReceiver) createTraces(slice []event) (ptrace.Traces, error) {
 	for _, el := range slice {
 		r.logger.Debug(fmt.Sprintf("Event: %s", el.Type), zap.Any("event", el))
 		switch el.Type {
@@ -301,9 +266,15 @@ func (r *telemetryAPIReceiver) createTraces(slice []event) (ptrace.Traces, error
 			if len(r.lastPlatformStartTime) > 0 && len(r.lastPlatformEndTime) > 0 {
 				if record, ok := el.Record.(map[string]any); ok {
 					if td, err := r.createPlatformInitSpan(record, r.lastPlatformStartTime, r.lastPlatformEndTime); err == nil {
-						r.lastPlatformEndTime = ""
-						r.lastPlatformStartTime = ""
-						return td, err
+						if r.nextTraces != nil {
+							err := r.nextTraces.ConsumeTraces(context.Background(), td)
+							if err == nil {
+								r.lastPlatformEndTime = ""
+								r.lastPlatformStartTime = ""
+							} else {
+								r.logger.Error("error receiving traces", zap.Error(err))
+							}
+						}
 					}
 				}
 			}
@@ -333,8 +304,30 @@ func (r *telemetryAPIReceiver) createTraces(slice []event) (ptrace.Traces, error
 		// Lambda dropped log entries.
 		// case "platform.logsDropped":
 	}
+	// Metrics
+	if r.nextMetrics != nil {
+		r.recordMetrics(slice)
+		if r.exportInterval == 0 {
+			if err := r.flushMetricsLocked(context.Background()); err != nil {
+				r.logger.Error("error flushing metrics", zap.Error(err))
+			}
+		}
+	}
 
-	return ptrace.Traces{}, errors.New("no traces created")
+	// Logs
+	if r.nextLogs != nil {
+		if logs, err := r.createLogs(slice); err == nil {
+			if logs.LogRecordCount() > 0 {
+				err := r.nextLogs.ConsumeLogs(context.Background(), logs)
+				if err != nil {
+					r.logger.Error("error receiving logs", zap.Error(err))
+				}
+			}
+		}
+	}
+
+	r.logger.Debug("logEvents received", zap.Int("count", len(slice)), zap.Int64("queue_length", r.queue.Len()))
+	slice = nil
 }
 
 func (r *telemetryAPIReceiver) getRecordRequestId(record map[string]interface{}) string {
