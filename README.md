@@ -110,10 +110,6 @@ The following are runtimes which are no longer or not yet supported by this repo
 [3]: https://github.com/open-telemetry/semantic-conventions/blob/main/docs/faas/faas-spans.md#outgoing-invocations
 [4]: https://github.com/open-telemetry/semantic-conventions/blob/main/docs/faas/faas-metrics.md
 
-## Contributing
-
-See the [Contributing Guide](CONTRIBUTING.md) for details.
-
 ### Maintainers
 
 - [Serkan Özal](https://github.com/serkan-ozal), Catchpoint
