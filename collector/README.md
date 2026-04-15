@@ -50,7 +50,7 @@ For example, if you want to add the extension `foo`, the file providing this ext
 //go:build lambdacomponents.custom && (lambdacomponents.all || lambdacomponents.extension.all || lambdacomponents.extension.foo)
 ```
 
-You can provide your addition as a pull-request to this repository. Before doing so, please also read through the details of [contributing to the OpenTelemetry project](https://opentelemetry.io/docs/community/contributing/).
+You can provide your addition as a pull-request to this repository. Before doing so, please also read through the details of [Contributing](https://github.com/open-telemetry/opentelemetry-lambda/blob/main/CONTRIBUTING.md) to this project.
 
 ## Installing
 To install the OpenTelemetry Collector Lambda layer to an existing Lambda function using the `aws` CLI:
