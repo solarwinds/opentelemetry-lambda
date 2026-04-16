@@ -77,7 +77,7 @@ jobs:
       with:
         working-directory: ${{ matrix.target.directory }}
       # There are no array literals in GHA that is why we need to use fromJson.
-      if: ${{ !contains(fromJson('["java", "csharp", "go"]'), matrix.target.language) }}
+      if: ${{ !contains(fromJson('["go"]'), matrix.target.language) }}
 
     # ℹ️ Command-line programs to run using the OS shell.
     # 📚 See https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepsrun
@@ -88,35 +88,6 @@ jobs:
     # - run: |
     #     echo "Run, Build Application using script"
     #     ./location_of_script_within_repo/buildscript.sh
-
-    - name: Set up Java
-      uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
-      with:
-        distribution: corretto
-        java-version: '17'
-      if: ${{ matrix.target.language == 'java' }}
-
-    - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e # v6.1.0
-      with:
-        cache-provider: basic # MIT licensed (see https://github.com/gradle/actions/releases/tag/v6.1.0)
-
-    - name: build Java
-      run: ./gradlew build --no-build-cache
-      working-directory: ${{ matrix.target.directory }}
-      if: ${{ matrix.target.language == 'java' }}
-
-    - name: setup dotnet
-      uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5.2.0
-      with:
-        dotnet-version: 6.x
-      if: ${{ matrix.target.language == 'csharp' }}
-
-    - name: build dotnet
-      # Build all dotnet applications from this directory
-      run: find . -name '*.sln' -exec dotnet build '{}' \;
-      working-directory: ${{ matrix.target.directory }}
-      if: ${{ matrix.target.language == 'csharp' }}
 
     - name: build go
       run: make build
