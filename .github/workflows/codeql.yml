@@ -19,6 +19,7 @@ on:
     branches: [ "swo" ]
   schedule:
     - cron: '37 10 * * 2'
+  workflow_dispatch:
 
 permissions:
   contents: read
