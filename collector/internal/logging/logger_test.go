@@ -25,7 +25,7 @@ import (
 func TestParseLevelDefaultsToInfoWhenUnset(t *testing.T) {
 	lvl, err := parseLevel("")
 	require.NoError(t, err)
-	assert.Equal(t, zapcore.InfoLevel, lvl.Level())
+	assert.Equal(t, zapcore.WarnLevel, lvl.Level())
 }
 
 func TestParseLevelAppliesValidLevel(t *testing.T) {
@@ -37,5 +37,5 @@ func TestParseLevelAppliesValidLevel(t *testing.T) {
 func TestParseLevelFallsBackToInfoAndErrorsOnInvalid(t *testing.T) {
 	lvl, err := parseLevel("not-a-level")
 	require.Error(t, err)
-	assert.Equal(t, zapcore.InfoLevel, lvl.Level(), "should fall back to INFO")
+	assert.Equal(t, zapcore.WarnLevel, lvl.Level(), "should fall back to INFO")
 }

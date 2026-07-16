@@ -47,11 +47,11 @@ func NewCore(levelEnabler zapcore.LevelEnabler) zapcore.Core {
 // falling back to INFO and returning an error if the value is invalid.
 func parseLevel(envLvl string) (zap.AtomicLevel, error) {
 	if envLvl == "" {
-		return zap.NewAtomicLevelAt(zapcore.InfoLevel), nil
+		return zap.NewAtomicLevelAt(zapcore.WarnLevel), nil
 	}
 	userLvl, err := zap.ParseAtomicLevel(envLvl)
 	if err != nil {
-		return zap.NewAtomicLevelAt(zapcore.InfoLevel), err
+		return zap.NewAtomicLevelAt(zapcore.WarnLevel), err
 	}
 	return userLvl, nil
 }
