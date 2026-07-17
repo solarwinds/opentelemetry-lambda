@@ -15,7 +15,6 @@ jobs:
       contents: write
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: false
       matrix:
         architecture:
           - x86_64
@@ -70,6 +69,7 @@ jobs:
     uses: ./.github/workflows/layer-publish.yml
     needs: build-layer
     strategy:
+      fail-fast: false
       matrix:
         architecture:
           - x86_64
