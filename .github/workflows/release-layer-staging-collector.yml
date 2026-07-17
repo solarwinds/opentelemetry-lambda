@@ -15,6 +15,7 @@ jobs:
       contents: write
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         architecture:
           - x86_64
