@@ -21,8 +21,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component"
+	"go.opentelemetry.io/collector/confmap"
 	"go.opentelemetry.io/collector/confmap/confmaptest"
-	"go.opentelemetry.io/collector/confmap/xconfmap"
 )
 
 func TestLoadConfig(t *testing.T) {
@@ -51,7 +51,7 @@ func TestLoadConfig(t *testing.T) {
 		{
 			name:     "all types",
 			id:       component.NewIDWithName(component.MustNewType("telemetryapi"), "1"),
-			expected: createExpectedConfig([]string{}),
+			expected: createExpectedConfig([]string{platform, function, extension}),
 		},
 		{
 			name:     "platform only",
@@ -111,7 +111,7 @@ func TestLoadConfig(t *testing.T) {
 			sub, err := cm.Sub(tt.id.String())
 			require.NoError(t, err)
 			require.NoError(t, sub.Unmarshal(cfg))
-			require.NoError(t, xconfmap.Validate(cfg))
+			require.NoError(t, confmap.Validate(cfg))
 
 			require.Equal(t, tt.expected, cfg)
 		})
