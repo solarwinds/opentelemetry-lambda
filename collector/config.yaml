@@ -19,7 +19,7 @@ processors:
   batch:
     send_batch_size: 50
     timeout: 25ms
-  resourcedetection:
+  resource_detection:
     detectors: [env, system, lambda]
     timeout: 0.2s
     override: false
@@ -38,7 +38,7 @@ processors:
 exporters:
   debug:
     verbosity: detailed
-  otlp:
+  otlp_http:
     endpoint: "https://otel.collector.${env:SW_APM_DATA_CENTER:-na-01}.cloud.solarwinds.com:443"
     headers:
       Authorization: "Bearer ${env:SW_APM_API_TOKEN}"
@@ -48,13 +48,13 @@ service:
   pipelines:
     traces:
       receivers: [otlp]
-      processors: [resource,resourcedetection,batch]
-      exporters: [otlp,debug]
+      processors: [resource,resource_detection,batch]
+      exporters: [otlp_http,debug]
     metrics:
       receivers: [otlp,telemetryapi]
-      processors: [resource,resourcedetection,batch]
-      exporters: [otlp,debug]
+      processors: [resource,resource_detection,batch]
+      exporters: [otlp_http,debug]
     logs:
       receivers: [otlp,telemetryapi]
-      processors: [resource,resourcedetection,batch]
-      exporters: [otlp,debug]
+      processors: [resource,resource_detection,batch]
+      exporters: [otlp_http,debug]
