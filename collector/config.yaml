@@ -4,12 +4,10 @@ extensions:
     key: "${env:SW_APM_API_TOKEN}:${env:OTEL_SERVICE_NAME}"
 
 receivers:
-  otlp:
-    protocols:
-      grpc:
-        endpoint: "localhost:4317"
-      http:
-        endpoint: "localhost:4318"
+  otlp_grpc:
+    endpoint: "localhost:4317"
+  otlp_http:
+    endpoint: "localhost:4318"
   telemetryapi:
     types: ${env:SW_APM_TELEMETRY_API_SUBSCRIPTION:-}
     log_report: true
@@ -19,7 +17,7 @@ processors:
   batch:
     send_batch_size: 50
     timeout: 25ms
-  resourcedetection:
+  resource_detection:
     detectors: [env, system, lambda]
     timeout: 0.2s
     override: false
@@ -48,13 +46,13 @@ service:
   pipelines:
     traces:
       receivers: [otlp]
-      processors: [resource,resourcedetection,batch]
+      processors: [resource,resource_detection,batch]
       exporters: [otlp,debug]
     metrics:
       receivers: [otlp,telemetryapi]
-      processors: [resource,resourcedetection,batch]
+      processors: [resource,resource_detection,batch]
       exporters: [otlp,debug]
     logs:
       receivers: [otlp,telemetryapi]
-      processors: [resource,resourcedetection,batch]
+      processors: [resource,resource_detection,batch]
       exporters: [otlp,debug]
