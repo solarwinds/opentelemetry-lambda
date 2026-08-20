@@ -47,7 +47,7 @@ service:
   extensions: [solarwindsapmsettings]
   pipelines:
     traces:
-      receivers: [otlp,telemetryapi]
+      receivers: [otlp]
       processors: [resource,resource_detection,batch]
       exporters: [otlp_http,debug]
     metrics:
