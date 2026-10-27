@@ -22,6 +22,16 @@ runs:
       with:
         go-version-file: collector/go.mod
 
+    - name: set version to the default config.yaml
+      shell: bash
+      run: |
+        version=$(echo ${{ github.ref_name }} | awk -F'/' {'print $2'})
+        sed -i "s/0.0.0-dev/$version/g" collector/config.yaml
+
+    - name: cat collector/config.yaml
+      shell: bash
+      run: cat collector/config.yaml
+
     - name: Build collector layer
       shell: bash
       run: make -C collector package GOARCH="${INPUTS_ARCHITECTURE}"
