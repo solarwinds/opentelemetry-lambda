@@ -115,8 +115,8 @@ jobs:
       - name: Upload Collector Artifact
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: opentelemetry-collector-layer-${{ matrix.architecture }}.zip
-          path: ${{ github.workspace }}/collector/build/opentelemetry-collector-layer-${{ matrix.architecture }}.zip
+          name: opentelemetry-collector-layer-${{ matrix.architecture == 'amd64' && 'x86_64' || 'arm64' }}.zipip
+          path: ${{ github.workspace }}/collector/build/opentelemetry-collector-layer-${{ matrix.architecture == 'amd64' && 'x86_64' || 'arm64' }}.zip
   prepare-release-jobs:
     needs: build-layer
     runs-on: ubuntu-26.04
@@ -151,7 +151,7 @@ jobs:
     strategy:
       matrix: ${{ fromJSON(needs.prepare-release-jobs.outputs.release_jobs) }}
     with:
-      artifact-name: opentelemetry-collector-layer-${{ matrix.architecture }}.zip
+      artifact-name: opentelemetry-collector-layer-${{ matrix.architecture == 'amd64' && 'x86_64' || 'arm64'}}.zip
       layer-name: opentelemetry-collector
       architecture: ${{ matrix.architecture }}
       runtimes: "nodejs20.x nodejs22.x nodejs24.x java11 java17 java21 java25 python3.10 python3.11 python3.12 python3.13 python3.14"

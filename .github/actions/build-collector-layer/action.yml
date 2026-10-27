@@ -10,7 +10,7 @@ inputs:
 outputs:
   artifact-path:
     description: 'Absolute path to the built layer zip'
-    value: ${{ github.workspace }}/collector/build/opentelemetry-collector-layer-${{ inputs.architecture }}.zip
+    value: ${{ github.workspace }}/collector/build/opentelemetry-collector-layer-${{ inputs.architecture == 'amd64' && 'x86_64' || 'arm64' }}.zip
   component-version:
     description: 'Collector binary version. Only set when architecture is amd64.'
     value: ${{ steps.version.outputs.component-version }}
