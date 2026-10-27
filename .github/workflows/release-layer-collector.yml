@@ -103,6 +103,4 @@ jobs:
       architecture: ${{ matrix.architecture }}
       release-group: prod
       aws_region: ${{ matrix.aws_region }}
-    secrets:
-      OTEL_LAMBDA_LAYER_PUBLISH_ROLE_ARN: ${{ secrets.OTEL_LAMBDA_LAYER_PUBLISH_ROLE_ARN }}
-      PROD_LAMBDA_ROLE_ARN: ${{ secrets.PROD_LAMBDA_ROLE_ARN }}
+    secrets: inherit

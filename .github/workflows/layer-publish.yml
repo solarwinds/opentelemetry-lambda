@@ -40,11 +40,6 @@ on:
         description: '(optional) Layer version to be used in the layer name. If no input is given, its value is tried to be extracted from the `GITHUB_REF_NAME` variable'
         required: false
         type: string
-    secrets:
-      OTEL_LAMBDA_LAYER_PUBLISH_ROLE_ARN:
-        required: false
-      PROD_LAMBDA_ROLE_ARN:
-        required: false
 
 permissions:
   contents: read

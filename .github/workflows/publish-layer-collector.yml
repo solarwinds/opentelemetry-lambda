@@ -160,6 +160,4 @@ jobs:
       role-arn: ${{ github.event.inputs.role-arn }}
       component-version: 'NA'
       layer-version: ${{ github.event.inputs.layer-version }}
-    secrets:
-      OTEL_LAMBDA_LAYER_PUBLISH_ROLE_ARN: ${{ secrets.OTEL_LAMBDA_LAYER_PUBLISH_ROLE_ARN }}
-      PROD_LAMBDA_ROLE_ARN: ${{ secrets.PROD_LAMBDA_ROLE_ARN }}
+    secrets: inherit
