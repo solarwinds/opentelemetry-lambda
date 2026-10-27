@@ -23,6 +23,8 @@ updates:
       - "/collector/receiver/telemetryapireceiver"
     schedule:
       interval: "weekly"
+    cooldown:
+      default-days: 7
     groups:
       opentelemetry-deps-collector:
         patterns:
