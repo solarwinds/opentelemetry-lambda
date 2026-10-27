@@ -47,7 +47,7 @@ jobs:
           - arm64
     with:
       artifact-name: opentelemetry-collector-layer-${{ matrix.architecture == 'amd64' && 'x86_64' || 'arm64' }}.zip
-    secrets: inherit
+  secrets: inherit
 
   publish-layer:
     permissions: # required by the reusable workflow
