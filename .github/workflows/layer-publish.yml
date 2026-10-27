@@ -59,7 +59,7 @@ jobs:
           
           if [[ -n "${INPUTS_ARCHITECTURE}" ]]; then
             ARCH=$(echo "${INPUTS_ARCHITECTURE}" | sed -r 's/amd64/x86_64/g')
-            LAYER_NAME="${LAYER_NAME}-${ARCH}"
+            LAYER_NAME="${LAYER_NAME}-$ARCH"
           else
             ARCH="x86_64 arm64"
           fi
