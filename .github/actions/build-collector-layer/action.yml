@@ -25,8 +25,10 @@ runs:
     - name: set version to the default config.yaml
       shell: bash
       run: |
-        version=$(echo ${{ github.ref_name }} | awk -F'/' {'print $2'})
+        version=$(echo ${REF_NAME} | awk -F'/' {'print $2'})
         sed -i "s/0.0.0-dev/$version/g" collector/config.yaml
+      env:
+        REF_NAME: ${{ github.ref_name }}
 
     - name: cat collector/config.yaml
       shell: bash
