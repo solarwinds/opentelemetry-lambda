@@ -26,7 +26,7 @@ jobs:
         run: |
           echo "Layer version:       ${{ steps.construct_layer_version.outputs.layer_version }}"
       - name: Download built layer
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: ${{ inputs.artifact-name }}
       - name: Display structure of downloaded files
@@ -37,7 +37,7 @@ jobs:
         id: rl-scan
         env:
           RLPORTAL_ACCESS_TOKEN: ${{ secrets.RLPORTAL_ACCESS_TOKEN }}
-        uses: reversinglabs/gh-action-rl-scanner-cloud-only@v1
+        uses: reversinglabs/gh-action-rl-scanner-cloud-only@b61135055814f4da482de188fafe6c5d614f87a8 # v1.0.7
         with:
           artifact-to-scan: scan.zip
           rl-verbose: true
